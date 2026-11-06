@@ -1782,23 +1782,51 @@ function renderChurnView() {
     const porMotivo = {};
     saidas.forEach(s => {
         const k = normalizarMotivo(s.motivo);
-        if (!porMotivo[k]) porMotivo[k] = { qtd: 0, valor: 0 };
+        if (!porMotivo[k]) porMotivo[k] = { qtd: 0, valor: 0, lista: [] };
         porMotivo[k].qtd += 1;
         porMotivo[k].valor += getValorSaida(s) || 0;
+        porMotivo[k].lista.push(s);
     });
     const ranking = Object.entries(porMotivo).sort((a, b) => b[1].qtd - a[1].qtd || a[0].localeCompare(b[0], 'pt-BR'));
     const max = ranking.length ? ranking[0][1].qtd : 1;
-    set('ch-motivos', ranking.length ? ranking.map(([nome, d], i) => `
-        <div class="ch-motivo">
-            <span class="ch-pos ${i === 0 ? 'top' : ''}">${i + 1}º</span>
-            <div class="ch-motivo-body">
-                <div class="ch-motivo-top">
-                    <span class="ch-motivo-nome">${nome}</span>
-                    <span class="ch-motivo-qtd">${d.qtd} ${d.qtd === 1 ? 'saída' : 'saídas'} · ${formatPct((d.qtd / saidas.length) * 100, 0)}</span>
+    const abertos = AppState._motivosAbertos || (AppState._motivosAbertos = new Set());
+    set('ch-motivos', ranking.length ? ranking.map(([nome, d], i) => {
+        const clientes = d.lista.slice().sort((x, y) => String(y.dataSaida || '').localeCompare(String(x.dataSaida || '')));
+        const aberto = abertos.has(nome);
+        return `
+        <div class="ch-motivo-wrap ${aberto ? 'aberto' : ''}">
+            <button type="button" class="ch-motivo" data-motivo="${escHtml(nome)}" aria-expanded="${aberto}">
+                <span class="ch-pos ${i === 0 ? 'top' : ''}">${i + 1}º</span>
+                <div class="ch-motivo-body">
+                    <div class="ch-motivo-top">
+                        <span class="ch-motivo-nome">${escHtml(nome)}</span>
+                        <span class="ch-motivo-qtd">${d.qtd} ${d.qtd === 1 ? 'saída' : 'saídas'} · ${formatPct((d.qtd / saidas.length) * 100, 0)}</span>
+                    </div>
+                    <div class="ch-motivo-bar"><i style="width:${(d.qtd / max) * 100}%"></i></div>
                 </div>
-                <div class="ch-motivo-bar"><i style="width:${(d.qtd / max) * 100}%"></i></div>
+                <svg class="ch-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            <div class="ch-clientes">
+                ${clientes.map(c => `
+                    <div class="ch-cliente">
+                        <span class="ch-cliente-nome">${escHtml(c.nome)}</span>
+                        <span class="ch-cliente-motivo">${escHtml(c.motivo || '')}</span>
+                        <span class="ch-cliente-data">${c.dataSaida ? formatDateBR(c.dataSaida) : (c.mesSaida || '—')}</span>
+                    </div>`).join('')}
             </div>
-        </div>`).join('') : `<div class="home-empty">Nenhuma saída registrada em ${ano}.</div>`, true);
+        </div>`;
+    }).join('') : `<div class="home-empty">Nenhuma saída registrada em ${ano}.</div>`, true);
+
+    document.querySelectorAll('#ch-motivos .ch-motivo').forEach(btn => {
+        btn.onclick = () => {
+            const nome = btn.dataset.motivo;
+            const wrap = btn.parentElement;
+            const abrir = !wrap.classList.contains('aberto');
+            wrap.classList.toggle('aberto', abrir);
+            btn.setAttribute('aria-expanded', String(abrir));
+            if (abrir) abertos.add(nome); else abertos.delete(nome);
+        };
+    });
 
     // Tempo de casa por faixa
     const faixas = [
@@ -1817,15 +1845,7 @@ function renderChurnView() {
         </div>`).join('') : '<div class="home-empty">Sem tempo de casa informado.</div>')
         + (semTempo > 0 ? `<div class="ch-note">${semTempo} ${semTempo === 1 ? 'saída sem' : 'saídas sem'} data de entrada (não entram no cálculo).</div>` : ''), true);
 
-    // Receita perdida
-    const semValor = saidas.length - comValor.length;
-    const topValor = Object.entries(porMotivo).filter(([, d]) => d.valor > 0).sort((a, b) => b[1].valor - a[1].valor).slice(0, 3);
-    set('ch-receita', `
-        <div class="ch-receita-big">${comValor.length ? formatBRL(perdida) : '—'}<span>por mês</span></div>
-        <div class="ch-receita-sub">${comValor.length ? `${formatBRL(perdida * 12)} por ano em mensalidades que deixaram de entrar` : 'Nenhuma saída com mensalidade conhecida.'}</div>
-        ${topValor.length ? `<div class="home-mini-list">${topValor.map(([n, d]) => `<div class="home-mini-row"><span>${n}</span><strong>${formatBRL(d.valor)}</strong></div>`).join('')}</div>` : ''}
-        ${semValor > 0 ? `<div class="ch-note">${semValor} de ${saidas.length} saídas são de clientes sem mensalidade cadastrada no portal e não entram nesse valor.</div>` : ''}
-    `, true);
+
 }
 
 /* ==========================================================================
