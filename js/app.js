@@ -1907,10 +1907,7 @@ function formatValorInput(n) {
 }
 
 function openNovoClienteModal() {
-    const nextNum = AppState.clientes.length + 1;
-    const contratoSugerido = `CTR-2026-${String(nextNum).padStart(3, '0')}`;
-    
-    document.getElementById('input-cliente-contrato').value = contratoSugerido;
+    document.getElementById('input-cliente-contrato').value = '';
     document.getElementById('input-cliente-nome').value = '';
     renderListasSegmentos();
     document.getElementById('input-cliente-segmento').value = '';
@@ -1951,7 +1948,7 @@ function handleNovoClienteSubmit() {
 
     const novoCliente = {
         id: 'cli-' + Date.now(),
-        contrato: contrato || `CTR-${ano}-000`,
+        contrato: contrato,
         nome: nome,
         segmento: segmento,
         mesEntrada: mesEntrada,
