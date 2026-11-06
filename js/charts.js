@@ -305,6 +305,19 @@ class LiftCharts {
                 LiftCharts._updateMonthlyTooltip(canvas, hit, mx, my);
             });
 
+            // Clique numa barra: chama options.onBarClick(mesAno, 'entrada' | 'saida')
+            canvas.addEventListener('click', (ev) => {
+                const st = canvas._liftMonthly;
+                if (!st || typeof st.options.onBarClick !== 'function') return;
+                const r = canvas.getBoundingClientRect();
+                const mx = ev.clientX - r.left;
+                const my = ev.clientY - r.top;
+                const hit = st.bars.find(b => mx >= b.x - 2 && mx <= b.x + b.w + 2 && my >= b.hitY && my <= b.y + b.h + 1);
+                if (!hit) return;
+                const ponto = st.serie[hit.index];
+                if (ponto) st.options.onBarClick(ponto.mesAno, hit.tipo);
+            });
+
             canvas.addEventListener('mouseleave', () => {
                 const st = canvas._liftMonthly;
                 if (!st) return;
@@ -456,6 +469,7 @@ class LiftCharts {
             <div class="tt-row ${hit.tipo === 'entrada' ? 'active' : ''}"><i class="tt-dot blue"></i>Entradas: <b>${d.entradas}</b></div>
             <div class="tt-row ${hit.tipo === 'saida' ? 'active' : ''}"><i class="tt-dot orange"></i>Saídas: <b>${d.saidas}</b></div>
             <div class="tt-row"><i class="tt-dot cyan"></i>Meta de Cliente: <b>${d.metaClientes}</b></div>
+            ${st.options.onBarClick ? `<div class="tt-hint">Clique para ver os ${hit.tipo === 'entrada' ? 'clientes' : 'clientes que saíram'}</div>` : ''}
             <div class="tt-row"><i class="tt-dot dark-orange"></i>Meta de Churn: <b>${d.metaChurn}</b></div>`;
         tip.classList.add('visible');
 

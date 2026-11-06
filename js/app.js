@@ -630,7 +630,7 @@ function renderHomeResumo(mesAtual) {
         });
     }
     if (AppState.currentView === 'overview' || !document.getElementById('homeCanvas')._liftMonthly) {
-        LiftCharts.renderMonthlyChart('homeCanvas', seis, { tooltipId: 'homeTooltip', compact: true });
+        LiftCharts.renderMonthlyChart('homeCanvas', seis, { tooltipId: 'homeTooltip', compact: true, onBarClick: abrirClientesDoMes });
     } else {
         document.getElementById('homeCanvas')._liftMonthly.serie = seis;
     }
@@ -1539,8 +1539,28 @@ function getDashboardMonthlySeries() {
     return serie;
 }
 
+/* ---------- Abre a aba Clientes já filtrada num mês (entradas ou saídas) ---------- */
+function abrirClientesDoMes(mesAno, tipo = 'entrada') {
+    const [m, a] = mesAno.split('/');
+    const ano = parseInt(a, 10);
+    AppState.selectedYearClientes = ano;
+    AppState.filterMesClientes = m;
+    AppState.filterSegmento = '';
+    AppState.searchQueryClientes = '';
+    AppState.searchQuerySaidas = '';
+    AppState.activeClientesTab = tipo === 'saida' ? 'saidas' : 'fechados';
+    const selMes = document.getElementById('filter-mes-select');
+    if (selMes) selMes.value = m;
+    ['search-clientes-input', 'search-saidas-input'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    switchView('clientes');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (ano < ANO_INICIO_CADASTRO_PORTAL) {
+        showToast(`${MONTH_NAMES_BR[m].full} de ${ano} usa o histórico oficial: os clientes desse mês não estão cadastrados no portal.`);
+    }
+}
+
 function renderDashboardChart() {
-    LiftCharts.renderMonthlyChart('historyCanvas', getDashboardMonthlySeries(), { tooltipId: 'historyTooltip' });
+    LiftCharts.renderMonthlyChart('historyCanvas', getDashboardMonthlySeries(), { tooltipId: 'historyTooltip', onBarClick: abrirClientesDoMes });
 }
 
 /* ==========================================================================

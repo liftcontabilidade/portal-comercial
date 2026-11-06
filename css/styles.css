@@ -2016,3 +2016,5 @@ body.cloud-on .cloud-only { display: flex !important; }
 
 /* Lista de anos (2012–2030) com rolagem */
 .year-dropdown-menu { max-height: 300px; overflow-y: auto; }
+
+.chart-tooltip .tt-hint { margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,.15); font-size: 11px; color: var(--lift-orange-border); font-weight: 600; }
