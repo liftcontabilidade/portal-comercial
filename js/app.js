@@ -1416,7 +1416,7 @@ function renderDadosView() {
                 <td>TOTAL ANUAL / SALDO</td>
                 <td style="color: #047857;">+${dataReport.somaEntradas} Entradas</td>
                 <td style="color: #DC2626;">-${dataReport.somaSaidas} Saídas</td>
-                <td style="color: var(--lift-orange); font-size: 14px;">${dataReport.baseFinal} Ativos</td>
+                <td></td>
                 <td colspan="3" style="text-align: right; color: var(--lift-blue);">
                     Saldo Líquido: <strong>${saldoLiquido >= 0 ? '+' : ''}${saldoLiquido} clientes</strong>
                 </td>
