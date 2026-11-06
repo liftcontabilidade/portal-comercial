@@ -56,6 +56,7 @@ function iniciar() {
     const msgLogin = document.getElementById('login-msg');
     const mostrarLogin = (msg = '', tipo = '') => {
         overlay.classList.add('active');
+        overlay.classList.remove('carregando');
         msgLogin.textContent = msg;
         msgLogin.className = `login-msg ${tipo}`;
         btnLogin.disabled = false;
@@ -105,23 +106,61 @@ function iniciar() {
     const erroPermissao = (e) => {
         console.error('[Firebase]', e);
         if (e.code === 'permission-denied') {
+            if (!ativo) return; // já tratado (cada consulta ao banco avisa o mesmo erro)
+            ativo = false;
             const email = auth.currentUser ? auth.currentUser.email : '';
             pararOuvintes();
-            signOut(auth);
+            liberado = false;
+            clearTimeout(timerOffline);
             mostrarLogin(`O e-mail ${email} não tem acesso ao portal. Peça para incluírem você na lista de acesso.`, 'erro');
+            signOut(auth);
         } else {
             status('Sem conexão com o banco', 'erro');
         }
     };
 
+    /* ---------- Libera a tela só depois que o banco confirmar o acesso ---------- */
+    const CHAVE_AUTORIZADO = 'lift_cloud_ultimo_autorizado';
+    let liberado = false;
+    let timerOffline = null;
+    function liberarTela() {
+        if (liberado) return;
+        liberado = true;
+        clearTimeout(timerOffline);
+        overlay.classList.remove('active', 'carregando');
+    }
+
     function ouvirBanco() {
         pararOuvintes();
+        liberado = false;
+        const uid = auth.currentUser ? auth.currentUser.uid : '';
+        // Sem internet: libera só para quem já teve o acesso confirmado neste computador
+        clearTimeout(timerOffline);
+        timerOffline = setTimeout(() => {
+            let ultimo = '';
+            try { ultimo = localStorage.getItem(CHAVE_AUTORIZADO) || ''; } catch (e) { /* ignora */ }
+            if (!liberado && uid && ultimo === uid && recebido.clientes) {
+                status('Offline · salvo neste computador', 'aviso');
+                liberarTela();
+            }
+        }, 6000);
+
         cancelar.push(onSnapshot(colClientes, { includeMetadataChanges: true }, (snap) => {
             sincronizado.clientes = new Map(snap.docs.map(d => [d.id, assinatura(d.data())]));
             recebido.clientes = true;
-            status(snap.metadata.fromCache ? 'Offline · salvo neste computador' : 'Sincronizado', snap.metadata.fromCache ? 'aviso' : 'ok');
-            verificarMigracao(snap);
-            aplicar();
+            if (!snap.metadata.fromCache) {
+                // O servidor respondeu: este e-mail tem acesso
+                try { localStorage.setItem(CHAVE_AUTORIZADO, uid); } catch (e) { /* ignora */ }
+                status('Sincronizado', 'ok');
+                aplicar();
+                liberarTela();
+                verificarMigracao(snap);
+            } else if (liberado) {
+                status('Offline · salvo neste computador', 'aviso');
+                aplicar();
+            } else {
+                aplicar();
+            }
         }, erroPermissao));
         cancelar.push(onSnapshot(colSaidas, (snap) => {
             sincronizado.saidas = new Map(snap.docs.map(d => [d.id, assinatura(d.data())]));
@@ -238,7 +277,8 @@ function iniciar() {
     onAuthStateChanged(auth, (user) => {
         if (user) {
             ativo = true;
-            overlay.classList.remove('active');
+            // Continua na tela de carregamento até o banco confirmar o acesso
+            overlay.classList.add('active', 'carregando');
             const el = document.getElementById('cloud-user');
             if (el) el.textContent = user.email;
             document.body.classList.add('cloud-on');
@@ -247,9 +287,12 @@ function iniciar() {
             ouvirBanco();
         } else {
             ativo = false;
+            liberado = false;
+            clearTimeout(timerOffline);
             pararOuvintes();
             document.body.classList.remove('cloud-on');
-            mostrarLogin();
+            // Mantém a mensagem de "sem acesso", se houver
+            mostrarLogin(msgLogin.classList.contains('erro') ? msgLogin.textContent : '', msgLogin.classList.contains('erro') ? 'erro' : '');
         }
     });
 }

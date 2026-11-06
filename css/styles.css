@@ -1968,3 +1968,11 @@ body.cloud-on .cloud-only { display: flex !important; }
 
 .opp-kpi-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 @media (max-width: 1200px) { .opp-kpi-grid.cols-3 { grid-template-columns: 1fr; } }
+
+/* Tela de carregamento (antes de confirmar login e acesso) */
+.login-loading { display: none; flex-direction: column; align-items: center; gap: 22px; }
+.login-overlay.carregando .login-loading { display: flex; }
+.login-overlay.carregando .login-card { display: none; }
+.login-loading-logo { width: 170px; height: auto; opacity: .95; }
+.login-spinner { width: 30px; height: 30px; border-radius: 50%; border: 3px solid rgba(255,255,255,.18); border-top-color: var(--lift-orange); animation: login-girar .8s linear infinite; }
+@keyframes login-girar { to { transform: rotate(360deg); } }

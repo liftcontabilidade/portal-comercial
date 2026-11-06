@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <!-- Estilos do Portal -->
-    <link rel="stylesheet" href="css/styles.css?v=20261106g">
+    <link rel="stylesheet" href="css/styles.css?v=20261106h">
 </head>
 <body>
     <div class="app-container">
@@ -1115,7 +1115,12 @@
     <!-- ====================================================================
          TELA DE LOGIN (Firebase / Google)
          ==================================================================== -->
-    <div class="login-overlay active" id="login-overlay">
+    <div class="login-overlay active carregando" id="login-overlay">
+        <!-- Enquanto confere o login e o acesso: só o logo (nada de tela de login nem de dados) -->
+        <div class="login-loading">
+            <img src="assets/lift-logo-white.png" alt="LIFT" class="login-loading-logo">
+            <div class="login-spinner"></div>
+        </div>
         <div class="login-card">
             <img src="assets/lift-logo.png" alt="LIFT" class="login-logo">
             <h1>Portal Comercial</h1>
@@ -1138,6 +1143,7 @@
         setTimeout(function () {
             var ov = document.getElementById('login-overlay');
             if (ov && ov.classList.contains('active') && !window.LiftCloud) {
+                ov.classList.remove('carregando');
                 var msg = document.getElementById('login-msg');
                 msg.className = 'login-msg erro';
                 msg.innerHTML = 'Não foi possível conectar ao banco (sem internet?). <a href="#" id="login-offline">Usar a cópia salva neste computador</a>';
@@ -1148,10 +1154,10 @@
 
     <!-- Scripts da Aplicação -->
     <datalist id="lista-segmentos"></datalist>
-    <script src="js/data.js?v=20261106g"></script>
-    <script src="js/charts.js?v=20261106g"></script>
-    <script src="js/firebase-config.js?v=20261106g"></script>
-    <script src="js/app.js?v=20261106g"></script>
-    <script type="module" src="js/firebase-sync.js?v=20261106g"></script>
+    <script src="js/data.js?v=20261106h"></script>
+    <script src="js/charts.js?v=20261106h"></script>
+    <script src="js/firebase-config.js?v=20261106h"></script>
+    <script src="js/app.js?v=20261106h"></script>
+    <script type="module" src="js/firebase-sync.js?v=20261106h"></script>
 </body>
 </html>
