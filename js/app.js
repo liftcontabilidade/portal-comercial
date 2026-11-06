@@ -1188,6 +1188,47 @@ function renderTabelaClientesFechados(lista) {
     }).join('');
 }
 
+/* ---------- Mensalidade nas saídas (campo na lista) ---------- */
+function setupValorSaidas() {
+    const tbody = document.getElementById('tabela-saidas-tbody');
+    if (!tbody || tbody._valorBound) return;
+    tbody._valorBound = true;
+    const salvarCampo = (inp) => {
+        const s = AppState.saidas.find(x => String(x.id) === inp.dataset.id);
+        if (!s) return;
+        const texto = inp.value.trim();
+        if (!texto) {
+            if (s.valorMensal === undefined) return;
+            delete s.valorMensal;
+        } else {
+            const v = parseValorBR(texto);
+            if (isNaN(v)) {
+                inp.classList.add('erro');
+                showToast('Valor inválido. Use por exemplo 697 ou 697,50.');
+                return;
+            }
+            if (Number(s.valorMensal) === v) { inp.value = formatValorInput(v); return; }
+            s.valorMensal = v;
+            inp.value = formatValorInput(v);
+        }
+        inp.classList.remove('erro');
+        inp.classList.add('salvo');
+        setTimeout(() => inp.classList.remove('salvo'), 900);
+        saveStorage();
+        renderChurnView();
+    };
+    tbody.addEventListener('change', (e) => { if (e.target.classList.contains('saida-valor-input')) salvarCampo(e.target); });
+    tbody.addEventListener('keydown', (e) => {
+        if (!e.target.classList.contains('saida-valor-input') || e.key !== 'Enter') return;
+        e.preventDefault();
+        const inputs = [...tbody.querySelectorAll('.saida-valor-input')];
+        const prox = inputs[inputs.indexOf(e.target) + 1];
+        e.target.blur();
+        if (prox) { prox.focus(); prox.select(); }
+    });
+    tbody.addEventListener('focusin', (e) => { if (e.target.classList.contains('saida-valor-input')) e.target.select(); });
+}
+
 function renderTabelaSaidas(lista) {
     const tbody = document.getElementById('tabela-saidas-tbody');
     if (!tbody) return;
@@ -1228,6 +1269,14 @@ function renderTabelaSaidas(lista) {
             <td>${s.dataAviso || '-'}</td>
             <td><strong style="color: #DC2626;">${formatDateBR(s.dataSaida)}</strong></td>
             <td>${s.motivo || 'Não informado'}</td>
+            <td>
+                <div class="saida-valor">
+                    <span>R$</span>
+                    <input type="text" inputmode="decimal" class="saida-valor-input" data-id="${s.id}"
+                           value="${s.valorMensal !== undefined && s.valorMensal !== null && s.valorMensal !== '' ? formatValorInput(s.valorMensal) : ''}"
+                           placeholder="${getValorSaida(s) ? formatValorInput(getValorSaida(s)) : '0,00'}" aria-label="Mensalidade de ${s.nome}">
+                </div>
+            </td>
             <td>
                 <div class="table-actions">
                     <button class="btn-action-icon danger" title="Excluir Registro" onclick="confirmDeleteSaida('${s.id}')">
@@ -1777,6 +1826,10 @@ function renderChurnView() {
     const comValor = saidas.map(s => ({ s, v: getValorSaida(s) })).filter(x => x.v !== null);
     const perdida = comValor.reduce((a, x) => a + x.v, 0);
     set('ch-kpi-receita', comValor.length ? formatMoneyCurto(perdida) : '—');
+    const semValorQtd = saidas.length - comValor.length;
+    set('ch-kpi-receita-sub', !saidas.length ? '' : semValorQtd
+        ? `${semValorQtd} de ${saidas.length} saídas sem mensalidade`
+        : `${formatMoneyCurto(perdida * 12)} por ano`);
 
     // Ranking de motivos
     const porMotivo = {};
@@ -1800,7 +1853,7 @@ function renderChurnView() {
                 <div class="ch-motivo-body">
                     <div class="ch-motivo-top">
                         <span class="ch-motivo-nome">${escHtml(nome)}</span>
-                        <span class="ch-motivo-qtd">${d.qtd} ${d.qtd === 1 ? 'saída' : 'saídas'} · ${formatPct((d.qtd / saidas.length) * 100, 0)}</span>
+                        <span class="ch-motivo-qtd">${d.qtd} ${d.qtd === 1 ? 'saída' : 'saídas'} · ${formatPct((d.qtd / saidas.length) * 100, 0)}${d.valor ? ` · <b>${formatBRL(d.valor)}/mês</b>` : ''}</span>
                     </div>
                     <div class="ch-motivo-bar"><i style="width:${(d.qtd / max) * 100}%"></i></div>
                 </div>
@@ -1811,6 +1864,7 @@ function renderChurnView() {
                     <div class="ch-cliente">
                         <span class="ch-cliente-nome">${escHtml(c.nome)}</span>
                         <span class="ch-cliente-motivo">${escHtml(c.motivo || '')}</span>
+                        <span class="ch-cliente-valor">${getValorSaida(c) !== null ? formatBRL(getValorSaida(c)) : '<i>sem valor</i>'}</span>
                         <span class="ch-cliente-data">${c.dataSaida ? formatDateBR(c.dataSaida) : (c.mesSaida || '—')}</span>
                     </div>`).join('')}
             </div>
@@ -2055,7 +2109,7 @@ function openNovaSaidaModal() {
     const dlMotivos = document.getElementById('lista-motivos-saida');
     if (dlMotivos) dlMotivos.innerHTML = [...motivos.values()].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(m => `<option value="${m}"></option>`).join('');
 
-    ['ns-nome', 'ns-aviso', 'ns-motivo'].forEach(id => { document.getElementById(id).value = ''; });
+    ['ns-nome', 'ns-aviso', 'ns-motivo', 'ns-valor'].forEach(id => { document.getElementById(id).value = ''; });
     document.getElementById('ns-saida').value = new Date().toISOString().split('T')[0];
     document.getElementById('modal-nova-saida').classList.add('active');
     setTimeout(() => document.getElementById('ns-nome').focus(), 50);
@@ -2073,6 +2127,13 @@ function handleNovaSaidaSubmit() {
     const motivo = document.getElementById('ns-motivo').value.trim();
     if (!nome || !dataSaida || !motivo) {
         alert('Preencha o cliente, a data da saída e o motivo.');
+        return;
+    }
+
+    const valorTxt = document.getElementById('ns-valor').value.trim();
+    const valorInformado = valorTxt ? parseValorBR(valorTxt) : null;
+    if (valorTxt && isNaN(valorInformado)) {
+        alert('Valor da mensalidade inválido. Use por exemplo 697 ou 697,50.');
         return;
     }
 
@@ -2108,6 +2169,8 @@ function handleNovaSaidaSubmit() {
         cliente.saidaId = registro.id;
         cliente.mesSaida = mesSaida;
     }
+
+    if (valorInformado !== null) registro.valorMensal = valorInformado;
 
     AppState.saidas.unshift(registro);
     saveStorage();
@@ -2391,6 +2454,7 @@ function setupEventListeners() {
     setupYearDropdown('oportunidades');
     setupYearDropdown('receita');
     setupYearDropdown('churn');
+    setupValorSaidas();
     setupOportunidadesInputs();
 
     // Botão Restaurar Padrão de Leads
