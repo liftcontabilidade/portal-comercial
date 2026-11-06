@@ -1965,3 +1965,6 @@ body.cloud-on .cloud-only { display: flex !important; }
 .bk-arquivo { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px; border: 1px solid var(--lift-orange-border); background: var(--lift-orange-light); border-radius: 10px; margin-bottom: 14px; flex-wrap: wrap; }
 .bk-arquivo strong { display: block; font-size: 13.5px; color: var(--lift-blue); }
 .bk-arquivo span { font-size: 12px; color: var(--text-secondary); }
+
+.opp-kpi-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 1200px) { .opp-kpi-grid.cols-3 { grid-template-columns: 1fr; } }
