@@ -1053,8 +1053,13 @@ function linhaGrupoMes(mesAno, qtd, singular, plural) {
         </tr>`;
 }
 
+// Anos que aparecem nos botões de seleção de ano de todas as abas
+const ANO_MINIMO_SELECAO = 2012;
+const ANO_MAXIMO_SELECAO = 2030;
+
 function getAnosDisponiveisClientes() {
-    const anos = new Set([2024, 2025, 2026, new Date().getFullYear(), AppState.selectedYearClientes]);
+    const anos = new Set([new Date().getFullYear(), AppState.selectedYearClientes]);
+    for (let a = ANO_MINIMO_SELECAO; a <= ANO_MAXIMO_SELECAO; a++) anos.add(a);
     AppState.clientes.forEach(c => { if (c.ano) anos.add(Number(c.ano)); });
     AppState.saidas.forEach(s => { if (s.ano) anos.add(Number(s.ano)); });
     return [...anos].filter(Boolean).sort((a, b) => b - a);
@@ -1101,6 +1106,10 @@ function setupYearDropdown(prefixo) {
         renderYearDropdown(prefixo);
         wrap.classList.toggle('open', abrir);
         btn.setAttribute('aria-expanded', String(abrir));
+        if (abrir) {
+            const ativo = menu.querySelector('.year-dropdown-item.active');
+            if (ativo) menu.scrollTop = ativo.offsetTop - menu.clientHeight / 2 + ativo.offsetHeight / 2;
+        }
     });
 
     menu.addEventListener('click', (e) => {
@@ -1749,7 +1758,8 @@ function renderReceitaView() {
 
     // Comparativo por ano
     const anos = getAnosDisponiveisClientes().sort((a, b) => a - b);
-    const porAno = anos.map(a => ({ ano: a, ...getReceitaDoAno(a) }));
+    const porAno = anos.map(a => ({ ano: a, ...getReceitaDoAno(a) }))
+        .filter(x => x.contratos > 0 || x.ano === ano || x.ano === new Date().getFullYear());
     const max = Math.max(1, ...porAno.map(x => x.valor));
     set('rec-years', porAno.slice().reverse().map((x, i, arr) => {
         const anterior = porAno.find(p => p.ano === x.ano - 1);
