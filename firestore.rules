@@ -1,0 +1,31 @@
+rules_version = '2';
+
+// ============================================================================
+// REGRAS DO FIRESTORE — Portal Comercial LIFT
+// Cole no Console do Firebase → Firestore Database → aba "Regras" → Publicar.
+//
+// Só quem entrar com uma conta Google da lista abaixo lê e grava os dados
+// do portal (pasta "portalComercial"). Para dar acesso a mais alguém,
+// acrescente o e-mail na lista e publique de novo.
+//
+// ATENÇÃO: se o projeto já tiver regras de outros sistemas, NÃO apague as
+// regras antigas — apenas acrescente o bloco "match /portalComercial/..."
+// e a função "acessoPortalComercial" dentro do "match /databases/...".
+// ============================================================================
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function acessoPortalComercial() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in [
+          'EMAIL_AUTORIZADO_1@gmail.com',
+          'EMAIL_AUTORIZADO_2@gmail.com'
+        ];
+    }
+
+    match /portalComercial/{documento=**} {
+      allow read, write: if acessoPortalComercial();
+    }
+  }
+}

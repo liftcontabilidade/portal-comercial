@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal do Time Comercial - LIFT Contabilidade</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/lift-logo.png">
+    <!-- Google Fonts (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Estilos do Portal -->
+    <link rel="stylesheet" href="css/styles.css?v=20261106d">
+</head>
+<body>
+    <div class="app-container">
+        <!-- ====================================================================
+             SIDEBAR LATERAL (NAVEGAÇÃO COM ABAS CLICÁVEIS)
+             ==================================================================== -->
+        <aside class="sidebar">
+            <div>
+                <!-- Logotipo e Identidade LIFT Sem Fundo -->
+                <div class="sidebar-header">
+                    <img src="assets/lift-logo-white.png" alt="LIFT Contabilidade" class="sidebar-logo">
+                    <div class="sidebar-brand-text">
+                        <span class="brand-title">PORTAL</span>
+                        <span class="brand-subtitle">COMERCIAL</span>
+                    </div>
+                </div>
+
+                <!-- Menu de Navegação (Sem Palavra 'Campo' e Sem Emojis) -->
+                <nav class="sidebar-nav">
+                    <div class="nav-section-title">Menu Principal</div>
+                    
+                    <a href="#overview" class="nav-item active" data-view="overview" title="Visão Geral">
+                        <span class="nav-icon">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                        </span>
+                        <span>Visão Geral</span>
+                    </a>
+
+                    <a href="#clientes" class="nav-item" data-view="clientes" title="Clientes">
+                        <span class="nav-icon">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        </span>
+                        <span>Clientes</span>
+                    </a>
+
+                    <a href="#dados" class="nav-item" data-view="dados" title="Dados">
+                        <span class="nav-icon">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                        </span>
+                        <span>Dados</span>
+                    </a>
+
+                    <a href="#dashboard" class="nav-item" data-view="dashboard" title="Dashboard">
+                        <span class="nav-icon">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                        </span>
+                        <span>Dashboard</span>
+                    </a>
+
+                    <a href="#oportunidades" class="nav-item" data-view="oportunidades" title="Oportunidades">
+                        <span class="nav-icon">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+                        </span>
+                        <span>Oportunidades</span>
+                    </a>
+
+                    <a href="#receita" class="nav-item" data-view="receita" title="Receita de Fechamento">
+                        <span class="nav-icon">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                        </span>
+                        <span>Receita</span>
+                    </a>
+
+                    <a href="#churn" class="nav-item" data-view="churn" title="Análise de Churn">
+                        <span class="nav-icon">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline><polyline points="17 18 23 18 23 12"></polyline></svg>
+                        </span>
+                        <span>Análise de Churn</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Rodapé do Usuário na Sidebar -->
+            <div class="sidebar-footer">
+                <div class="user-avatar">LC</div>
+                <div class="user-info">
+                    <span class="user-name">Time Comercial</span>
+                    <span class="user-role" id="cloud-user">LIFT CONTABILIDADE</span>
+                    <span class="cloud-status" id="cloud-status"><i></i><span class="cloud-status-text">Só neste computador</span></span>
+                </div>
+                <button type="button" class="sidebar-backup-btn cloud-only" id="btn-logout" title="Sair do portal">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                </button>
+                <button type="button" class="sidebar-backup-btn" id="btn-abrir-backups" title="Cópias de segurança dos dados">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                </button>
+            </div>
+        </aside>
+
+        <!-- ====================================================================
+             ÁREA PRINCIPAL DA APLICAÇÃO (HEADER + CONTEÚDO)
+             ==================================================================== -->
+        <div class="main-wrapper">
+            <!-- ================================================================
+                 CONTEÚDO DINÂMICO (PAINÉIS DE CADA ABA)
+                 ================================================================ -->
+            <main class="content-body">
+
+                <!-- ------------------------------------------------------------
+                     PAINEL 1: PÁGINA PRINCIPAL / VISÃO GERAL (INSPIRADA NA IMAGEM 1)
+                     ------------------------------------------------------------ -->
+                <section id="panel-overview" class="view-panel active">
+                    <!-- Cabeçalho: mês em exibição (controla a página inteira) -->
+                    <div class="home-head">
+                        <div>
+                            <h2 class="home-title">Resumo de <span id="home-month-title">Novembro 2026</span></h2>
+                        </div>
+                        <div class="home-head-actions">
+                        <button type="button" class="btn-report" id="btn-relatorio-mes">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                            <span>Relatório do mês</span>
+                        </button>
+                        <div class="perf-nav">
+                            <button type="button" class="perf-nav-btn" id="btn-prev-month" title="Mês anterior" aria-label="Mês anterior">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </button>
+                            <span id="perf-month-label" class="perf-nav-label">Novembro 2026</span>
+                            <button type="button" class="perf-nav-btn" id="btn-next-month" title="Próximo mês" aria-label="Próximo mês">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </button>
+                        </div>
+                        </div>
+                    </div>
+
+                    <!-- Linha 1: 4 números principais -->
+                    <div class="home-kpis">
+                        <div class="home-kpi accent-blue">
+                            <span class="home-kpi-label">Clientes fechados</span>
+                            <span class="home-kpi-value" id="home-kpi-fechados">0</span>
+                            <span class="home-kpi-delta" id="home-kpi-fechados-delta">—</span>
+                        </div>
+                        <div class="home-kpi accent-blue">
+                            <span class="home-kpi-label">Receita nova (mensalidades)</span>
+                            <span class="home-kpi-value" id="home-kpi-receita">R$ 0</span>
+                            <span class="home-kpi-delta" id="home-kpi-receita-delta">—</span>
+                        </div>
+                        <div class="home-kpi accent-orange">
+                            <span class="home-kpi-label">Saídas (churn)</span>
+                            <span class="home-kpi-value orange" id="home-kpi-saidas">0</span>
+                            <span class="home-kpi-delta" id="home-kpi-saidas-delta">—</span>
+                        </div>
+                    </div>
+
+                    <!-- Linha 2: Meta do mês + Funil -->
+                    <div class="home-row">
+                        <div class="card-overview perf-card">
+                            <div class="perf-head">
+                                <h3 class="card-title" style="margin-bottom: 0;">Meta do Mês</h3>
+                                <div class="perf-pct" id="gauge-percent-display">0%</div>
+                            </div>
+                            <div class="perf-main">
+                                <div>
+                                    <div class="perf-big">
+                                        <span id="metric-fechados-count">0</span><span class="perf-big-meta">/ <span id="perf-meta-mes">10</span></span>
+                                    </div>
+                                    <div class="perf-big-label">clientes fechados no mês</div>
+                                </div>
+                            </div>
+                            <div class="perf-segments" id="perf-segments" aria-hidden="true"></div>
+                            <div class="perf-stats">
+                                <div class="perf-stat">
+                                    <span class="perf-stat-label">Faltam para a meta</span>
+                                    <span class="perf-stat-value orange" id="metric-restantes-count">10</span>
+                                </div>
+                                <div class="perf-stat">
+                                    <span class="perf-stat-label">Mês anterior</span>
+                                    <span class="perf-stat-value" id="perf-mes-anterior">0</span>
+                                </div>
+                                <div class="perf-stat">
+                                    <span class="perf-stat-label">Média do ano</span>
+                                    <span class="perf-stat-value" id="perf-media-ano">0</span>
+                                </div>
+                                <div class="perf-stat projection">
+                                    <span class="perf-stat-label" id="perf-proj-label">Projeção do mês</span>
+                                    <span class="perf-stat-value" id="perf-proj-value">—</span>
+                                    <span class="perf-stat-note" id="perf-proj-note"></span>
+                                </div>
+                            </div>
+                            <div class="perf-footer">
+                                <span>Meta mensal: <strong id="perf-meta-texto">10 novos clientes</strong></span>
+                                <a href="#clientes" id="perf-ver-contratos">Ver contratos do mês →</a>
+                            </div>
+                        </div>
+
+                        <div class="card-overview">
+                            <div class="card-title-row">
+                                <h3 class="card-title"><span>Funil do Mês</span></h3>
+                                <a href="#oportunidades" class="home-link" onclick="switchView('oportunidades'); return false;">Oportunidades →</a>
+                            </div>
+                            <div class="home-funnel">
+                                <div class="home-funnel-step">
+                                    <span class="home-funnel-label">Leads</span>
+                                    <span class="home-funnel-value orange" id="kpi-oportunidades-geradas">0</span>
+                                </div>
+                                <div class="home-funnel-arrow">→</div>
+                                <div class="home-funnel-step">
+                                    <span class="home-funnel-label">Clientes</span>
+                                    <span class="home-funnel-value" id="kpi-ganhos">0</span>
+                                </div>
+                                <div class="home-funnel-arrow">=</div>
+                                <div class="home-funnel-step highlight">
+                                    <span class="home-funnel-label">Conversão</span>
+                                    <span class="home-funnel-value" id="kpi-taxa-conversao">—</span>
+                                </div>
+                            </div>
+                            <div class="home-mini-list">
+                                <div class="home-mini-row"><span>Conversão no ano</span><strong id="home-conv-ano">—</strong></div>
+                                <div class="home-mini-row"><span>Aguardando assinatura</span><strong id="pipe-aguardando-assinatura">0</strong></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Linha 3: Últimos 6 meses + Segmentos -->
+                    <div class="home-row">
+                        <div class="card-overview">
+                            <div class="card-title-row">
+                                <h3 class="card-title"><span>Últimos 6 Meses</span></h3>
+                                <a href="#dashboard" class="home-link" onclick="switchView('dashboard'); return false;">Dashboard →</a>
+                            </div>
+                            <div class="home-legend">
+                                <span><i class="lg-box blue"></i>Entradas</span>
+                                <span><i class="lg-box orange"></i>Saídas</span>
+                                <span><i class="lg-line cyan"></i>Meta de clientes</span>
+                            </div>
+                            <div class="history-canvas-container home-chart">
+                                <canvas id="homeCanvas"></canvas>
+                                <div class="chart-tooltip" id="homeTooltip"></div>
+                            </div>
+                        </div>
+
+                        <div class="card-overview">
+                            <div class="card-title-row">
+                                <h3 class="card-title"><span>Segmentos do Mês</span></h3>
+                                <span class="card-subtitle" id="home-seg-sub">clientes fechados</span>
+                            </div>
+                            <div class="home-segs" id="home-segs"></div>
+                        </div>
+                    </div>
+
+                    <!-- Tabela de Contratos Fechados no Mês Selecionado -->
+                    <div class="table-card-wrapper" style="margin-top: 0;">
+                        <div class="table-header-tools">
+                            <div style="font-weight: 700; color: var(--lift-blue); font-size: 14px;" id="overview-table-title">
+                                Contratos Fechados no Mês Selecionado
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="switchView('clientes')">
+                                    Ver Todos os Clientes
+                                </button>
+                                <button class="btn-lift-action" onclick="openNovoClienteModal()">
+                                    + Adicionar Cliente
+                                </button>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table class="portal-table">
+                                <thead>
+                                    <tr>
+                                        <th>Número do Contrato</th>
+                                        <th>Nome / Razão Social</th>
+                                        <th>Segmento</th>
+                                        <th>Data da Entrada</th>
+                                        <th>Contrato Assinado</th>
+                                        <th>Mensalidade</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-clients-tbody">
+                                    <!-- Preenchido via app.js -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ------------------------------------------------------------
+                     PAINEL 2: CLIENTES
+                     (Seletor de Ano + Abas Fechados e Saídas + Botão Novo Cliente)
+                     ------------------------------------------------------------ -->
+                <section id="panel-clientes" class="view-panel">
+                    <!-- Barra de Ações do Topo: Ano e Novo Cliente -->
+                    <div class="page-top-action-bar">
+                        <div class="year-selector-group">
+                            <span class="year-selector-label">Selecione o Ano:</span>
+                            <div class="year-dropdown" id="clientes-year-dropdown">
+                                <button type="button" class="year-dropdown-btn" id="clientes-year-btn" aria-haspopup="listbox" aria-expanded="false">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                    <span id="clientes-year-label">2026</span>
+                                    <svg class="year-dropdown-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                </button>
+                                <div class="year-dropdown-menu" id="clientes-year-menu" role="listbox"></div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <select class="form-select" id="filter-mes-select" style="padding: 7px 12px; font-size: 12.5px;">
+                                    <option value="">Todos os Meses</option>
+                                    <option value="01">Janeiro</option>
+                                    <option value="02">Fevereiro</option>
+                                    <option value="03">Março</option>
+                                    <option value="04">Abril</option>
+                                    <option value="05">Maio</option>
+                                    <option value="06">Junho</option>
+                                    <option value="07">Julho</option>
+                                    <option value="08">Agosto</option>
+                                    <option value="09">Setembro</option>
+                                    <option value="10">Outubro</option>
+                                    <option value="11">Novembro</option>
+                                    <option value="12">Dezembro</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <select class="form-select" id="filter-segmento-select" style="padding: 7px 12px; font-size: 12.5px;">
+                                    <option value="">Todos os Segmentos</option>
+                                </select>
+                            </div>
+
+                            <button type="button" class="btn-saida-action" id="btn-open-nova-saida">
+                                <span>−</span>
+                                <span>Nova Saída</span>
+                            </button>
+
+                            <button class="btn-lift-action" id="btn-open-novo-cliente">
+                                <span>+</span>
+                                <span>Novo Cliente</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 2 Abas: Clientes Fechados naquele ano vs Saídas daquele ano -->
+                    <div class="sub-tabs-bar">
+                        <button class="sub-tab-btn active" data-subtab="fechados">
+                            <span>Clientes Fechados no Ano</span>
+                            <span class="badge-tab-count" id="count-tab-fechados">0</span>
+                        </button>
+                        <button class="sub-tab-btn" data-subtab="saidas">
+                            <span>Saídas do Ano (Churn)</span>
+                            <span class="badge-tab-count" id="count-tab-saidas">0</span>
+                        </button>
+                    </div>
+
+                    <!-- ABA 1: CLIENTES FECHADOS -->
+                    <div id="wrapper-tab-fechados" class="table-card-wrapper">
+                        <div class="table-header-tools">
+                            <div class="table-search-box">
+                                <input type="text" placeholder="Filtrar por contrato ou nome..." id="search-clientes-input">
+                            </div>
+                            <span style="font-size: 12px; color: var(--text-secondary);">
+                                Mostrando todos os novos contratos fechados do ano selecionado
+                            </span>
+                        </div>
+                        <div class="table-container">
+                            <table class="portal-table">
+                                <thead>
+                                    <tr>
+                                        <th>Número do Contrato</th>
+                                        <th>Nome</th>
+                                        <th>Segmento</th>
+                                        <th>Mês da Entrada</th>
+                                        <th>Data da Entrada</th>
+                                        <th>Contrato Assinado</th>
+                                        <th>Ticket Mensal</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabela-clientes-tbody">
+                                    <!-- Preenchido via app.js -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- ABA 2: SAÍDAS DO ANO -->
+                    <div id="wrapper-tab-saidas" class="table-card-wrapper" style="display: none;">
+                        <div class="table-header-tools">
+                            <div class="table-search-box">
+                                <input type="text" placeholder="Filtrar saídas..." id="search-saidas-input">
+                            </div>
+                            <span style="font-size: 12px; color: var(--text-secondary);">
+                                Histórico de cancelamentos e motivos de saída
+                            </span>
+                        </div>
+                        <div class="table-container">
+                            <table class="portal-table">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Data do Aviso</th>
+                                        <th>Data da Saída</th>
+                                        <th>Motivo da Saída</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabela-saidas-tbody">
+                                    <!-- Preenchido via app.js -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ------------------------------------------------------------
+                     PAINEL 3: DADOS
+                     (Competências Jan-Dez, Entradas, Saídas, Base, Churn, LTV)
+                     ------------------------------------------------------------ -->
+                <section id="panel-dados" class="view-panel">
+                    <div class="page-top-action-bar">
+                        <div class="year-selector-group">
+                            <span class="year-selector-label">Selecione o Ano para visualização dos Dados:</span>
+                            <div class="year-dropdown" id="dados-year-dropdown">
+                                <button type="button" class="year-dropdown-btn" id="dados-year-btn" aria-haspopup="listbox" aria-expanded="false">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                    <span id="dados-year-label">2026</span>
+                                    <svg class="year-dropdown-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                </button>
+                                <div class="year-dropdown-menu" id="dados-year-menu" role="listbox"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <span style="font-size: 12px; color: var(--text-secondary); margin-right: 12px;">
+                                Os dados são atualizados automaticamente a cada entrada ou saída de clientes.
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="table-card-wrapper">
+                        <div class="table-container">
+                            <table class="portal-table table-dados-planilha">
+                                <thead>
+                                    <tr>
+                                        <th>Competência (Jan a Dez)</th>
+                                        <th>Entradas</th>
+                                        <th>Saídas</th>
+                                        <th>Total de Clientes</th>
+                                        <th>Churn</th>
+                                        <th># LTV/meses</th>
+                                        <th># LTV méd</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabela-dados-tbody">
+                                    <!-- Gerado dinamicamente com base nas movimentações de clientes -->
+                                </tbody>
+                                <tfoot id="tabela-dados-tfoot">
+                                    <!-- Linha de Totais Anuais -->
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ------------------------------------------------------------
+                     PAINEL 4: DASHBOARD (HISTÓRICO 24 MESES EM GRÁFICO)
+                     ------------------------------------------------------------ -->
+                <section id="panel-dashboard" class="view-panel">
+                    <!-- Meta anual de novos clientes -->
+                    <div class="dash-meta-card">
+                        <div class="dash-meta-header">
+                            <span class="dash-meta-title" id="dash-meta-title">META DE NOVOS CLIENTES (2026)</span>
+                            <span class="dash-meta-value" id="dash-meta-value">0 / 120</span>
+                        </div>
+                        <div class="dash-meta-track">
+                            <div class="dash-meta-fill" id="dash-meta-fill" style="width:0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="dash-main-grid">
+                        <!-- Gráfico Histórico Mensal -->
+                        <div class="dash-chart-card">
+                            <span class="dash-section-title">HISTÓRICO MENSAL</span>
+                            <div class="dash-legend" id="dash-legend">
+                                <span class="dash-legend-item"><i class="lg-line cyan"></i>Meta de Cliente</span>
+                                <span class="dash-legend-item"><i class="lg-line dashed"></i>Meta de Churn</span>
+                                <span class="dash-legend-item"><i class="lg-box blue"></i>Entrada de Clientes</span>
+                                <span class="dash-legend-item"><i class="lg-box orange"></i>Saída de Clientes</span>
+                            </div>
+                            <div class="history-canvas-container">
+                                <canvas id="historyCanvas"></canvas>
+                                <div class="chart-tooltip" id="historyTooltip"></div>
+                            </div>
+                        </div>
+
+                        <!-- Cards laterais -->
+                        <div class="dash-side-grid">
+                            <div class="dash-kpi-card accent-blue">
+                                <div class="dash-kpi-head">
+                                    <div class="dash-kpi-icon blue">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg>
+                                    </div>
+                                    <span class="dash-kpi-title blue">TOTAL ENTRADAS</span>
+                                </div>
+                                <p class="dash-kpi-desc">Novos clientes captados por ano</p>
+                                <div class="dash-year-list" id="dash-entradas-anos"></div>
+                            </div>
+
+                            <div class="dash-kpi-card accent-orange">
+                                <div class="dash-kpi-head">
+                                    <div class="dash-kpi-icon orange">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="22" y1="11" x2="16" y2="11"></line></svg>
+                                    </div>
+                                    <span class="dash-kpi-title orange">TOTAL SAÍDAS</span>
+                                </div>
+                                <p class="dash-kpi-desc">Clientes perdidos por churn ao ano</p>
+                                <div class="dash-year-list" id="dash-saidas-anos"></div>
+                            </div>
+
+                            <div class="dash-kpi-card accent-blue">
+                                <div class="dash-kpi-head">
+                                    <div class="dash-kpi-icon blue">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                                    </div>
+                                    <span class="dash-kpi-title blue">RECORDE ENTRADAS</span>
+                                </div>
+                                <p class="dash-kpi-desc">Maior número de novos clientes em um único mês</p>
+                                <div class="dash-kpi-big" id="dash-recorde-valor">0</div>
+                                <div class="dash-kpi-month" id="dash-recorde-mes">-</div>
+                            </div>
+
+                            <div class="dash-kpi-card accent-orange">
+                                <div class="dash-kpi-head">
+                                    <div class="dash-kpi-icon orange">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline><polyline points="17 18 23 18 23 12"></polyline></svg>
+                                    </div>
+                                    <span class="dash-kpi-title orange">PIOR MÊS CHURN</span>
+                                </div>
+                                <p class="dash-kpi-desc">Maior número de saídas registradas em um único mês</p>
+                                <div class="dash-kpi-big" id="dash-pior-valor">0</div>
+                                <div class="dash-kpi-month" id="dash-pior-mes">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ------------------------------------------------------------
+                     PAINEL 5: OPORTUNIDADES (LEADS E CONVERSÃO)
+                     (Seletor de Ano + Tabelas Leads e Clientes Alcançados)
+                     ------------------------------------------------------------ -->
+                <section id="panel-oportunidades" class="view-panel">
+                    <!-- Barra superior: ano -->
+                    <div class="page-top-action-bar">
+                        <div class="year-selector-group">
+                            <span class="year-selector-label">Selecione o Ano das Oportunidades:</span>
+                            <div class="year-dropdown" id="oportunidades-year-dropdown">
+                                <button type="button" class="year-dropdown-btn" id="oportunidades-year-btn" aria-haspopup="listbox" aria-expanded="false">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                    <span id="oportunidades-year-label">2026</span>
+                                    <svg class="year-dropdown-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                </button>
+                                <div class="year-dropdown-menu" id="oportunidades-year-menu" role="listbox"></div>
+                            </div>
+                        </div>
+                        <span class="opp-hint">Digite a quantidade de leads de cada mês. Os fechamentos vêm automaticamente da aba Clientes.</span>
+                    </div>
+
+                    <!-- Cards de resumo -->
+                    <div class="opp-kpi-grid">
+                        <div class="opp-kpi-card accent-orange">
+                            <div class="dash-kpi-icon orange">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+                            </div>
+                            <div>
+                                <span class="opp-kpi-label">Total de Leads</span>
+                                <span class="opp-kpi-value orange" id="kpi-total-leads">0</span>
+                            </div>
+                        </div>
+                        <div class="opp-kpi-card accent-blue">
+                            <div class="dash-kpi-icon blue">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg>
+                            </div>
+                            <div>
+                                <span class="opp-kpi-label">Clientes Alcançados</span>
+                                <span class="opp-kpi-value" id="kpi-total-fechamentos">0</span>
+                            </div>
+                        </div>
+                        <div class="opp-kpi-card accent-blue">
+                            <div class="dash-kpi-icon blue">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                            </div>
+                            <div>
+                                <span class="opp-kpi-label">Taxa de Conversão</span>
+                                <span class="opp-kpi-value" id="kpi-conversao-geral">0,0%</span>
+                            </div>
+                        </div>
+                        <div class="opp-kpi-card accent-orange">
+                            <div class="dash-kpi-icon orange">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                            </div>
+                            <div>
+                                <span class="opp-kpi-label">Melhor Mês de Conversão</span>
+                                <span class="opp-kpi-value orange" id="kpi-melhor-mes">—</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabela única: Leads x Clientes Alcançados x Conversão -->
+                    <div class="opp-card">
+                        <div class="opp-card-head">
+                            <span class="dash-section-title" id="opp-card-title">LEADS E CLIENTES ALCANÇADOS — 2026</span>
+                        </div>
+                        <div class="opp-table">
+                            <div class="opp-row opp-row-head">
+                                <span>Mês</span>
+                                <span class="center">Leads</span>
+                                <span class="center">Clientes Alcançados</span>
+                                <span>Conversão</span>
+                            </div>
+                            <div id="opp-rows"></div>
+                            <div class="opp-row opp-row-total">
+                                <span>Total</span>
+                                <span class="center" id="total-leads-sum">0</span>
+                                <span class="center" id="total-fechamentos-sum">0</span>
+                                <span id="total-conversao-sum">0,0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ------------------------------------------------------------
+                     PAINEL 6: RECEITA DE FECHAMENTO (valores das vendas fechadas)
+                     ------------------------------------------------------------ -->
+                <section id="panel-receita" class="view-panel">
+                    <div class="page-top-action-bar">
+                        <div class="year-selector-group">
+                            <span class="year-selector-label">Selecione o Ano:</span>
+                            <div class="year-dropdown" id="receita-year-dropdown">
+                                <button type="button" class="year-dropdown-btn" id="receita-year-btn" aria-haspopup="listbox" aria-expanded="false">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                    <span id="receita-year-label">2026</span>
+                                    <svg class="year-dropdown-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                </button>
+                                <div class="year-dropdown-menu" id="receita-year-menu" role="listbox"></div>
+                            </div>
+                        </div>
+                        <span class="opp-hint">Valores das mensalidades dos contratos fechados, somados pelo mês de entrada.</span>
+                    </div>
+
+                    <div class="opp-kpi-grid">
+                        <div class="opp-kpi-card accent-orange">
+                            <div class="dash-kpi-icon orange">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                            </div>
+                            <div>
+                                <span class="opp-kpi-label">Receita fechada no ano</span>
+                                <span class="opp-kpi-value orange" id="rec-kpi-total">R$ 0</span>
+                            </div>
+                        </div>
+                        <div class="opp-kpi-card accent-blue">
+                            <div class="dash-kpi-icon blue">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><polyline points="9 15 11 17 15 13"></polyline></svg>
+                            </div>
+                            <div>
+                                <span class="opp-kpi-label">Contratos fechados</span>
+                                <span class="opp-kpi-value" id="rec-kpi-contratos">0</span>
+                            </div>
+                        </div>
+                        <div class="opp-kpi-card accent-blue">
+                            <div class="dash-kpi-icon blue">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                            </div>
+                            <div>
+                                <span class="opp-kpi-label">Ticket médio</span>
+                                <span class="opp-kpi-value" id="rec-kpi-ticket">R$ 0</span>
+                            </div>
+                        </div>
+                        <div class="opp-kpi-card accent-orange">
+                            <div class="dash-kpi-icon orange">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                            </div>
+                            <div>
+                                <span class="opp-kpi-label">Melhor mês</span>
+                                <span class="opp-kpi-value orange" id="rec-kpi-melhor">—</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rec-grid">
+                        <div class="opp-card">
+                            <div class="opp-card-head">
+                                <span class="dash-section-title" id="rec-card-title">RECEITA POR MÊS — 2026</span>
+                            </div>
+                            <div class="opp-table">
+                                <div class="opp-row rec-row opp-row-head">
+                                    <span>Mês</span>
+                                    <span class="center">Contratos</span>
+                                    <span class="right">Receita nova</span>
+                                    <span class="right">Ticket médio</span>
+                                    <span class="right">Acumulado no ano</span>
+                                </div>
+                                <div id="rec-rows"></div>
+                                <div class="opp-row rec-row opp-row-total">
+                                    <span>Total</span>
+                                    <span class="center" id="rec-total-contratos">0</span>
+                                    <span class="right" id="rec-total-valor">R$ 0</span>
+                                    <span class="right" id="rec-total-ticket">—</span>
+                                    <span class="right"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="opp-card">
+                            <div class="opp-card-head">
+                                <span class="dash-section-title">RECEITA FECHADA POR ANO</span>
+                            </div>
+                            <div class="rec-years" id="rec-years"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ------------------------------------------------------------
+                     PAINEL 7: ANÁLISE DE CHURN
+                     ------------------------------------------------------------ -->
+                <section id="panel-churn" class="view-panel">
+                    <div class="page-top-action-bar">
+                        <div class="year-selector-group">
+                            <span class="year-selector-label">Selecione o Ano:</span>
+                            <div class="year-dropdown" id="churn-year-dropdown">
+                                <button type="button" class="year-dropdown-btn" id="churn-year-btn" aria-haspopup="listbox" aria-expanded="false">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                    <span id="churn-year-label">2026</span>
+                                    <svg class="year-dropdown-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                </button>
+                                <div class="year-dropdown-menu" id="churn-year-menu" role="listbox"></div>
+                            </div>
+                        </div>
+                        <span class="opp-hint">Calculado a partir das saídas registradas na aba Clientes.</span>
+                    </div>
+
+                    <div class="opp-kpi-grid">
+                        <div class="opp-kpi-card accent-orange">
+                            <div class="dash-kpi-icon orange">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="22" y1="11" x2="16" y2="11"></line></svg>
+                            </div>
+                            <div>
+                                <span class="opp-kpi-label">Saídas no ano</span>
+                                <span class="opp-kpi-value orange" id="ch-kpi-saidas">0</span>
+                            </div>
+                        </div>
+                        <div class="opp-kpi-card accent-blue">
+                            <div class="dash-kpi-icon blue">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline><polyline points="17 18 23 18 23 12"></polyline></svg>
+                            </div>
+                            <div>
+                                <span class="opp-kpi-label">Churn médio por mês</span>
+                                <span class="opp-kpi-value" id="ch-kpi-churn">—</span>
+                            </div>
+                        </div>
+                        <div class="opp-kpi-card accent-blue">
+                            <div class="dash-kpi-icon blue">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            </div>
+                            <div>
+                                <span class="opp-kpi-label">Tempo médio de casa</span>
+                                <span class="opp-kpi-value" id="ch-kpi-tempo">—</span>
+                            </div>
+                        </div>
+                        <div class="opp-kpi-card accent-orange">
+                            <div class="dash-kpi-icon orange">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                            </div>
+                            <div>
+                                <span class="opp-kpi-label">Receita perdida (mensal)</span>
+                                <span class="opp-kpi-value orange" id="ch-kpi-receita">—</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rec-grid">
+                        <div class="opp-card">
+                            <div class="opp-card-head">
+                                <span class="dash-section-title" id="ch-motivos-title">MOTIVOS DE SAÍDA — 2026</span>
+                            </div>
+                            <div class="ch-motivos" id="ch-motivos"></div>
+                        </div>
+
+                        <div class="ch-side">
+                            <div class="opp-card">
+                                <div class="opp-card-head">
+                                    <span class="dash-section-title">TEMPO DE CASA ATÉ SAIR</span>
+                                </div>
+                                <div class="ch-tempo" id="ch-tempo"></div>
+                            </div>
+                            <div class="opp-card">
+                                <div class="opp-card-head">
+                                    <span class="dash-section-title">RECEITA PERDIDA</span>
+                                </div>
+                                <div class="ch-receita" id="ch-receita"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+
+
+            </main>
+        </div>
+    </div>
+
+    <!-- ====================================================================
+         MODAL: ADICIONAR NOVO CLIENTE
+         ==================================================================== -->
+    <div class="modal-backdrop" id="modal-novo-cliente">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <span class="modal-title">Adicionar Novo Cliente</span>
+                <button class="modal-close-btn">&times;</button>
+            </div>
+            <form id="form-novo-cliente">
+                <div class="modal-body">
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Número do Contrato</label>
+                            <input type="text" class="form-input" id="input-cliente-contrato" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Segmento</label>
+                            <input type="text" class="form-input" id="input-cliente-segmento" list="lista-segmentos" placeholder="Digite ou escolha um segmento" autocomplete="off" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Nome / Razão Social</label>
+                        <input type="text" class="form-input" id="input-cliente-nome" placeholder="Ex: TechCorp Inovações Ltda" required>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Data da Entrada</label>
+                            <input type="date" class="form-input" id="input-cliente-data" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Contrato Assinado?</label>
+                            <select class="form-select" id="input-cliente-assinado">
+                                <option value="Sim">Sim</option>
+                                <option value="Não">Não (Pendente)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Valor da Mensalidade (R$)</label>
+                        <input type="text" class="form-input" id="input-cliente-ticket" value="2500" inputmode="decimal" placeholder="Ex: 697 ou 697,50" autocomplete="off">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary btn-modal-cancel">Cancelar</button>
+                    <button type="submit" class="btn-lift-action">Salvar Cliente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ====================================================================
+         MODAL: EDITAR CLIENTE
+         ==================================================================== -->
+    <div class="modal-backdrop" id="modal-editar-cliente">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <span class="modal-title">Editar Cliente</span>
+                <button class="modal-close-btn">&times;</button>
+            </div>
+            <form id="form-editar-cliente">
+                <input type="hidden" id="edit-cliente-id">
+                <div class="modal-body">
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Número do Contrato</label>
+                            <input type="text" class="form-input" id="edit-cliente-contrato" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Segmento</label>
+                            <input type="text" class="form-input" id="edit-cliente-segmento" list="lista-segmentos" placeholder="Digite ou escolha um segmento" autocomplete="off" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Nome / Razão Social</label>
+                        <input type="text" class="form-input" id="edit-cliente-nome" required>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Data da Entrada</label>
+                            <input type="date" class="form-input" id="edit-cliente-data" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Contrato Assinado?</label>
+                            <select class="form-select" id="edit-cliente-assinado">
+                                <option value="Sim">Sim</option>
+                                <option value="Não">Não (Pendente)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Valor da Mensalidade (R$)</label>
+                        <input type="text" class="form-input" id="edit-cliente-ticket" inputmode="decimal" placeholder="Ex: 697 ou 697,50" autocomplete="off">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary btn-modal-cancel">Cancelar</button>
+                    <button type="submit" class="btn-lift-action">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ====================================================================
+         MODAL: REGISTRAR SAÍDA DE CLIENTE (CHURN)
+         ==================================================================== -->
+    <div class="modal-backdrop" id="modal-registrar-saida">
+        <div class="modal-dialog">
+            <div class="modal-header" style="background-color: #991B1B;">
+                <span class="modal-title">Registrar Saída (Churn)</span>
+                <button class="modal-close-btn">&times;</button>
+            </div>
+            <form id="form-registrar-saida">
+                <input type="hidden" id="saida-cliente-id">
+                <div class="modal-body">
+                    <p style="font-size: 13px; color: var(--text-secondary);">
+                        Cliente selecionado: <strong id="saida-cliente-info" style="color: var(--lift-blue);"></strong>
+                    </p>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Data do Aviso</label>
+                            <input type="date" class="form-input" id="input-saida-aviso">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Data da Saída</label>
+                            <input type="date" class="form-input" id="input-saida-data" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Motivo Principal da Saída</label>
+                        <select class="form-select" id="input-saida-motivo">
+                            <option value="Redução de custos">Redução de custos</option>
+                            <option value="Encerramento de atividades">Encerramento de atividades</option>
+                            <option value="Preço da mensalidade">Preço da mensalidade</option>
+                            <option value="Migração para contador interno">Migração para contador interno</option>
+                            <option value="Troca de fornecedor">Troca de fornecedor</option>
+                            <option value="Inadimplência">Inadimplência</option>
+                            <option value="Dificuldades financeiras">Dificuldades financeiras</option>
+                            <option value="Outro motivo">Outro motivo</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary btn-modal-cancel">Cancelar</button>
+                    <button type="submit" class="btn-lift-action" style="background-color: #DC2626;">Confirmar Saída</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ====================================================================
+         MODAL: NOVA SAÍDA (qualquer cliente, cadastrado ou não no portal)
+         ==================================================================== -->
+    <div class="modal-backdrop" id="modal-nova-saida">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <span class="modal-title">Registrar Nova Saída</span>
+                <button class="modal-close-btn">&times;</button>
+            </div>
+            <form id="form-nova-saida" autocomplete="off">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Cliente</label>
+                        <input type="text" class="form-input" id="ns-nome" placeholder="Nome do cliente" required>
+                    </div>
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Data do Aviso (opcional)</label>
+                            <input type="date" class="form-input" id="ns-aviso">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Data da Saída</label>
+                            <input type="date" class="form-input" id="ns-saida" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Motivo da Saída</label>
+                        <input type="text" class="form-input" id="ns-motivo" list="lista-motivos-saida" placeholder="Digite ou escolha um motivo" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary btn-modal-cancel">Cancelar</button>
+                    <button type="submit" class="btn-lift-action">Salvar Saída</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <datalist id="lista-motivos-saida"></datalist>
+
+    <!-- ====================================================================
+         MODAL: CÓPIAS DE SEGURANÇA (BACKUPS AUTOMÁTICOS)
+         ==================================================================== -->
+    <div class="modal-backdrop" id="modal-backups">
+        <div class="modal-dialog" style="max-width: 620px;">
+            <div class="modal-header">
+                <span class="modal-title">Cópias de Segurança</span>
+                <button class="modal-close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="bk-arquivo">
+                    <div>
+                        <strong>Arquivo de dados</strong>
+                        <span>Baixe todos os dados num arquivo para guardar ou levar para o site publicado.</span>
+                    </div>
+                    <div class="bk-actions">
+                        <button type="button" class="btn-secondary" id="btn-exportar-dados">Baixar arquivo</button>
+                        <button type="button" class="btn-lift-action" id="btn-importar-dados">Importar arquivo</button>
+                        <input type="file" id="input-importar-dados" accept=".json,application/json" hidden>
+                    </div>
+                </div>
+                <p class="rel-desc">O portal também guarda cópias automáticas enquanto você usa (até 30). Se algo sumir, escolha uma cópia e clique em Restaurar.</p>
+                <div class="bk-lista" id="backup-lista"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====================================================================
+         MODAL: RELATÓRIO DO MÊS
+         ==================================================================== -->
+    <div class="modal-backdrop" id="modal-relatorio">
+        <div class="modal-dialog" style="max-width: 520px;">
+            <div class="modal-header">
+                <span class="modal-title" id="relatorio-titulo">Relatório do Mês</span>
+                <button class="modal-close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="rel-desc">Resumo do mês com fechamentos, meta, receita, saídas, funil, segmentos e a lista de contratos e saídas.</p>
+                <div class="rel-options">
+                    <button type="button" class="rel-option" id="btn-relatorio-pdf">
+                        <span class="rel-option-icon pdf">PDF</span>
+                        <span class="rel-option-text"><strong>Baixar em PDF</strong><small>Abre a janela de impressão: escolha "Salvar como PDF".</small></span>
+                    </button>
+                    <button type="button" class="rel-option" id="btn-relatorio-excel">
+                        <span class="rel-option-icon xls">XLS</span>
+                        <span class="rel-option-text"><strong>Baixar em Excel</strong><small>Planilha com abas: Resumo, Contratos, Saídas e Segmentos.</small></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====================================================================
+         MODAL: BACKUP E SINCRONIZAÇÃO COM GOOGLE SHEETS
+         ==================================================================== -->
+    <div class="modal-backdrop" id="modal-google-sheets">
+        <div class="modal-dialog" style="max-width: 620px;">
+            <div class="modal-header" style="background-color: var(--lift-blue);">
+                <span class="modal-title">Backup & Sincronização Google Sheets</span>
+                <button class="modal-close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="background-color: #F8FAFC; border: 1px solid var(--border-color); padding: 14px; border-radius: var(--radius-sm);">
+                    <div style="font-weight: 700; color: var(--lift-blue); font-size: 13.5px; margin-bottom: 4px;">
+                        Sua Planilha Oficial do Google Sheets:
+                    </div>
+                    <a href="https://docs.google.com/spreadsheets/d/1helTyTRY_Xb_nX8kH6quVA1FbLzJ7mL4AlyxwYgwIWY/edit?gid=0#gid=0" target="_blank" style="color: var(--lift-orange); font-size: 12.5px; word-break: break-all; font-weight: 600; text-decoration: underline;">
+                        Abrir Planilha de Backup da LIFT ↗
+                    </a>
+                </div>
+
+                <div class="form-group" style="margin-top: 10px;">
+                    <label class="form-label" style="display: flex; justify-content: space-between;">
+                        <span>URL do Webhook do Google Apps Script (Sincronização Automática)</span>
+                        <a href="COMO_SINCRONIZAR_GOOGLE_SHEETS.md" target="_blank" style="color: var(--lift-orange); text-decoration: none; font-size: 11.5px;">
+                            Ver Guia Passo a Passo ↗
+                        </a>
+                    </label>
+                    <input type="url" class="form-input" id="input-sheets-webhook-url" value="https://script.google.com/macros/s/AKfycbw5F-u7zIIa3m2MpAqjTAcW2WJJhCgmXKcBQs1aYTXo0L42JuXPUwYxFAMK5hE7L2Fk1Q/exec" placeholder="Ex: https://script.google.com/macros/s/AKfycb.../exec">
+                    <small style="color: var(--text-secondary); font-size: 11.5px;">
+                        Ao configurar o Webhook, toda adição, saída ou alteração no portal será gravada instantaneamente nas abas da sua planilha.
+                    </small>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 5px;">
+                    <button type="button" class="btn-lift-action" id="btn-sync-webhook-now" style="background-color: var(--lift-orange); flex: 1;">
+                        Sincronizar Agora com a Planilha
+                    </button>
+                </div>
+
+                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 10px 0;">
+
+                <div>
+                    <div style="font-weight: 700; color: var(--lift-blue); font-size: 13px; margin-bottom: 8px;">
+                        Copiar Dados Formatados (Basta Colar na Planilha com Ctrl+V):
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <button type="button" class="btn-secondary" style="font-size: 12px; padding: 8px;" onclick="copyTableDataToClipboard('clientes')">
+                            Copiar Clientes (Aba 1)
+                        </button>
+                        <button type="button" class="btn-secondary" style="font-size: 12px; padding: 8px;" onclick="copyTableDataToClipboard('saidas')">
+                            Copiar Saídas (Aba 2)
+                        </button>
+                        <button type="button" class="btn-secondary" style="font-size: 12px; padding: 8px;" onclick="copyTableDataToClipboard('dados')">
+                            Copiar Dados Mensais (Aba 3)
+                        </button>
+                        <button type="button" class="btn-secondary" style="font-size: 12px; padding: 8px;" onclick="copyTableDataToClipboard('oportunidades')">
+                            Copiar Leads & Conversão (Aba 4)
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary btn-modal-cancel">Fechar</button>
+                <a href="https://docs.google.com/spreadsheets/d/1helTyTRY_Xb_nX8kH6quVA1FbLzJ7mL4AlyxwYgwIWY/edit?gid=0#gid=0" target="_blank" class="btn-lift-action" style="background-color: var(--lift-blue); text-decoration: none;">
+                    Abrir Planilha no Google Docs ↗
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====================================================================
+         TELA DE LOGIN (Firebase / Google)
+         ==================================================================== -->
+    <div class="login-overlay active" id="login-overlay">
+        <div class="login-card">
+            <img src="assets/lift-logo.png" alt="LIFT" class="login-logo">
+            <h1>Portal Comercial</h1>
+            <p>Entre com a sua conta Google autorizada para acessar os dados do time.</p>
+            <button type="button" class="login-google-btn" id="btn-login-google">
+                <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+                <span>Entrar com Google</span>
+            </button>
+            <div class="login-msg" id="login-msg"></div>
+        </div>
+    </div>
+    <script>
+        // Aberto como arquivo no computador (abrir-portal.bat): funciona como antes, sem login.
+        // O banco de dados (Firebase) só funciona pelo site publicado (GitHub Pages).
+        if (location.protocol === 'file:') {
+            var ovLocal = document.getElementById('login-overlay');
+            if (ovLocal) ovLocal.remove();
+        }
+        // Se o Firebase não carregar (sem internet), avisa e permite usar a cópia deste computador
+        setTimeout(function () {
+            var ov = document.getElementById('login-overlay');
+            if (ov && ov.classList.contains('active') && !window.LiftCloud) {
+                var msg = document.getElementById('login-msg');
+                msg.className = 'login-msg erro';
+                msg.innerHTML = 'Não foi possível conectar ao banco (sem internet?). <a href="#" id="login-offline">Usar a cópia salva neste computador</a>';
+                document.getElementById('login-offline').onclick = function (e) { e.preventDefault(); ov.remove(); };
+            }
+        }, 8000);
+    </script>
+
+    <!-- Scripts da Aplicação -->
+    <datalist id="lista-segmentos"></datalist>
+    <script src="js/data.js?v=20261106d"></script>
+    <script src="js/charts.js?v=20261106d"></script>
+    <script src="js/firebase-config.js?v=20261106d"></script>
+    <script src="js/app.js?v=20261106d"></script>
+    <script type="module" src="js/firebase-sync.js?v=20261106d"></script>
+</body>
+</html>
