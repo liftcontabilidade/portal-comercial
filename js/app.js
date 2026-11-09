@@ -239,6 +239,32 @@ function exportarDados() {
     showToast(`Arquivo baixado: ${dados.clientes.length} clientes e ${dados.saidas.length} saídas.`);
 }
 
+// Importação que só ACRESCENTA clientes (não apaga nem altera os existentes).
+// Ignora quem já está no portal (mesmo id, mesmo CNPJ/CPF ou mesmo nome).
+function importarAdicionando(dados) {
+    const norm = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+    const ids = new Set(AppState.clientes.map(c => String(c.id)));
+    const docs = new Set(AppState.clientes.map(c => String(c.inscricao || '').replace(/\D/g, '')).filter(Boolean));
+    const nomes = new Set(AppState.clientes.map(c => norm(c.nome)));
+    const novos = (dados.clientes || []).filter(c => {
+        const doc = String(c.inscricao || '').replace(/\D/g, '');
+        return !ids.has(String(c.id)) && !(doc && docs.has(doc)) && !nomes.has(norm(c.nome));
+    });
+    const repetidos = (dados.clientes || []).length - novos.length;
+    if (!novos.length) {
+        alert(`Nenhum cliente novo para adicionar: os ${dados.clientes.length} do arquivo já estão no portal.`);
+        return;
+    }
+    const titulo = dados.descricao || 'clientes';
+    if (!confirm(`Adicionar ${novos.length} clientes ao portal (${titulo})?${repetidos ? `\n\n${repetidos} já estavam cadastrados e serão ignorados.` : ''}\n\nNada do que já existe será apagado ou alterado.`)) return;
+    criarBackupAutomatico(true, 'Antes de adicionar clientes');
+    AppState.clientes = AppState.clientes.concat(novos);
+    saveStorage();
+    renderAll();
+    document.getElementById('modal-backups').classList.remove('active');
+    showToast(`${novos.length} clientes adicionados ao portal!`);
+}
+
 function importarDados(arquivo) {
     const leitor = new FileReader();
     leitor.onload = () => {
@@ -248,6 +274,7 @@ function importarDados(arquivo) {
             alert('Arquivo inválido: não é um arquivo de dados do portal.');
             return;
         }
+        if (dados.modo === 'adicionar') { importarAdicionando(dados); return; }
         const quando = dados.geradoEm ? new Date(dados.geradoEm).toLocaleString('pt-BR') : 'data desconhecida';
         if (!confirm(`Importar este arquivo (gerado em ${quando})?\n\n• ${dados.clientes.length} clientes\n• ${dados.saidas.length} saídas\n\nOs dados atuais do portal serão substituídos (uma cópia deles fica guardada antes).`)) return;
         criarBackupAutomatico(true, 'Antes de importar arquivo');
@@ -908,16 +935,16 @@ function renderOverviewMonthClients(mesAtual) {
 
     container.innerHTML = clientesDoMes.map(c => `
         <tr>
-            <td><strong>${c.contrato}</strong></td>
+            <td>${c.contrato ? `<strong>${c.contrato}</strong>` : '<span style="color: var(--text-muted);">—</span>'}</td>
             <td><strong>${c.nome}</strong></td>
-            <td><span class="tag-segmento">${c.segmento}</span></td>
+            <td>${c.segmento ? `<span class="tag-segmento">${c.segmento}</span>` : '<span style="color: var(--text-muted);">—</span>'}</td>
             <td>${formatDateBR(c.dataEntrada)}</td>
             <td>
-                <span class="status-pill ${c.assinado === 'Sim' ? 'assinado-sim' : 'assinado-nao'}">
+                ${c.assinado ? `<span class="status-pill ${c.assinado === 'Sim' ? 'assinado-sim' : 'assinado-nao'}">
                     ${c.assinado === 'Sim' ? '✓ Assinado' : '⏳ Pendente'}
-                </span>
+                </span>` : '<span style="color: var(--text-muted);">—</span>'}
             </td>
-            <td><strong>${formatMoney(c.valorMensal ?? 0)}</strong></td>
+            <td>${temValor(c.valorMensal) ? `<strong>${formatMoney(c.valorMensal)}</strong>` : '<span style="color: var(--text-muted);">—</span>'}</td>
         </tr>
     `).join('');
 }
@@ -1165,20 +1192,20 @@ function renderTabelaClientesFechados(lista) {
         mesAnterior = mesAtual;
         return cabecalho + `
         <tr>
-            <td><strong>${c.contrato}</strong></td>
+            <td>${c.contrato ? `<strong>${c.contrato}</strong>` : '<span style="color: var(--text-muted);">—</span>'}</td>
             <td>
                 <div style="font-weight: 600; color: var(--lift-blue);">${c.nome}</div>
                 ${c.status === 'Cancelado' ? `<span class="tag-saiu">Saiu${c.mesSaida ? ' em ' + c.mesSaida : ''}</span>` : ''}
             </td>
-            <td><span class="tag-segmento">${c.segmento}</span></td>
+            <td>${c.segmento ? `<span class="tag-segmento">${c.segmento}</span>` : '<span style="color: var(--text-muted);">—</span>'}</td>
             <td><strong>${c.mesEntrada}</strong></td>
             <td>${formatDateBR(c.dataEntrada)}</td>
             <td>
-                <span class="status-pill ${c.assinado === 'Sim' ? 'assinado-sim' : 'assinado-nao'}">
+                ${c.assinado ? `<span class="status-pill ${c.assinado === 'Sim' ? 'assinado-sim' : 'assinado-nao'}">
                     ${c.assinado === 'Sim' ? 'Sim' : 'Pendente'}
-                </span>
+                </span>` : '<span style="color: var(--text-muted);">—</span>'}
             </td>
-            <td>${formatMoney(c.valorMensal ?? 0)}</td>
+            <td>${temValor(c.valorMensal) ? formatMoney(c.valorMensal) : '<span style="color: var(--text-muted);">—</span>'}</td>
             <td>
                 <div class="table-actions">
                     <button class="btn-action-icon" title="Editar Cliente" onclick="openEditClienteModal('${c.id}')">
@@ -1302,15 +1329,33 @@ function renderTabelaSaidas(lista) {
    3. 2° CAMPO: DADOS (TABELA IDÊNTICA À PLANILHA DA IMAGEM 2)
    Cálculo Reativo Automático de Competências, Entradas, Saídas, Base, Churn, LTV
    ========================================================================== */
+// Total de clientes no fim do ano anterior ao informado.
+// 2025 fechou com INITIAL_BASE_CLIENTES_2025_END (194); anos anteriores são
+// calculados para trás com o histórico oficial; anos seguintes, para frente.
+function baseInicialDoAno(year) {
+    const fim2025 = INITIAL_BASE_CLIENTES_2025_END;
+    if (year === ANO_INICIO_CADASTRO_PORTAL) return fim2025;
+    if (year < ANO_INICIO_CADASTRO_PORTAL) {
+        let base = fim2025;
+        Object.entries(HISTORICO_MENSAL_BASE).forEach(([mesAno, [e, s]]) => {
+            const a = parseInt(mesAno.split('/')[1], 10);
+            if (a >= year && a < ANO_INICIO_CADASTRO_PORTAL) base -= (e - s);
+        });
+        return base;
+    }
+    const anterior = calculateMonthlyDataForYear(year - 1, true).rows;
+    return anterior.length ? anterior[anterior.length - 1].totalClientes : fim2025;
+}
+
 function calculateMonthlyDataForYear(year, _semAnoAnterior = false) {
     const meses = [
         '01', '02', '03', '04', '05', '06', 
         '07', '08', '09', '10', '11', '12'
     ];
 
-    // Base inicial anterior ao ano selecionado
-    // Se for 2026, a base fecha 2025 em 194
-    let currentBase = year === 2026 ? INITIAL_BASE_CLIENTES_2025_END : 160;
+    // Base inicial (total de clientes no fim do ano anterior)
+    let currentBase = baseInicialDoAno(year);
+    const usaHistorico = year < ANO_INICIO_CADASTRO_PORTAL;
 
     const rows = [];
     let somaEntradas = 0;
@@ -1320,10 +1365,15 @@ function calculateMonthlyDataForYear(year, _semAnoAnterior = false) {
         const competencia = `${mStr}/${year}`;
         
         // Contagem dinâmica de entradas naquele mês/ano (todos os contratos fechados na competência)
-        const entradasNoMes = AppState.clientes.filter(c => c.mesEntrada === competencia).length;
-        
+        const hist = HISTORICO_MENSAL_BASE[competencia];
+        const entradasNoMes = usaHistorico
+            ? (hist ? hist[0] : 0)
+            : AppState.clientes.filter(c => c.mesEntrada === competencia).length;
+
         // Contagem dinâmica de saídas naquele mês/ano
-        const saidasNoMes = AppState.saidas.filter(s => s.mesSaida === competencia).length;
+        const saidasNoMes = usaHistorico
+            ? (hist ? hist[1] : 0)
+            : AppState.saidas.filter(s => s.mesSaida === competencia).length;
 
         const previousBase = currentBase;
         // Total de clientes acumula: Base Anterior + Entradas - Saídas
@@ -1522,8 +1572,10 @@ function getDashboardMonthlySeries() {
             entradas = ent[mesAno] || 0;
             saidas = sai[mesAno] || 0;
         } else {
-            entradas = base[mesAno][0] + (ent[mesAno] || 0);
-            saidas = base[mesAno][1] + (sai[mesAno] || 0);
+            // Anos anteriores ao portal: só o histórico oficial (a carteira importada
+            // contém apenas quem continua ativo, não todas as entradas do período)
+            entradas = base[mesAno][0];
+            saidas = base[mesAno][1];
         }
         const nomeMes = MONTH_NAMES_BR[mm].full.slice(0, 3);
         serie.push({
@@ -1598,7 +1650,7 @@ function getFechamentosDoAno(ano) {
         const [m, a] = d.mesAno.split('/');
         if (Number(a) === ano) porMes[m] = d.entradas;
     });
-    if (ano >= ANO_INICIO_CADASTRO_PORTAL || !Object.keys(porMes).length) {
+    if (ano >= ANO_INICIO_CADASTRO_PORTAL) {
         // garante contagem direta dos cadastros mesmo fora do intervalo do gráfico
         MESES_OPORTUNIDADES.forEach(m => {
             if (porMes[m.key] === undefined) {
@@ -1606,6 +1658,7 @@ function getFechamentosDoAno(ano) {
             }
         });
     }
+    MESES_OPORTUNIDADES.forEach(m => { if (porMes[m.key] === undefined) porMes[m.key] = 0; });
     return porMes;
 }
 
@@ -1730,6 +1783,7 @@ function getReceitaDoAno(ano) {
         if (parseInt(a, 10) !== ano) return;
         const linha = meses.find(x => x.key === m);
         if (!linha) return;
+        if (!temValor(c.valorMensal)) return; // sem mensalidade informada (ex.: carteira importada)
         linha.contratos += 1;
         linha.valor += Number(c.valorMensal) || 0;
     });
@@ -1993,6 +2047,10 @@ function setupModals() {
 }
 
 /* ---------- Valor da mensalidade: aceita qualquer número (697 / 697,50 / 1.234,56) ---------- */
+function temValor(v) {
+    return v !== undefined && v !== null && v !== '' && !isNaN(Number(v));
+}
+
 function parseValorBR(texto) {
     let v = String(texto || '').replace(/R\$|\s/g, '');
     if (!v) return NaN;
@@ -2076,13 +2134,13 @@ function openEditClienteModal(clienteId) {
     if (!cliente) return;
 
     document.getElementById('edit-cliente-id').value = cliente.id;
-    document.getElementById('edit-cliente-contrato').value = cliente.contrato;
+    document.getElementById('edit-cliente-contrato').value = cliente.contrato || '';
     document.getElementById('edit-cliente-nome').value = cliente.nome;
     renderListasSegmentos();
-    document.getElementById('edit-cliente-segmento').value = cliente.segmento;
+    document.getElementById('edit-cliente-segmento').value = cliente.segmento || '';
     document.getElementById('edit-cliente-data').value = cliente.dataEntrada;
-    document.getElementById('edit-cliente-assinado').value = cliente.assinado;
-    document.getElementById('edit-cliente-ticket').value = formatValorInput(cliente.valorMensal);
+    document.getElementById('edit-cliente-assinado').value = cliente.assinado || '';
+    document.getElementById('edit-cliente-ticket').value = temValor(cliente.valorMensal) ? formatValorInput(cliente.valorMensal) : '';
 
     document.getElementById('modal-editar-cliente').classList.add('active');
 }
@@ -2092,8 +2150,9 @@ function handleEditClienteSubmit() {
     const cliente = AppState.clientes.find(c => c.id === clienteId);
     if (!cliente) return;
 
-    const valorEditado = parseValorBR(document.getElementById('edit-cliente-ticket').value);
-    if (isNaN(valorEditado)) {
+    const valorTexto = document.getElementById('edit-cliente-ticket').value.trim();
+    const valorEditado = valorTexto ? parseValorBR(valorTexto) : null;
+    if (valorTexto && isNaN(valorEditado)) {
         alert('Por favor, informe um valor de mensalidade válido (ex: 697 ou 697,50).');
         return;
     }
@@ -2106,12 +2165,12 @@ function handleEditClienteSubmit() {
     cliente.contrato = document.getElementById('edit-cliente-contrato').value.trim();
     cliente.nome = document.getElementById('edit-cliente-nome').value.trim();
     const segmentoEditado = document.getElementById('edit-cliente-segmento').value.trim();
-    if (segmentoEditado) cliente.segmento = registrarSegmento(segmentoEditado);
+    cliente.segmento = segmentoEditado ? registrarSegmento(segmentoEditado) : '';
     cliente.dataEntrada = dataEntrada;
     cliente.mesEntrada = `${mes}/${ano}`;
     cliente.ano = ano;
     cliente.assinado = document.getElementById('edit-cliente-assinado').value;
-    cliente.valorMensal = valorEditado;
+    if (valorEditado === null) delete cliente.valorMensal; else cliente.valorMensal = valorEditado;
 
     saveStorage();
     document.getElementById('modal-editar-cliente').classList.remove('active');

@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <!-- Estilos do Portal -->
-    <link rel="stylesheet" href="css/styles.css?v=20261106m">
+    <link rel="stylesheet" href="css/styles.css?v=20261109a">
 </head>
 <body>
     <div class="app-container">
@@ -858,11 +858,11 @@
                     <div class="form-grid-2">
                         <div class="form-group">
                             <label class="form-label">Número do Contrato</label>
-                            <input type="text" class="form-input" id="edit-cliente-contrato" required>
+                            <input type="text" class="form-input" id="edit-cliente-contrato" placeholder="Ex: 794-2026" autocomplete="off">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Segmento</label>
-                            <input type="text" class="form-input" id="edit-cliente-segmento" list="lista-segmentos" placeholder="Digite ou escolha um segmento" autocomplete="off" required>
+                            <input type="text" class="form-input" id="edit-cliente-segmento" list="lista-segmentos" placeholder="Digite ou escolha um segmento" autocomplete="off">
                         </div>
                     </div>
 
@@ -879,6 +879,7 @@
                         <div class="form-group">
                             <label class="form-label">Contrato Assinado?</label>
                             <select class="form-select" id="edit-cliente-assinado">
+                                <option value="">Não informado</option>
                                 <option value="Sim">Sim</option>
                                 <option value="Não">Não (Pendente)</option>
                             </select>
@@ -1155,10 +1156,10 @@
 
     <!-- Scripts da Aplicação -->
     <datalist id="lista-segmentos"></datalist>
-    <script src="js/data.js?v=20261106m"></script>
-    <script src="js/charts.js?v=20261106m"></script>
-    <script src="js/firebase-config.js?v=20261106m"></script>
-    <script src="js/app.js?v=20261106m"></script>
-    <script type="module" src="js/firebase-sync.js?v=20261106m"></script>
+    <script src="js/data.js?v=20261109a"></script>
+    <script src="js/charts.js?v=20261109a"></script>
+    <script src="js/firebase-config.js?v=20261109a"></script>
+    <script src="js/app.js?v=20261109a"></script>
+    <script type="module" src="js/firebase-sync.js?v=20261109a"></script>
 </body>
 </html>
