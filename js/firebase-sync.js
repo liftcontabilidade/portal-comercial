@@ -42,6 +42,7 @@ function iniciar() {
     const docLeads = doc(db, 'portalComercial', 'dados', 'config', 'leads');
     const docSegmentos = doc(db, 'portalComercial', 'dados', 'config', 'segmentos');
     const docMetas = doc(db, 'portalComercial', 'dados', 'config', 'metas');
+    const docMetaAds = doc(db, 'portalComercial', 'dados', 'config', 'integracaoMeta');
 
     // Último estado recebido/gravado no banco (para gravar só o que mudou)
     const sincronizado = { clientes: new Map(), saidas: new Map(), trafego: new Map(), leads: null, segmentos: null, metas: null };
@@ -180,6 +181,9 @@ function iniciar() {
             trafegoRecebido = true;
             window.aplicarTrafegoDaNuvem && window.aplicarTrafegoDaNuvem([...sincronizado.trafego.values()].map(v => JSON.parse(v)));
         }, () => {}));
+        cancelar.push(onSnapshot(docMetaAds, (snap) => {
+            window.aplicarConfigMetaAds && window.aplicarConfigMetaAds(snap.exists() ? snap.data() : null);
+        }, () => {}));
         cancelar.push(onSnapshot(docMetas, (snap) => {
             sincronizado.metas = snap.exists() ? assinatura(snap.data().metas || null) : null;
             if (snap.exists() && snap.data().metas) window.aplicarMetasDaNuvem(snap.data().metas);
@@ -291,7 +295,14 @@ function iniciar() {
         }
     }
 
-    window.LiftCloud = { salvar, ativo: () => ativo };
+    // Configuração da integração com o Meta Ads (fica só no banco, protegido pelas regras de acesso)
+    async function salvarConfigMeta(cfg) {
+        const b = writeBatch(db);
+        if (cfg) b.set(docMetaAds, limpo(cfg)); else b.delete(docMetaAds);
+        await b.commit();
+    }
+
+    window.LiftCloud = { salvar, ativo: () => ativo, salvarConfigMeta };
 
     /* ---------- Entrou / saiu ---------- */
     onAuthStateChanged(auth, (user) => {

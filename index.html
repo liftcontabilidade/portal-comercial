@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <!-- Estilos do Portal -->
-    <link rel="stylesheet" href="css/styles.css?v=20261110d">
+    <link rel="stylesheet" href="css/styles.css?v=20261110e">
 </head>
 <body>
     <div class="app-container">
@@ -923,6 +923,7 @@
                             </div>
                         </div>
                         <div class="tr-acoes">
+                            <div class="tr-meta" id="tr-meta-status"></div>
                             <button type="button" class="btn-secondary" id="tr-btn-lancar">Lançar manualmente</button>
                             <button type="button" class="btn-lift-action" id="tr-btn-importar">Importar relatório</button>
                         </div>
@@ -1247,6 +1248,44 @@
     </div>
     <datalist id="lista-copys-trafego"></datalist>
 
+    <div class="modal-backdrop" id="modal-meta-config">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <span class="modal-title">Conectar ao Meta Ads</span>
+                <button class="modal-close-btn">&times;</button>
+            </div>
+            <form id="form-meta-config" autocomplete="off">
+                <div class="modal-body">
+                    <p class="tr-form-dica">Com a conta conectada, o portal busca sozinho os números de cada anúncio (alcance, cliques, CTR, CPC, valor usado e resultados) ao ser aberto e a cada 1 hora. O token fica guardado só no banco do portal, que apenas os e-mails autorizados acessam.</p>
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label class="form-label">ID da conta de anúncios</label>
+                            <input type="text" class="form-input" id="mc-conta" inputmode="numeric" placeholder="Ex: 123456789012345">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Buscar dados desde</label>
+                            <input type="date" class="form-input" id="mc-desde">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Token de acesso (usuário do sistema)</label>
+                        <input type="password" class="form-input" id="mc-token" autocomplete="new-password" spellcheck="false">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">O que conta como "Resultado"</label>
+                        <select class="form-select" id="mc-resultado"></select>
+                    </div>
+                    <div class="mc-info" id="mc-info"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary mc-desconectar oculto" id="mc-desconectar">Desconectar</button>
+                    <button type="button" class="btn-secondary" id="mc-testar">Testar conexão</button>
+                    <button type="submit" class="btn-lift-action" id="mc-salvar" disabled>Salvar e buscar dados</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="modal-backdrop" id="modal-trafego-import">
         <div class="modal-dialog">
             <div class="modal-header">
@@ -1444,11 +1483,12 @@
     <!-- Scripts da Aplicação -->
     <datalist id="lista-segmentos"></datalist>
     <datalist id="lista-origens"></datalist>
-    <script src="js/data.js?v=20261110d"></script>
-    <script src="js/charts.js?v=20261110d"></script>
-    <script src="js/firebase-config.js?v=20261110d"></script>
-    <script src="js/app.js?v=20261110d"></script>
-    <script src="js/trafego.js?v=20261110d"></script>
-    <script type="module" src="js/firebase-sync.js?v=20261110d"></script>
+    <script src="js/data.js?v=20261110e"></script>
+    <script src="js/charts.js?v=20261110e"></script>
+    <script src="js/firebase-config.js?v=20261110e"></script>
+    <script src="js/app.js?v=20261110e"></script>
+    <script src="js/trafego.js?v=20261110e"></script>
+    <script src="js/meta-ads.js?v=20261110e"></script>
+    <script type="module" src="js/firebase-sync.js?v=20261110e"></script>
 </body>
 </html>

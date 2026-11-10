@@ -121,6 +121,23 @@ function trClientesPagos(j) {
         c.dataEntrada && c.dataEntrada >= j.ini && c.dataEntrada <= j.fim && REGEX_ORIGEM_PAGA.test(c.origemCliente || ''));
 }
 
+// Pessoas alcançadas não se somam dia a dia: usa o alcance do período informado pelo Meta
+function trAplicarAlcanceReal(j, lista, copys, total) {
+    if (typeof metaAlcanceDoPeriodo !== 'function') return;
+    const api = lista.filter(l => l.fonte === 'api');
+    if (!api.length) return;
+    const r = metaAlcanceDoPeriodo(j);
+    if (!r) return;
+    const somaManual = lista.filter(l => l.fonte !== 'api').reduce((s, l) => s + (Number(l.alcance) || 0), 0);
+    if (r.total !== null) total.alcance = r.total + somaManual;
+    (copys || []).forEach(c => {
+        const ads = [...new Set(c.itens.filter(l => l.fonte === 'api').map(l => l.adId))];
+        if (!ads.length) return;
+        const manual = c.itens.filter(l => l.fonte !== 'api').reduce((s, l) => s + (Number(l.alcance) || 0), 0);
+        c.alcance = ads.reduce((s, id) => s + (r.porAd[id] || 0), 0) + manual;
+    });
+}
+
 /* ---------- Formatação ---------- */
 const trNum = (v) => (v === null || v === undefined || isNaN(v)) ? '—' : Math.round(v).toLocaleString('pt-BR');
 const trPct = (v) => (v === null || v === undefined || isNaN(v)) ? '—' : v.toFixed(2).replace('.', ',') + '%';
@@ -171,6 +188,9 @@ function renderTrafegoView() {
 
     // Tabela por copy (copys nas colunas, como no relatório)
     const copys = trPorCopy(lista);
+    // Alcance real (pessoas únicas no período) quando os dados vêm do Meta
+    trAplicarAlcanceReal(j, lista, copys, t);
+    copys.sort((a, b) => b.alcance - a.alcance || b.investimento - a.investimento);
     const tabela = document.getElementById('tr-tabela');
     if (tabela) {
         if (!copys.length) {
@@ -204,10 +224,13 @@ function renderTrafegoView() {
     const evol = [];
     let jj = j;
     for (let i = 0; i < 6; i++) { evol.unshift(jj); jj = trDeslocar(tipo, jj, -1); }
+    if (typeof metaRenderStatus === 'function') metaRenderStatus();
     const evolBox = document.getElementById('tr-evolucao');
     if (evolBox) {
         evolBox.innerHTML = evol.map(p => {
-            const s = trSomar(trLancamentosDaJanela(p));
+            const lp = trLancamentosDaJanela(p);
+            const s = trSomar(lp);
+            trAplicarAlcanceReal(p, lp, null, s);
             const atual = p.ini === j.ini;
             const rotulo = tipo === 'mes' ? p.label : `${trCurta(p.ini)} a ${trCurta(p.fim)}`;
             return `<div class="opp-row tr-ev-row ${atual ? 'atual' : ''} ${s.n ? '' : 'vazio'}" data-ref="${p.ini}">

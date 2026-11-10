@@ -15,6 +15,7 @@ O site é publicado pelo **GitHub Pages**.
 | `js/data.js` | Histórico oficial (2024–2025), metas e dados iniciais |
 | `js/app.js` | Telas e cálculos |
 | `js/trafego.js` | Aba Tráfego Pago (lançamentos, importação e análise) |
+| `js/meta-ads.js` | Busca automática dos números na conta de anúncios do Meta (Marketing API) |
 | `js/charts.js` | Gráficos |
 | `js/firebase-config.js` | Configuração do projeto Firebase |
 | `js/firebase-sync.js` | Login Google e sincronização com o Firestore |
@@ -28,6 +29,7 @@ portalComercial/dados/saidas/{id}       um documento por saída
 portalComercial/dados/trafego/{id}      um lançamento de anúncio (tráfego pago)
 portalComercial/dados/config/leads      leads por ano e mês
 portalComercial/dados/config/segmentos  segmentos digitados
+portalComercial/dados/config/integracaoMeta  conta e token do Meta Ads (nunca vai para o GitHub)
 ```
 
 Cada alteração grava só o registro que mudou, e quem estiver com o portal aberto
