@@ -64,6 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
  * Inicializa os dados a partir do LocalStorage ou carrega o Seed Padrão (data.js)
  */
 function initStorage(motivoBackup = 'Ao abrir o portal') {
+    carregarMetas();
     const STORAGE_KEY_CLIENTES = 'lift_comercial_2026_oficial_clientes';
     const STORAGE_KEY_SAIDAS = 'lift_comercial_2026_oficial_saidas';
     const STORAGE_KEY_LEADS = 'lift_comercial_2026_oficial_leads';
@@ -126,7 +127,8 @@ function saveStorage() {
             clientes: AppState.clientes,
             saidas: AppState.saidas,
             leads: AppState.oportunidadesLeads,
-            segmentos: getSegmentosSalvos()
+            segmentos: getSegmentosSalvos(),
+            metas: AppState.metas
         });
     }
     syncToGoogleSheets(); // Sincronização automática com a planilha do Google
@@ -140,7 +142,8 @@ window.lerDadosLocais = function () {
         clientes: ler('lift_comercial_2026_oficial_clientes', []),
         saidas: ler('lift_comercial_2026_oficial_saidas', []),
         leads: ler('lift_comercial_2026_oficial_leads', {}),
-        segmentos: ler(STORAGE_KEY_SEGMENTOS, [])
+        segmentos: ler(STORAGE_KEY_SEGMENTOS, []),
+        metas: ler(STORAGE_KEY_METAS, null)
     };
 };
 
@@ -406,6 +409,10 @@ function switchView(viewName) {
         renderReceitaView();
     } else if (viewName === 'churn') {
         renderChurnView();
+    } else if (viewName === 'origens') {
+        renderOrigensView();
+    } else if (viewName === 'metas') {
+        renderMetasView();
     }
 }
 
@@ -420,6 +427,8 @@ function renderAll() {
     renderOportunidadesView();
     renderReceitaView();
     renderChurnView();
+    renderOrigensView();
+    renderMetasView();
 }
 
 /* ==========================================================================
@@ -483,7 +492,7 @@ function renderOverview() {
     const anoNum = parseInt(anoSel, 10);
     const fechAno = getFechamentosDoAno(anoNum);
     const fechadosNoMes = fechAno[mesSel] || 0;
-    const meta = (typeof META_CLIENTES_MES_POR_ANO !== 'undefined' && META_CLIENTES_MES_POR_ANO[anoNum]) || AppState.metaFechamentoMes;
+    const meta = getMetaClientesMes(anoNum);
     const restantes = Math.max(0, meta - fechadosNoMes);
     const percentMeta = Math.round((fechadosNoMes / meta) * 100);
 
@@ -614,7 +623,9 @@ function renderHomeResumo(mesAtual) {
         const rec = receitaDe(mesAtual), recAnt = receitaDe(anterior);
         const qtd = AppState.clientes.filter(c => getMesCliente(c) === mesAtual).length;
         set('home-kpi-receita', formatMoneyCurto(rec));
-        set('home-kpi-receita-delta', qtd ? `ticket médio ${formatMoneyCurto(rec / qtd)}` : `${nomeAnt}: ${formatMoneyCurto(recAnt)}`);
+        const metaRec = getMetaReceitaMes(ano);
+        set('home-kpi-receita-delta', (metaRec ? `<span class="${rec >= metaRec ? 'up' : 'down'}">${Math.round((rec / metaRec) * 100)}% da meta</span> (${formatMoneyCurto(metaRec)}) · ` : '')
+            + (qtd ? `ticket médio ${formatMoneyCurto(rec / qtd)}` : `${nomeAnt}: ${formatMoneyCurto(recAnt)}`), true);
     } else {
         set('home-kpi-receita', '—');
         set('home-kpi-receita-delta', 'sem cadastros neste ano');
@@ -624,7 +635,7 @@ function renderHomeResumo(mesAtual) {
     set('home-kpi-saidas', atual.saidas);
     const linhas = temCadastro ? calculateMonthlyDataForYear(ano).rows : [];
     const linha = linhas.find(r => r.competencia === mesAtual);
-    const metaChurn = typeof META_CHURN_MES !== 'undefined' ? META_CHURN_MES : 2;
+    const metaChurn = getMetaChurnMes(ano);
     const dentroMeta = atual.saidas <= metaChurn;
     set('home-kpi-saidas-delta',
         `${linha && linha.churn ? 'churn ' + String(linha.churn).replace('-', '') + ' · ' : ''}<span class="${dentroMeta ? 'up' : 'down'}">${dentroMeta ? 'dentro da meta' : 'acima da meta'} (até ${metaChurn})</span>`, true);
@@ -653,8 +664,8 @@ function renderHomeResumo(mesAtual) {
             label: `${MONTH_NAMES_BR[m1].full.slice(0, 3)}/${a1.slice(2)}`,
             labelLongo: `${MONTH_NAMES_BR[m1].full.slice(0, 3)}/${a1}`,
             entradas: p.entradas, saidas: p.saidas,
-            metaClientes: META_CLIENTES_MES_POR_ANO[a1] || AppState.metaFechamentoMes,
-            metaChurn: metaChurn
+            metaClientes: getMetaClientesMes(parseInt(a1, 10)),
+            metaChurn: getMetaChurnMes(parseInt(a1, 10))
         });
     }
     if (AppState.currentView === 'overview' || !document.getElementById('homeCanvas')._liftMonthly) {
@@ -715,7 +726,7 @@ function getResumoMes(mesAno) {
     const anterior = indexToMesAno(idx - 1);
     const fech = getFechamentosDoAno(ano)[mm] || 0;
     const fechAnt = getFechamentosDoAno(parseInt(anterior.split('/')[1], 10))[anterior.split('/')[0]] || 0;
-    const meta = META_CLIENTES_MES_POR_ANO[aaaa] || AppState.metaFechamentoMes;
+    const meta = getMetaClientesMes(parseInt(aaaa, 10));
     const contratos = AppState.clientes.filter(c => getMesCliente(c) === mesAno)
         .sort((x, y) => String(x.dataEntrada).localeCompare(String(y.dataEntrada)));
     const saidas = AppState.saidas.filter(s => getMesSaida(s) === mesAno)
@@ -898,7 +909,7 @@ function renderOverviewGauge(fechados, meta) {
     if (fechados === undefined) {
         const [m, a] = AppState.selectedMonthOverview.split('/');
         fechados = getFechamentosDoAno(parseInt(a, 10))[m] || 0;
-        meta = META_CLIENTES_MES_POR_ANO[a] || AppState.metaFechamentoMes;
+        meta = getMetaClientesMes(parseInt(a, 10));
     }
     const extra = Math.max(0, fechados - meta);
     let html = '';
@@ -1144,7 +1155,8 @@ const YEAR_DROPDOWNS = {
     dados:    { get: () => AppState.selectedYearDados,    set: (a) => { AppState.selectedYearDados = a; },    render: () => renderDadosView() },
     oportunidades: { get: () => AppState.selectedYearOportunidades || 2026, set: (a) => { AppState.selectedYearOportunidades = a; }, render: () => renderOportunidadesView() },
     receita:  { get: () => AppState.selectedYearReceita || new Date().getFullYear(), set: (a) => { AppState.selectedYearReceita = a; }, render: () => renderReceitaView() },
-    churn:    { get: () => AppState.selectedYearChurn || new Date().getFullYear(), set: (a) => { AppState.selectedYearChurn = a; }, render: () => renderChurnView() }
+    churn:    { get: () => AppState.selectedYearChurn || new Date().getFullYear(), set: (a) => { AppState.selectedYearChurn = a; }, render: () => renderChurnView() },
+    origens:  { get: () => AppState.selectedYearOrigens || new Date().getFullYear(), set: (a) => { AppState.selectedYearOrigens = a; }, render: () => renderOrigensView() }
 };
 
 function renderYearDropdown(prefixo) {
@@ -1563,7 +1575,7 @@ function renderDashboardView() {
 
     // Meta anual de novos clientes (ano corrente)
     const anoAtual = String(new Date().getFullYear());
-    const metaMes = (typeof META_CLIENTES_MES_POR_ANO !== 'undefined' && META_CLIENTES_MES_POR_ANO[anoAtual]) || AppState.metaFechamentoMes;
+    const metaMes = getMetaClientesMes(parseInt(anoAtual, 10));
     const metaAno = metaMes * 12;
     const realizadoAno = porAno[anoAtual] ? porAno[anoAtual].entradas : 0;
     setText('dash-meta-title', `META DE NOVOS CLIENTES (${anoAtual})`);
@@ -1635,8 +1647,8 @@ function getDashboardMonthlySeries() {
             labelLongo: `${nomeMes}/${aaaa}`,
             entradas: Math.max(0, entradas),
             saidas: Math.max(0, saidas),
-            metaClientes: (META_CLIENTES_MES_POR_ANO[aaaa] || META_CLIENTES_MES_POR_ANO[Math.max(...Object.keys(META_CLIENTES_MES_POR_ANO).map(Number))]),
-            metaChurn: META_CHURN_MES
+            metaClientes: getMetaClientesMes(parseInt(aaaa, 10)),
+            metaChurn: getMetaChurnMes(parseInt(aaaa, 10))
         });
     }
     return serie;
@@ -1859,6 +1871,8 @@ function renderReceitaView() {
 
     // KPIs do ano
     set('rec-kpi-total', formatMoneyCurto(r.valor));
+    const metaRecMes = getMetaReceitaMes(ano);
+    set('rec-kpi-total-sub', metaRecMes ? `${Math.round((r.valor / (metaRecMes * 12)) * 100)}% da meta do ano (${formatMoneyCurto(metaRecMes * 12)})` : 'sem meta de receita definida');
     set('rec-kpi-contratos', r.contratos);
     set('rec-kpi-ticket', r.contratos ? formatMoneyCurto(r.valor / r.contratos) : '—');
     const melhor = r.meses.reduce((best, m) => (m.valor > (best ? best.valor : 0) ? m : best), null);
@@ -2036,6 +2050,200 @@ function renderChurnView() {
         + (semTempo > 0 ? `<div class="ch-note">${semTempo} ${semTempo === 1 ? 'saída sem' : 'saídas sem'} data de entrada (não entram no cálculo).</div>` : ''), true);
 
 
+}
+
+/* ==========================================================================
+   METAS POR ANO (editáveis na aba Metas; salvas no navegador e no Firebase)
+   Ano sem meta definida usa a do ano anterior mais próximo.
+   ========================================================================== */
+const STORAGE_KEY_METAS = 'lift_comercial_metas';
+const CAMPOS_META = { clientesMes: 10, churnMes: 2, receitaMes: null };
+
+function metasPadrao() {
+    const porAno = {};
+    Object.entries(typeof META_CLIENTES_MES_POR_ANO !== 'undefined' ? META_CLIENTES_MES_POR_ANO : {}).forEach(([a, v]) => {
+        porAno[a] = { clientesMes: v, churnMes: typeof META_CHURN_MES !== 'undefined' ? META_CHURN_MES : 2 };
+    });
+    return { porAno };
+}
+
+function carregarMetas() {
+    try {
+        const salvo = JSON.parse(localStorage.getItem(STORAGE_KEY_METAS));
+        if (salvo && salvo.porAno) { AppState.metas = salvo; return; }
+    } catch (e) { /* usa o padrão */ }
+    AppState.metas = metasPadrao();
+}
+
+function salvarMetas() {
+    try { localStorage.setItem(STORAGE_KEY_METAS, JSON.stringify(AppState.metas)); } catch (e) { /* ignora */ }
+    saveStorage();
+}
+
+// Valor da meta do ano; se o ano não tiver, usa o ano anterior mais próximo
+function getMetaInfo(ano, campo) {
+    if (!AppState.metas) carregarMetas();
+    const porAno = AppState.metas.porAno || {};
+    const definido = (a) => porAno[a] && porAno[a][campo] !== undefined && porAno[a][campo] !== null && porAno[a][campo] !== '';
+    if (definido(ano)) return { valor: Number(porAno[ano][campo]), origem: ano, herdada: false };
+    const anos = Object.keys(porAno).map(Number).filter(a => definido(a));
+    // Só herda de anos anteriores (um ano passado nunca copia a meta de um ano futuro)
+    const de = anos.filter(a => a < ano).sort((a, b) => b - a)[0];
+    if (de !== undefined) return { valor: Number(porAno[de][campo]), origem: de, herdada: true };
+    return { valor: CAMPOS_META[campo], origem: null, herdada: true };
+}
+function getMetaClientesMes(ano) { return getMetaInfo(ano, 'clientesMes').valor || 10; }
+function getMetaChurnMes(ano) { const v = getMetaInfo(ano, 'churnMes').valor; return v === null || isNaN(v) ? 2 : v; }
+function getMetaReceitaMes(ano) { const v = getMetaInfo(ano, 'receitaMes').valor; return v === null || isNaN(v) ? null : v; }
+
+// Recebe as metas do banco de dados (firebase-sync.js)
+window.aplicarMetasDaNuvem = function (metas) {
+    if (!metas || !metas.porAno) return;
+    if (JSON.stringify(metas) === JSON.stringify(AppState.metas)) return;
+    AppState.metas = metas;
+    try { localStorage.setItem(STORAGE_KEY_METAS, JSON.stringify(metas)); } catch (e) { /* ignora */ }
+    renderAll();
+};
+
+function renderMetasView() {
+    const box = document.getElementById('metas-rows');
+    if (!box) return;
+    const anoAtual = new Date().getFullYear();
+    const anos = [];
+    for (let a = 2024; a <= ANO_MAXIMO_SELECAO; a++) anos.push(a);
+    const campo = (ano, nome, tipo) => {
+        const info = getMetaInfo(ano, nome);
+        const proprio = !info.herdada;
+        let valor = '', dica = '';
+        const fmt = (v) => tipo === 'dinheiro' ? Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) : String(v);
+        if (proprio) valor = fmt(info.valor);
+        else if (info.valor !== null && !isNaN(info.valor)) dica = fmt(info.valor);
+        return `<span class="meta-input-wrap">${tipo === 'dinheiro' ? '<span class="meta-prefixo">R$</span>' : ''}<input type="text" inputmode="decimal" class="meta-input ${proprio ? '' : 'herdada'}"
+                    data-ano="${ano}" data-campo="${nome}" data-tipo="${tipo}" value="${valor}" placeholder="${dica || '—'}"
+                    title="${proprio ? '' : (info.origem ? 'Usando a meta de ' + info.origem + ' (digite para definir uma meta própria)' : 'Sem meta definida')}"></span>`;
+    };
+    box.innerHTML = anos.map(ano => {
+        const cli = getMetaClientesMes(ano);
+        const rec = getMetaReceitaMes(ano);
+        const herdou = ['clientesMes', 'churnMes', 'receitaMes'].every(c => getMetaInfo(ano, c).herdada);
+        const origem = getMetaInfo(ano, 'clientesMes').origem;
+        return `
+            <div class="opp-row meta-row ${ano === anoAtual ? 'atual' : ''}">
+                <span class="opp-mes">${ano}${ano === anoAtual ? ' <span class="meta-badge">atual</span>' : ''}${herdou && origem ? `<small class="meta-herdada">usa as metas de ${origem}</small>` : ''}</span>
+                <span class="center">${campo(ano, 'clientesMes', 'inteiro')}</span>
+                <span class="center meta-calc">${cli * 12}</span>
+                <span class="center">${campo(ano, 'churnMes', 'inteiro')}</span>
+                <span class="center">${campo(ano, 'receitaMes', 'dinheiro')}</span>
+                <span class="center meta-calc">${rec ? formatBRL(rec * 12) : '—'}</span>
+            </div>`;
+    }).join('');
+}
+
+function setupMetasInputs() {
+    const box = document.getElementById('metas-rows');
+    if (!box || box._bound) return;
+    box._bound = true;
+    box.addEventListener('change', (e) => {
+        const inp = e.target;
+        if (!inp.classList.contains('meta-input')) return;
+        const ano = inp.dataset.ano, nome = inp.dataset.campo, tipo = inp.dataset.tipo;
+        const texto = inp.value.trim();
+        if (!AppState.metas) carregarMetas();
+        const porAno = AppState.metas.porAno;
+        if (!texto) {
+            if (porAno[ano]) { delete porAno[ano][nome]; if (!Object.keys(porAno[ano]).length) delete porAno[ano]; }
+        } else {
+            let v = tipo === 'dinheiro' ? parseValorBR(texto) : parseInt(texto.replace(/\D/g, ''), 10);
+            if (isNaN(v) || v < 0 || (nome === 'clientesMes' && v === 0)) {
+                inp.classList.add('erro');
+                showToast(nome === 'clientesMes' ? 'A meta de clientes precisa ser um número maior que zero.' : 'Valor inválido.');
+                return;
+            }
+            if (!porAno[ano]) porAno[ano] = {};
+            porAno[ano][nome] = v;
+        }
+        salvarMetas();
+        renderMetasView();
+        renderAll();
+        showToast(`Meta de ${ano} atualizada.`);
+    });
+    box.addEventListener('keydown', (e) => {
+        if (e.target.classList.contains('meta-input') && e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
+    });
+    box.addEventListener('focusin', (e) => { if (e.target.classList.contains('meta-input')) e.target.select(); });
+}
+
+/* ==========================================================================
+   ANÁLISE POR ORIGEM — clientes, receita, ticket médio e saídas por canal
+   ========================================================================== */
+function calcularOrigens(ano) {
+    const clientes = AppState.clientes.filter(c => Number(c.ano) === ano);
+    const grupos = {};
+    clientes.forEach(c => {
+        const k = (c.origemCliente || '').trim() || 'Sem origem informada';
+        if (!grupos[k]) grupos[k] = { nome: k, clientes: 0, comValor: 0, receita: 0, sairam: 0, semOrigem: !(c.origemCliente || '').trim() };
+        const g = grupos[k];
+        g.clientes += 1;
+        if (temValor(c.valorMensal)) { g.comValor += 1; g.receita += Number(c.valorMensal); }
+        if (c.status === 'Cancelado') g.sairam += 1;
+    });
+    const lista = Object.values(grupos).map(g => ({
+        ...g,
+        ticket: g.comValor ? g.receita / g.comValor : null,
+        taxaSaida: g.clientes ? (g.sairam / g.clientes) * 100 : 0
+    }));
+    return { total: clientes.length, lista };
+}
+
+function renderOrigensView() {
+    const ano = AppState.selectedYearOrigens || new Date().getFullYear();
+    if (!document.getElementById('panel-origens')) return;
+    renderYearDropdown('origens');
+    const set = (id, v, html = false) => { const el = document.getElementById(id); if (el) el[html ? 'innerHTML' : 'textContent'] = v; };
+    const { total, lista } = calcularOrigens(ano);
+    const comOrigem = lista.filter(g => !g.semOrigem);
+    const melhor = (fn) => comOrigem.slice().sort(fn)[0];
+
+    const topCli = melhor((a, b) => b.clientes - a.clientes);
+    const topRec = melhor((a, b) => b.receita - a.receita);
+    const topTicket = comOrigem.filter(g => g.ticket !== null).sort((a, b) => b.ticket - a.ticket)[0];
+    const topSaida = comOrigem.filter(g => g.sairam > 0).sort((a, b) => b.taxaSaida - a.taxaSaida || b.sairam - a.sairam)[0];
+    set('or-kpi-clientes', topCli ? topCli.nome : '—');
+    set('or-kpi-clientes-sub', topCli ? `${topCli.clientes} ${topCli.clientes === 1 ? 'cliente' : 'clientes'}` : 'nenhuma origem informada');
+    set('or-kpi-receita', topRec && topRec.receita ? topRec.nome : '—');
+    set('or-kpi-receita-sub', topRec && topRec.receita ? `${formatBRL(topRec.receita)}/mês` : '');
+    set('or-kpi-ticket', topTicket ? topTicket.nome : '—');
+    set('or-kpi-ticket-sub', topTicket ? `${formatBRL(topTicket.ticket)} de ticket médio` : '');
+    set('or-kpi-saida', topSaida ? topSaida.nome : '—');
+    set('or-kpi-saida-sub', topSaida ? `${topSaida.sairam} de ${topSaida.clientes} saíram (${formatPct(topSaida.taxaSaida, 0)})` : 'nenhuma saída de clientes com origem');
+    set('or-titulo', `CLIENTES POR ORIGEM — ${ano}`);
+
+    const semOrigem = lista.find(g => g.semOrigem);
+    set('or-aviso', semOrigem && total
+        ? `${semOrigem.clientes} de ${total} clientes de ${ano} estão sem origem informada. Preencha pelo ✏️ na aba Clientes para a análise ficar completa.`
+        : '');
+
+    const ordenada = lista.sort((a, b) => (a.semOrigem - b.semOrigem) || (b.clientes - a.clientes) || a.nome.localeCompare(b.nome, 'pt-BR'));
+    const maxCli = Math.max(1, ...ordenada.map(g => g.clientes));
+    set('or-rows', ordenada.length ? ordenada.map(g => `
+        <button type="button" class="opp-row or-row ${g.semOrigem ? 'sem' : ''}" data-origem="${g.semOrigem ? '__vazio__' : escHtml(g.nome)}" title="Ver estes clientes na aba Clientes">
+            <span class="or-nome">${escHtml(g.nome)}</span>
+            <span class="or-barra-cell"><span class="or-barra"><i style="width:${(g.clientes / maxCli) * 100}%"></i></span><b>${g.clientes}</b><small>${formatPct((g.clientes / total) * 100, 0)}</small></span>
+            <span class="right">${g.receita ? formatBRL(g.receita) : '—'}</span>
+            <span class="right">${g.ticket !== null ? formatBRL(g.ticket) : '—'}</span>
+            <span class="center ${g.sairam ? 'or-saida' : 'or-zero'}">${g.sairam ? `${g.sairam} · ${formatPct(g.taxaSaida, 0)}` : '0'}</span>
+        </button>`).join('') : `<div class="home-empty">Nenhum cliente cadastrado em ${ano}.</div>`, true);
+
+    document.querySelectorAll('#or-rows .or-row').forEach(btn => btn.onclick = () => {
+        AppState.selectedYearClientes = ano;
+        AppState.filterMesClientes = '';
+        AppState.filterSegmento = '';
+        AppState.filterOrigem = btn.dataset.origem;
+        AppState.activeClientesTab = 'fechados';
+        const selMes = document.getElementById('filter-mes-select');
+        if (selMes) selMes.value = '';
+        switchView('clientes');
+    });
 }
 
 /* ==========================================================================
@@ -2608,6 +2816,8 @@ function setupEventListeners() {
     setupYearDropdown('oportunidades');
     setupYearDropdown('receita');
     setupYearDropdown('churn');
+    setupYearDropdown('origens');
+    setupMetasInputs();
     setupValorSaidas();
     setupOportunidadesInputs();
 

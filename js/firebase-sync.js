@@ -40,9 +40,10 @@ function iniciar() {
     const colSaidas = collection(db, 'portalComercial', 'dados', 'saidas');
     const docLeads = doc(db, 'portalComercial', 'dados', 'config', 'leads');
     const docSegmentos = doc(db, 'portalComercial', 'dados', 'config', 'segmentos');
+    const docMetas = doc(db, 'portalComercial', 'dados', 'config', 'metas');
 
     // Último estado recebido/gravado no banco (para gravar só o que mudou)
-    const sincronizado = { clientes: new Map(), saidas: new Map(), leads: null, segmentos: null };
+    const sincronizado = { clientes: new Map(), saidas: new Map(), leads: null, segmentos: null, metas: null };
     const recebido = { clientes: false, saidas: false, leads: false };
     let cancelar = [];
     let migracaoVerificada = false;
@@ -172,6 +173,10 @@ function iniciar() {
             recebido.leads = true;
             aplicar();
         }, erroPermissao));
+        cancelar.push(onSnapshot(docMetas, (snap) => {
+            sincronizado.metas = snap.exists() ? assinatura(snap.data().metas || null) : null;
+            if (snap.exists() && snap.data().metas) window.aplicarMetasDaNuvem(snap.data().metas);
+        }, () => {}));
         cancelar.push(onSnapshot(docSegmentos, (snap) => {
             sincronizado.segmentos = snap.exists() ? assinatura(snap.data().lista || []) : null;
             if (sincronizado.segmentos) window.aplicarSegmentosDaNuvem(JSON.parse(sincronizado.segmentos));
@@ -219,6 +224,7 @@ function iniciar() {
         dados.saidas.forEach(s => ops.push(['set', doc(colSaidas, String(s.id)), limpo(s)]));
         ops.push(['set', docLeads, { porAno: limpo(dados.leads || {}) }]);
         if (dados.segmentos) ops.push(['set', docSegmentos, { lista: limpo(dados.segmentos) }]);
+        if (dados.metas) ops.push(['set', docMetas, { metas: limpo(dados.metas) }]);
         for (let i = 0; i < ops.length; i += 400) {
             const lote = writeBatch(db);
             ops.slice(i, i + 400).forEach(([, ref, val]) => lote.set(ref, val));
@@ -252,12 +258,15 @@ function iniciar() {
         if (sigLeads !== sincronizado.leads) { lote.set(docLeads, { porAno: JSON.parse(sigLeads) }); n++; }
         const sigSeg = assinatura(estado.segmentos || []);
         if (estado.segmentos && sigSeg !== sincronizado.segmentos) { lote.set(docSegmentos, { lista: JSON.parse(sigSeg) }); n++; }
+        const sigMetas = estado.metas ? assinatura(estado.metas) : null;
+        if (sigMetas && sigMetas !== sincronizado.metas) { lote.set(docMetas, { metas: JSON.parse(sigMetas) }); n++; }
         if (!n) return;
         // Atualiza o estado conhecido já (o retorno do banco confirma em seguida)
         sincronizado.clientes = novosCli;
         sincronizado.saidas = novasSai;
         sincronizado.leads = sigLeads;
         if (estado.segmentos) sincronizado.segmentos = sigSeg;
+        if (sigMetas) sincronizado.metas = sigMetas;
         try {
             status('Salvando…', 'aviso');
             for (let i = 0; i < ops.length; i += 400) {

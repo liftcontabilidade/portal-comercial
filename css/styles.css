@@ -2021,3 +2021,46 @@ body.cloud-on .cloud-only { display: flex !important; }
 
 /* Origem do cliente */
 .tag-origem { display: inline-block; font-size: 11.5px; font-weight: 700; color: var(--lift-blue); background: #E8EEF6; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+
+/* ==========================================================================
+   ANÁLISE POR ORIGEM
+   ========================================================================== */
+.or-kpi-txt { min-width: 0; }
+.or-kpi-nome { font-size: 20px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.or-row { grid-template-columns: 1.3fr 2fr 1fr 1fr 0.9fr; }
+button.or-row { width: 100%; background: transparent; border: none; font-family: inherit; text-align: left; cursor: pointer; }
+#or-rows .or-row + .or-row { border-top: 1px solid var(--border-subtle); border-radius: 0; }
+#or-rows .or-row:hover { background: var(--lift-orange-light); }
+.or-nome { font-weight: 700; color: var(--lift-blue); font-size: 13.5px; }
+.or-row.sem .or-nome { color: var(--text-muted); font-style: italic; font-weight: 600; }
+.or-barra-cell { display: flex; align-items: center; gap: 10px; }
+.or-barra { flex: 1; height: 8px; background: var(--border-subtle); border-radius: 999px; overflow: hidden; }
+.or-barra i { display: block; height: 100%; background: var(--lift-blue); border-radius: 999px; }
+.or-row.sem .or-barra i { background: #CBD5E1; }
+.or-barra-cell b { font-size: 14px; color: var(--lift-blue); min-width: 22px; text-align: right; }
+.or-barra-cell small { font-size: 11.5px; color: var(--text-secondary); min-width: 34px; }
+#or-rows .right { font-size: 13px; font-weight: 700; color: var(--lift-blue); }
+.or-saida { font-size: 12.5px; font-weight: 800; color: var(--lift-orange); }
+.or-zero { color: var(--text-muted); font-weight: 600; }
+.or-aviso { font-size: 12px; color: var(--text-secondary); padding: 0 24px 16px; }
+.or-aviso:empty { display: none; }
+
+/* ==========================================================================
+   METAS POR ANO
+   ========================================================================== */
+.meta-row { grid-template-columns: 1.1fr 1fr 1fr 1fr 1.2fr 1.2fr; min-height: 46px; }
+#metas-rows .meta-row + .meta-row { border-top: 1px solid var(--border-subtle); border-radius: 0; }
+.meta-row.atual { background: var(--lift-orange-light); }
+.meta-badge { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; color: #FFFFFF; background: var(--lift-orange); padding: 2px 6px; border-radius: 999px; margin-left: 6px; vertical-align: middle; }
+.meta-herdada { display: block; font-size: 11px; font-weight: 500; color: var(--text-muted); }
+.meta-input-wrap { display: inline-flex; align-items: center; gap: 5px; }
+.meta-prefixo { font-size: 12px; font-weight: 700; color: var(--text-secondary); }
+.meta-input {
+    width: 90px; text-align: center; font-family: inherit; font-size: 14px; font-weight: 800; color: var(--lift-blue);
+    background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 8px; padding: 6px 8px;
+}
+.meta-input.herdada::placeholder { color: #94A3B8; font-weight: 600; }
+.meta-input:hover { border-color: var(--lift-orange-border); }
+.meta-input:focus { outline: none; border-color: var(--lift-orange); box-shadow: 0 0 0 3px rgba(243,111,33,.15); }
+.meta-input.erro { border-color: #DC2626; }
+.meta-calc { font-size: 14px; font-weight: 800; color: var(--text-secondary); }

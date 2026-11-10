@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <!-- Estilos do Portal -->
-    <link rel="stylesheet" href="css/styles.css?v=20261110a">
+    <link rel="stylesheet" href="css/styles.css?v=20261110b">
 </head>
 <body>
     <div class="app-container">
@@ -80,6 +80,20 @@
                             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline><polyline points="17 18 23 18 23 12"></polyline></svg>
                         </span>
                         <span>Análise de Churn</span>
+                    </a>
+
+                    <a href="#origens" class="nav-item" data-view="origens" title="Análise por Origem">
+                        <span class="nav-icon">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                        </span>
+                        <span>Origens</span>
+                    </a>
+
+                    <a href="#metas" class="nav-item" data-view="metas" title="Metas por ano">
+                        <span class="nav-icon">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+                        </span>
+                        <span>Metas</span>
                     </a>
                 </nav>
             </div>
@@ -663,6 +677,7 @@
                             <div>
                                 <span class="opp-kpi-label">Receita fechada no ano</span>
                                 <span class="opp-kpi-value orange" id="rec-kpi-total">R$ 0</span>
+                                <span class="opp-kpi-sub" id="rec-kpi-total-sub"></span>
                             </div>
                         </div>
                         <div class="opp-kpi-card accent-blue">
@@ -788,6 +803,102 @@
 
                     </div>
                 </section>
+
+                <!-- ------------------------------------------------------------
+                     PAINEL 8: ANÁLISE POR ORIGEM
+                     ------------------------------------------------------------ -->
+                <section id="panel-origens" class="view-panel">
+                    <div class="page-top-action-bar">
+                        <div class="year-selector-group">
+                            <span class="year-selector-label">Selecione o Ano:</span>
+                            <div class="year-dropdown" id="origens-year-dropdown">
+                                <button type="button" class="year-dropdown-btn" id="origens-year-btn" aria-haspopup="listbox" aria-expanded="false">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                    <span id="origens-year-label">2026</span>
+                                    <svg class="year-dropdown-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                </button>
+                                <div class="year-dropdown-menu" id="origens-year-menu" role="listbox"></div>
+                            </div>
+                        </div>
+                        <span class="opp-hint">De onde vêm os clientes fechados no ano. Clique numa origem para ver os clientes.</span>
+                    </div>
+
+                    <div class="opp-kpi-grid">
+                        <div class="opp-kpi-card accent-blue">
+                            <div class="dash-kpi-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></div>
+                            <div class="or-kpi-txt">
+                                <span class="opp-kpi-label">Traz mais clientes</span>
+                                <span class="opp-kpi-value  or-kpi-nome" id="or-kpi-clientes">—</span>
+                                <span class="opp-kpi-sub" id="or-kpi-clientes-sub"></span>
+                            </div>
+                        </div>
+                        <div class="opp-kpi-card accent-blue">
+                            <div class="dash-kpi-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></div>
+                            <div class="or-kpi-txt">
+                                <span class="opp-kpi-label">Traz mais receita</span>
+                                <span class="opp-kpi-value  or-kpi-nome" id="or-kpi-receita">—</span>
+                                <span class="opp-kpi-sub" id="or-kpi-receita-sub"></span>
+                            </div>
+                        </div>
+                        <div class="opp-kpi-card accent-blue">
+                            <div class="dash-kpi-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg></div>
+                            <div class="or-kpi-txt">
+                                <span class="opp-kpi-label">Maior ticket médio</span>
+                                <span class="opp-kpi-value  or-kpi-nome" id="or-kpi-ticket">—</span>
+                                <span class="opp-kpi-sub" id="or-kpi-ticket-sub"></span>
+                            </div>
+                        </div>
+                        <div class="opp-kpi-card accent-orange">
+                            <div class="dash-kpi-icon orange"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline><polyline points="17 18 23 18 23 12"></polyline></svg></div>
+                            <div class="or-kpi-txt">
+                                <span class="opp-kpi-label">Mais saídas (proporcional)</span>
+                                <span class="opp-kpi-value orange or-kpi-nome" id="or-kpi-saida">—</span>
+                                <span class="opp-kpi-sub" id="or-kpi-saida-sub"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="opp-card">
+                        <div class="opp-card-head">
+                            <span class="dash-section-title" id="or-titulo">CLIENTES POR ORIGEM — 2026</span>
+                        </div>
+                        <div class="opp-table">
+                            <div class="opp-row or-row opp-row-head">
+                                <span>Origem</span>
+                                <span>Clientes</span>
+                                <span class="right">Receita (mensal)</span>
+                                <span class="right">Ticket médio</span>
+                                <span class="center">Saíram</span>
+                            </div>
+                            <div id="or-rows"></div>
+                        </div>
+                        <div class="or-aviso" id="or-aviso"></div>
+                    </div>
+                </section>
+
+                <!-- ------------------------------------------------------------
+                     PAINEL 9: METAS POR ANO
+                     ------------------------------------------------------------ -->
+                <section id="panel-metas" class="view-panel">
+                    <div class="page-top-action-bar">
+                        <span class="year-selector-label">Metas por ano</span>
+                        <span class="opp-hint">Digite a meta e aperte Enter. O ano sem meta própria usa a do ano anterior. O Dashboard e as outras telas usam a meta de cada ano.</span>
+                    </div>
+                    <div class="opp-card">
+                        <div class="opp-table">
+                            <div class="opp-row meta-row opp-row-head">
+                                <span>Ano</span>
+                                <span class="center">Novos clientes / mês</span>
+                                <span class="center">Novos clientes / ano</span>
+                                <span class="center">Máx. de saídas / mês</span>
+                                <span class="center">Receita nova / mês</span>
+                                <span class="center">Receita nova / ano</span>
+                            </div>
+                            <div id="metas-rows"></div>
+                        </div>
+                    </div>
+                </section>
+
 
 
 
@@ -1173,10 +1284,10 @@
     <!-- Scripts da Aplicação -->
     <datalist id="lista-segmentos"></datalist>
     <datalist id="lista-origens"></datalist>
-    <script src="js/data.js?v=20261110a"></script>
-    <script src="js/charts.js?v=20261110a"></script>
-    <script src="js/firebase-config.js?v=20261110a"></script>
-    <script src="js/app.js?v=20261110a"></script>
-    <script type="module" src="js/firebase-sync.js?v=20261110a"></script>
+    <script src="js/data.js?v=20261110b"></script>
+    <script src="js/charts.js?v=20261110b"></script>
+    <script src="js/firebase-config.js?v=20261110b"></script>
+    <script src="js/app.js?v=20261110b"></script>
+    <script type="module" src="js/firebase-sync.js?v=20261110b"></script>
 </body>
 </html>
