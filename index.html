@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <!-- Estilos do Portal -->
-    <link rel="stylesheet" href="css/styles.css?v=20261109a">
+    <link rel="stylesheet" href="css/styles.css?v=20261110a">
 </head>
 <body>
     <div class="app-container">
@@ -328,6 +328,11 @@
                                     <option value="">Todos os Segmentos</option>
                                 </select>
                             </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <select class="form-select" id="filter-origem-select" style="padding: 7px 12px; font-size: 12.5px;">
+                                    <option value="">Todas as Origens</option>
+                                </select>
+                            </div>
 
                             <button type="button" class="btn-saida-action" id="btn-open-nova-saida">
                                 <span>−</span>
@@ -370,6 +375,7 @@
                                         <th>Número do Contrato</th>
                                         <th>Nome</th>
                                         <th>Segmento</th>
+                                        <th>Origem</th>
                                         <th>Mês da Entrada</th>
                                         <th>Data da Entrada</th>
                                         <th>Contrato Assinado</th>
@@ -816,6 +822,11 @@
                         <input type="text" class="form-input" id="input-cliente-nome" placeholder="Ex: TechCorp Inovações Ltda" required>
                     </div>
 
+                    <div class="form-group">
+                        <label class="form-label">Origem do Cliente</label>
+                        <input type="text" class="form-input" id="input-cliente-origem" list="lista-origens" placeholder="Digite ou escolha: Indicação, Instagram, Google..." autocomplete="off">
+                    </div>
+
                     <div class="form-grid-2">
                         <div class="form-group">
                             <label class="form-label">Data da Entrada</label>
@@ -869,6 +880,11 @@
                     <div class="form-group">
                         <label class="form-label">Nome / Razão Social</label>
                         <input type="text" class="form-input" id="edit-cliente-nome" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Origem do Cliente</label>
+                        <input type="text" class="form-input" id="edit-cliente-origem" list="lista-origens" placeholder="Digite ou escolha: Indicação, Instagram, Google..." autocomplete="off">
                     </div>
 
                     <div class="form-grid-2">
@@ -1156,10 +1172,11 @@
 
     <!-- Scripts da Aplicação -->
     <datalist id="lista-segmentos"></datalist>
-    <script src="js/data.js?v=20261109a"></script>
-    <script src="js/charts.js?v=20261109a"></script>
-    <script src="js/firebase-config.js?v=20261109a"></script>
-    <script src="js/app.js?v=20261109a"></script>
-    <script type="module" src="js/firebase-sync.js?v=20261109a"></script>
+    <datalist id="lista-origens"></datalist>
+    <script src="js/data.js?v=20261110a"></script>
+    <script src="js/charts.js?v=20261110a"></script>
+    <script src="js/firebase-config.js?v=20261110a"></script>
+    <script src="js/app.js?v=20261110a"></script>
+    <script type="module" src="js/firebase-sync.js?v=20261110a"></script>
 </body>
 </html>

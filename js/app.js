@@ -17,6 +17,7 @@ const AppState = {
     searchQueryClientes: '',
     searchQuerySaidas: '',
     filterSegmento: '',
+    filterOrigem: '', // '' = todas, '__vazio__' = sem origem informada
     filterMesClientes: '', // '' = todos os meses, '01'..'12' = mês específico
     metaFechamentoMes: 10 // Padrão: 100% = 10 clientes fechados no mês
 };
@@ -860,9 +861,9 @@ async function gerarRelatorioExcel() {
         ['Leads', r.leads, ''],
         ['Conversão', r.conversao, '']
     ];
-    const contratos = [['Contrato', 'Cliente', 'Segmento', 'Data de entrada', 'Contrato assinado', 'Mensalidade (R$)'],
-        ...r.contratos.map(c => [c.contrato || '', c.nome, c.segmento || '', formatDateBR(c.dataEntrada), c.assinado === 'Sim' ? 'Sim' : 'Pendente', Number(c.valorMensal) || 0])];
-    if (r.contratos.length) contratos.push(['', 'Total', '', '', '', r.receita]);
+    const contratos = [['Contrato', 'Cliente', 'Segmento', 'Origem', 'Data de entrada', 'Contrato assinado', 'Mensalidade (R$)'],
+        ...r.contratos.map(c => [c.contrato || '', c.nome, c.segmento || '', c.origemCliente || '', formatDateBR(c.dataEntrada), c.assinado === 'Sim' ? 'Sim' : 'Pendente', Number(c.valorMensal) || 0])];
+    if (r.contratos.length) contratos.push(['', 'Total', '', '', '', '', r.receita]);
     const saidas = [['Cliente', 'Data do aviso', 'Data da saída', 'Motivo'],
         ...r.listaSaidas.map(s => [s.nome, s.dataAviso || '', formatDateBR(s.dataSaida), s.motivo || ''])];
     const segmentos = [['Segmento', 'Clientes'], ...r.segmentos];
@@ -876,7 +877,7 @@ async function gerarRelatorioExcel() {
             XLSX.utils.book_append_sheet(wb, ws, nome);
         };
         add(resumo, 'Resumo', [32, 22, 36]);
-        add(contratos, 'Contratos', [14, 44, 22, 16, 18, 18]);
+        add(contratos, 'Contratos', [14, 44, 22, 18, 16, 18, 18]);
         add(saidas, 'Saídas', [44, 16, 16, 30]);
         add(segmentos, 'Segmentos', [30, 12]);
         XLSX.writeFile(wb, `${nomeArq}.xlsx`);
@@ -991,7 +992,44 @@ function registrarSegmento(texto) {
     return v;
 }
 
+/* ---------- Origem do cliente (de onde veio) ---------- */
+const ORIGENS_PADRAO = ['Indicação', 'Instagram', 'Google', 'Site', 'WhatsApp', 'Facebook', 'LinkedIn', 'Evento', 'Parceiro', 'Prospecção ativa', 'Outros'];
+
+function getListaOrigens() {
+    const mapa = new Map();
+    const add = (o) => {
+        const v = (o || '').trim();
+        if (v && !mapa.has(v.toLocaleLowerCase('pt-BR'))) mapa.set(v.toLocaleLowerCase('pt-BR'), v);
+    };
+    ORIGENS_PADRAO.forEach(add);
+    AppState.clientes.forEach(c => add(c.origemCliente));
+    return [...mapa.values()].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+}
+
+// Reaproveita a grafia de uma origem já existente (ignorando maiúsculas/minúsculas)
+function normalizarOrigem(texto) {
+    const v = (texto || '').trim().replace(/\s+/g, ' ');
+    if (!v) return '';
+    const existente = getListaOrigens().find(x => x.toLocaleLowerCase('pt-BR') === v.toLocaleLowerCase('pt-BR'));
+    return existente || v;
+}
+
+function renderListasOrigens() {
+    const lista = getListaOrigens();
+    const dl = document.getElementById('lista-origens');
+    if (dl) dl.innerHTML = lista.map(o => `<option value="${escHtml(o)}"></option>`).join('');
+    const filtro = document.getElementById('filter-origem-select');
+    if (filtro) {
+        const usadas = new Set(AppState.clientes.map(c => (c.origemCliente || '').trim()).filter(Boolean));
+        const atual = AppState.filterOrigem;
+        filtro.innerHTML = '<option value="">Todas as Origens</option>'
+            + [...usadas].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(o => `<option value="${escHtml(o)}" ${o === atual ? 'selected' : ''}>${escHtml(o)}</option>`).join('')
+            + `<option value="__vazio__" ${atual === '__vazio__' ? 'selected' : ''}>Sem origem informada</option>`;
+    }
+}
+
 function renderListasSegmentos() {
+    renderListasOrigens();
     const lista = getListaSegmentos();
 
     const datalist = document.getElementById('lista-segmentos');
@@ -1024,7 +1062,12 @@ function renderClientesView() {
 
     const countFechados = document.getElementById('count-tab-fechados');
     const countSaidas = document.getElementById('count-tab-saidas');
-    if (countFechados) countFechados.textContent = `${clientesAno.length}`;
+    // O número da aba acompanha os filtros de segmento e origem
+    const qtdFechados = clientesAno.filter(c =>
+        (!AppState.filterSegmento || c.segmento === AppState.filterSegmento) &&
+        (!AppState.filterOrigem || (AppState.filterOrigem === '__vazio__' ? !(c.origemCliente || '').trim() : (c.origemCliente || '') === AppState.filterOrigem))
+    ).length;
+    if (countFechados) countFechados.textContent = `${qtdFechados}`;
     if (countSaidas) countSaidas.textContent = `${saidasAno.length}`;
 
     const wrapperFechados = document.getElementById('wrapper-tab-fechados');
@@ -1073,7 +1116,7 @@ function linhaGrupoMes(mesAno, qtd, singular, plural) {
     const nome = MONTH_NAMES_BR[m] ? MONTH_NAMES_BR[m].full : mesAno;
     return `
         <tr class="month-group-row">
-            <td colspan="8">
+            <td colspan="9">
                 <span class="month-group-name">${nome} de ${a}</span>
                 <span class="month-group-count">${qtd} ${qtd === 1 ? singular : plural}</span>
             </td>
@@ -1158,10 +1201,11 @@ function renderTabelaClientesFechados(lista) {
     let filtrados = lista;
     if (AppState.searchQueryClientes) {
         const q = AppState.searchQueryClientes.toLowerCase();
-        filtrados = filtrados.filter(c => 
-            c.contrato.toLowerCase().includes(q) || 
-            c.nome.toLowerCase().includes(q) ||
-            c.segmento.toLowerCase().includes(q)
+        filtrados = filtrados.filter(c =>
+            (c.contrato || '').toLowerCase().includes(q) ||
+            (c.nome || '').toLowerCase().includes(q) ||
+            (c.segmento || '').toLowerCase().includes(q) ||
+            (c.origemCliente || '').toLowerCase().includes(q)
         );
     }
 
@@ -1169,10 +1213,16 @@ function renderTabelaClientesFechados(lista) {
         filtrados = filtrados.filter(c => c.segmento === AppState.filterSegmento);
     }
 
+    if (AppState.filterOrigem) {
+        filtrados = filtrados.filter(c => AppState.filterOrigem === '__vazio__'
+            ? !(c.origemCliente || '').trim()
+            : (c.origemCliente || '') === AppState.filterOrigem);
+    }
+
     if (filtrados.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="8" style="text-align: center; padding: 30px; color: var(--text-muted);">
+                <td colspan="9" style="text-align: center; padding: 30px; color: var(--text-muted);">
                     Nenhum cliente fechado encontrado para ${AppState.filterMesClientes ? MONTH_NAMES_BR[AppState.filterMesClientes].full + ' de ' : 'o ano de '}${AppState.selectedYearClientes}.
                 </td>
             </tr>
@@ -1198,6 +1248,7 @@ function renderTabelaClientesFechados(lista) {
                 ${c.status === 'Cancelado' ? `<span class="tag-saiu">Saiu${c.mesSaida ? ' em ' + c.mesSaida : ''}</span>` : ''}
             </td>
             <td>${c.segmento ? `<span class="tag-segmento">${c.segmento}</span>` : '<span style="color: var(--text-muted);">—</span>'}</td>
+            <td>${c.origemCliente ? `<span class="tag-origem">${escHtml(c.origemCliente)}</span>` : '<span style="color: var(--text-muted);">—</span>'}</td>
             <td><strong>${c.mesEntrada}</strong></td>
             <td>${formatDateBR(c.dataEntrada)}</td>
             <td>
@@ -1282,7 +1333,7 @@ function renderTabelaSaidas(lista) {
     if (filtrados.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="8" style="text-align: center; padding: 30px; color: var(--text-muted);">
+                <td colspan="9" style="text-align: center; padding: 30px; color: var(--text-muted);">
                     Nenhuma saída (churn) registrada para ${AppState.filterMesClientes ? MONTH_NAMES_BR[AppState.filterMesClientes].full + ' de ' : 'o ano de '}${AppState.selectedYearClientes}.
                 </td>
             </tr>
@@ -1598,6 +1649,7 @@ function abrirClientesDoMes(mesAno, tipo = 'entrada') {
     AppState.selectedYearClientes = ano;
     AppState.filterMesClientes = m;
     AppState.filterSegmento = '';
+    AppState.filterOrigem = '';
     AppState.searchQueryClientes = '';
     AppState.searchQuerySaidas = '';
     AppState.activeClientesTab = tipo === 'saida' ? 'saidas' : 'fechados';
@@ -2073,6 +2125,7 @@ function openNovoClienteModal() {
     document.getElementById('input-cliente-nome').value = '';
     renderListasSegmentos();
     document.getElementById('input-cliente-segmento').value = '';
+    document.getElementById('input-cliente-origem').value = '';
     document.getElementById('input-cliente-data').value = new Date().toISOString().split('T')[0];
     document.getElementById('input-cliente-assinado').value = 'Sim';
     document.getElementById('input-cliente-ticket').value = '2500';
@@ -2113,6 +2166,7 @@ function handleNovoClienteSubmit() {
         contrato: contrato,
         nome: nome,
         segmento: segmento,
+        origemCliente: normalizarOrigem(document.getElementById('input-cliente-origem').value),
         mesEntrada: mesEntrada,
         dataEntrada: dataEntrada,
         assinado: assinado,
@@ -2138,6 +2192,7 @@ function openEditClienteModal(clienteId) {
     document.getElementById('edit-cliente-nome').value = cliente.nome;
     renderListasSegmentos();
     document.getElementById('edit-cliente-segmento').value = cliente.segmento || '';
+    document.getElementById('edit-cliente-origem').value = cliente.origemCliente || '';
     document.getElementById('edit-cliente-data').value = cliente.dataEntrada;
     document.getElementById('edit-cliente-assinado').value = cliente.assinado || '';
     document.getElementById('edit-cliente-ticket').value = temValor(cliente.valorMensal) ? formatValorInput(cliente.valorMensal) : '';
@@ -2166,6 +2221,7 @@ function handleEditClienteSubmit() {
     cliente.nome = document.getElementById('edit-cliente-nome').value.trim();
     const segmentoEditado = document.getElementById('edit-cliente-segmento').value.trim();
     cliente.segmento = segmentoEditado ? registrarSegmento(segmentoEditado) : '';
+    cliente.origemCliente = normalizarOrigem(document.getElementById('edit-cliente-origem').value);
     cliente.dataEntrada = dataEntrada;
     cliente.mesEntrada = `${mes}/${ano}`;
     cliente.ano = ano;
@@ -2517,6 +2573,15 @@ function setupEventListeners() {
     if (searchClientesInput) {
         searchClientesInput.addEventListener('input', (e) => {
             AppState.searchQueryClientes = e.target.value;
+            renderClientesView();
+        });
+    }
+
+    // Filtro de Origem
+    const filterOrigemSelect = document.getElementById('filter-origem-select');
+    if (filterOrigemSelect) {
+        filterOrigemSelect.addEventListener('change', (e) => {
+            AppState.filterOrigem = e.target.value;
             renderClientesView();
         });
     }
