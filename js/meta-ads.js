@@ -13,7 +13,7 @@
    ========================================================================== */
 const META_GRAPH = 'https://graph.facebook.com/v24.0/';
 const META_STORAGE_LOCAL = 'lift_comercial_meta_ads';
-const META_INTERVALO_SYNC = 60 * 60 * 1000;
+const META_INTERVALO_SYNC = 5 * 60 * 1000; // com o portal aberto, busca no Meta a cada 5 minutos
 const META_ACOES = {
     'onsite_conversion.messaging_conversation_started_7d': 'Conversas iniciadas por mensagem (WhatsApp/Direct)',
     'onsite_conversion.messaging_first_reply': 'Novas conversas por mensagem',
@@ -236,7 +236,10 @@ function metaRenderStatus() {
     const box = document.getElementById('tr-meta-status');
     if (!box) return;
     if (!MetaAds.cfgRecebida) { box.innerHTML = ''; return; }
-    if (!metaConectado()) {
+    // Conectado ao Meta: os números entram sozinhos, então os botões de importar/lançar saem da tela
+    const conectado = metaConectado();
+    ['tr-btn-importar', 'tr-btn-lancar'].forEach(id => { const b = document.getElementById(id); if (b) b.classList.toggle('oculto', conectado); });
+    if (!conectado) {
         box.innerHTML = `<button type="button" class="tr-meta-conectar" id="tr-meta-config">Conectar Meta Ads</button>`;
         return;
     }
@@ -246,7 +249,7 @@ function metaRenderStatus() {
     else if (MetaAds.cfg.ultimaSync) {
         const d = new Date(MetaAds.cfg.ultimaSync);
         const hoje = trIso(new Date()) === trIso(d);
-        txt = `Meta Ads conectado · atualizado ${hoje ? 'hoje' : 'em ' + d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+        txt = `Ao vivo com o Meta Ads · atualizado ${hoje ? 'hoje' : 'em ' + d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
     } else { txt = 'Meta Ads conectado · aguardando a primeira atualização'; cls = 'aviso'; }
     box.innerHTML = `<span class="tr-meta-pill ${cls}" title="${escHtml(txt)}"><i></i><span>${escHtml(txt)}</span></span>
         <button type="button" class="tr-btn-icone" id="tr-meta-sync" title="Atualizar agora" ${MetaAds.sincronizando ? 'disabled' : ''}>↻</button>
@@ -334,6 +337,14 @@ function setupMetaAds() {
     metaCarregarLocal();
     metaRenderStatus();
     metaAgendar(2000);
+    // Ao voltar para a aba do portal, busca de novo se já passou mais de 2 minutos
+    const aoVoltar = () => {
+        if (document.visibilityState !== 'visible' || !metaConectado() || MetaAds.sincronizando) return;
+        const ultima = MetaAds.cfg.ultimaSync ? new Date(MetaAds.cfg.ultimaSync).getTime() : 0;
+        if (Date.now() - ultima > 2 * 60 * 1000) metaSincronizar(false).then(() => metaAgendar(META_INTERVALO_SYNC));
+    };
+    document.addEventListener('visibilitychange', aoVoltar);
+    window.addEventListener('focus', aoVoltar);
     const box = document.getElementById('tr-meta-status');
     if (box) box.addEventListener('click', (e) => {
         if (e.target.closest('#tr-meta-config')) metaAbrirConfig();
