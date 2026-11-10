@@ -14,6 +14,7 @@ O site é publicado pelo **GitHub Pages**.
 | `css/styles.css` | Visual |
 | `js/data.js` | Histórico oficial (2024–2025), metas e dados iniciais |
 | `js/app.js` | Telas e cálculos |
+| `js/trafego.js` | Aba Tráfego Pago (lançamentos, importação e análise) |
 | `js/charts.js` | Gráficos |
 | `js/firebase-config.js` | Configuração do projeto Firebase |
 | `js/firebase-sync.js` | Login Google e sincronização com o Firestore |
@@ -24,6 +25,7 @@ O site é publicado pelo **GitHub Pages**.
 ```
 portalComercial/dados/clientes/{id}     um documento por cliente
 portalComercial/dados/saidas/{id}       um documento por saída
+portalComercial/dados/trafego/{id}      um lançamento de anúncio (tráfego pago)
 portalComercial/dados/config/leads      leads por ano e mês
 portalComercial/dados/config/segmentos  segmentos digitados
 ```

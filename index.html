@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <!-- Estilos do Portal -->
-    <link rel="stylesheet" href="css/styles.css?v=20261110c">
+    <link rel="stylesheet" href="css/styles.css?v=20261110d">
 </head>
 <body>
     <div class="app-container">
@@ -94,6 +94,13 @@
                             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
                         </span>
                         <span>Metas</span>
+                    </a>
+
+                    <a href="#trafego" class="nav-item" data-view="trafego" title="Tráfego Pago">
+                        <span class="nav-icon">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8-8-2z"></path></svg>
+                        </span>
+                        <span>Tráfego Pago</span>
                     </a>
                 </nav>
             </div>
@@ -898,8 +905,80 @@
                     </div>
                 </section>
 
+                <!-- ------------------------------------------------------------
+                     PAINEL 10: TRÁFEGO PAGO
+                     ------------------------------------------------------------ -->
+                <section id="panel-trafego" class="view-panel">
+                    <div class="page-top-action-bar tr-topo">
+                        <div class="tr-filtros">
+                            <div class="tr-tipos" id="tr-tipos">
+                                <button type="button" data-tipo="semana">Semanal</button>
+                                <button type="button" data-tipo="quinzena">Quinzenal</button>
+                                <button type="button" data-tipo="mes">Mensal</button>
+                            </div>
+                            <div class="tr-nav">
+                                <button type="button" id="tr-ant" title="Período anterior">‹</button>
+                                <span id="tr-periodo-label">—</span>
+                                <button type="button" id="tr-prox" title="Próximo período">›</button>
+                            </div>
+                        </div>
+                        <div class="tr-acoes">
+                            <button type="button" class="btn-secondary" id="tr-btn-lancar">Lançar manualmente</button>
+                            <button type="button" class="btn-lift-action" id="tr-btn-importar">Importar relatório</button>
+                        </div>
+                    </div>
 
+                    <div class="opp-kpi-grid">
+                        <div class="opp-kpi-card accent-blue">
+                            <div class="dash-kpi-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></div>
+                            <div><span class="opp-kpi-label">Valor investido</span><span class="opp-kpi-value" id="tr-kpi-invest">—</span><span class="opp-kpi-sub" id="tr-kpi-invest-sub"></span></div>
+                        </div>
+                        <div class="opp-kpi-card accent-orange">
+                            <div class="dash-kpi-icon orange"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></div>
+                            <div><span class="opp-kpi-label">Resultados</span><span class="opp-kpi-value orange" id="tr-kpi-res">—</span><span class="opp-kpi-sub" id="tr-kpi-res-sub"></span></div>
+                        </div>
+                        <div class="opp-kpi-card accent-blue">
+                            <div class="dash-kpi-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg></div>
+                            <div><span class="opp-kpi-label">Custo por resultado</span><span class="opp-kpi-value" id="tr-kpi-cpr">—</span><span class="opp-kpi-sub" id="tr-kpi-cpr-sub"></span></div>
+                        </div>
+                        <div class="opp-kpi-card accent-blue">
+                            <div class="dash-kpi-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path></svg></div>
+                            <div><span class="opp-kpi-label">CTR médio</span><span class="opp-kpi-value" id="tr-kpi-ctr">—</span><span class="opp-kpi-sub" id="tr-kpi-ctr-sub"></span></div>
+                        </div>
+                    </div>
 
+                    <div class="tr-grid">
+                        <div class="opp-card">
+                            <div class="opp-card-head"><span class="dash-section-title" id="tr-tabela-titulo">COPYS</span></div>
+                            <div class="tr-tabela-wrap"><table class="tr-tabela" id="tr-tabela"></table></div>
+                            <div class="tr-legenda">Em destaque, o melhor valor de cada linha.</div>
+                        </div>
+                        <div class="opp-card">
+                            <div class="opp-card-head"><span class="dash-section-title">ANÁLISE DO PERÍODO</span></div>
+                            <div class="tr-analise" id="tr-analise"></div>
+                        </div>
+                    </div>
+
+                    <div class="opp-card tr-bloco">
+                        <div class="opp-card-head"><span class="dash-section-title">EVOLUÇÃO — ÚLTIMOS 6 PERÍODOS</span></div>
+                        <div class="opp-table">
+                            <div class="opp-row tr-ev-row opp-row-head">
+                                <span>Período</span><span class="right">Investido</span><span class="center">Alcance</span><span class="center">Cliques</span><span class="center">CTR</span><span class="center">Resultados</span><span class="right">Custo / resultado</span>
+                            </div>
+                            <div id="tr-evolucao"></div>
+                        </div>
+                    </div>
+
+                    <div class="opp-card tr-bloco">
+                        <div class="opp-card-head"><span class="dash-section-title">LANÇAMENTOS DO PERÍODO</span></div>
+                        <div class="opp-table">
+                            <div class="opp-row tr-lanc-row opp-row-head">
+                                <span>Período</span><span>Plataforma</span><span>Copy / anúncio</span><span class="center">Alcance</span><span class="center">Cliques</span><span class="right">Investido</span><span class="center">Resultados</span><span></span>
+                            </div>
+                            <div id="tr-lancamentos"></div>
+                        </div>
+                    </div>
+                </section>
 
             </main>
         </div>
@@ -1120,6 +1199,88 @@
     <datalist id="lista-motivos-saida"></datalist>
 
     <!-- ====================================================================
+         MODAIS: TRÁFEGO PAGO (lançamento manual e importação)
+         ==================================================================== -->
+    <div class="modal-backdrop" id="modal-trafego-lanc">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <span class="modal-title" id="tr-lanc-titulo">Lançar números de anúncio</span>
+                <button class="modal-close-btn">&times;</button>
+            </div>
+            <form id="form-trafego-lanc" autocomplete="off">
+                <div class="modal-body">
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Plataforma</label>
+                            <select class="form-select" id="trl-plataforma"><option value="Meta">Meta Ads (Facebook/Instagram)</option><option value="Google">Google Ads</option></select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Copy / anúncio</label>
+                            <input type="text" class="form-input" id="trl-anuncio" list="lista-copys-trafego" placeholder="Ex: Copy 1.2 (Levi)" required>
+                        </div>
+                    </div>
+                    <div class="form-grid-2">
+                        <div class="form-group"><label class="form-label">Início do período</label><input type="date" class="form-input" id="trl-inicio" required></div>
+                        <div class="form-group"><label class="form-label">Fim do período</label><input type="date" class="form-input" id="trl-fim" required></div>
+                    </div>
+                    <div class="form-grid-2">
+                        <div class="form-group"><label class="form-label">Alcance (pessoas)</label><input type="text" class="form-input" id="trl-alcance" inputmode="numeric" placeholder="Ex: 5.214"></div>
+                        <div class="form-group"><label class="form-label">Cliques no link</label><input type="text" class="form-input" id="trl-cliques" inputmode="numeric" placeholder="Ex: 48"></div>
+                    </div>
+                    <div class="form-grid-2">
+                        <div class="form-group"><label class="form-label">CTR (%)</label><input type="text" class="form-input" id="trl-ctr" inputmode="decimal" placeholder="Ex: 0,73"></div>
+                        <div class="form-group"><label class="form-label">Impressões (se tiver)</label><input type="text" class="form-input" id="trl-impressoes" inputmode="numeric" placeholder="Opcional"></div>
+                    </div>
+                    <div class="form-grid-2">
+                        <div class="form-group"><label class="form-label">CPC (R$)</label><input type="text" class="form-input" id="trl-cpc" inputmode="decimal" placeholder="Ex: 2,78"></div>
+                        <div class="form-group"><label class="form-label">Valor investido (R$)</label><input type="text" class="form-input" id="trl-investimento" inputmode="decimal" placeholder="Ou deixe em branco e preencha o CPC"></div>
+                    </div>
+                    <div class="form-group"><label class="form-label">Resultados</label><input type="text" class="form-input" id="trl-resultados" inputmode="numeric" placeholder="Ex: 4"></div>
+                    <p class="tr-form-dica">Basta preencher os números como aparecem no relatório: o portal calcula o valor investido pelo CPC × cliques, e as impressões pelo CTR.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary btn-modal-cancel">Cancelar</button>
+                    <button type="submit" class="btn-lift-action">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <datalist id="lista-copys-trafego"></datalist>
+
+    <div class="modal-backdrop" id="modal-trafego-import">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <span class="modal-title">Importar relatório de anúncios</span>
+                <button class="modal-close-btn">&times;</button>
+            </div>
+            <form id="form-trafego-import" autocomplete="off">
+                <div class="modal-body">
+                    <p class="tr-form-dica">No Gerenciador de Anúncios (Meta) ou no Google Ads, abra o relatório por <b>anúncio</b>, escolha o período e clique em <b>Exportar</b> (CSV ou Excel). Se o mesmo período for importado de novo, os números são atualizados — não duplicam.</p>
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Plataforma</label>
+                            <select class="form-select" id="tri-plataforma"><option value="Meta">Meta Ads (Facebook/Instagram)</option><option value="Google">Google Ads</option></select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Arquivo (.csv ou .xlsx)</label>
+                            <input type="file" class="form-input" id="tri-arquivo" accept=".csv,.xlsx,.xls,.txt" required>
+                        </div>
+                    </div>
+                    <div class="form-grid-2 oculto" id="tri-datas">
+                        <div class="form-group"><label class="form-label">Início do período</label><input type="date" class="form-input" id="tri-inicio"></div>
+                        <div class="form-group"><label class="form-label">Fim do período</label><input type="date" class="form-input" id="tri-fim"></div>
+                    </div>
+                    <div id="tri-preview"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary btn-modal-cancel">Cancelar</button>
+                    <button type="submit" class="btn-lift-action" id="tri-confirmar" disabled>Importar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ====================================================================
          MODAL: CÓPIAS DE SEGURANÇA (BACKUPS AUTOMÁTICOS)
          ==================================================================== -->
     <div class="modal-backdrop" id="modal-backups">
@@ -1283,10 +1444,11 @@
     <!-- Scripts da Aplicação -->
     <datalist id="lista-segmentos"></datalist>
     <datalist id="lista-origens"></datalist>
-    <script src="js/data.js?v=20261110c"></script>
-    <script src="js/charts.js?v=20261110c"></script>
-    <script src="js/firebase-config.js?v=20261110c"></script>
-    <script src="js/app.js?v=20261110c"></script>
-    <script type="module" src="js/firebase-sync.js?v=20261110c"></script>
+    <script src="js/data.js?v=20261110d"></script>
+    <script src="js/charts.js?v=20261110d"></script>
+    <script src="js/firebase-config.js?v=20261110d"></script>
+    <script src="js/app.js?v=20261110d"></script>
+    <script src="js/trafego.js?v=20261110d"></script>
+    <script type="module" src="js/firebase-sync.js?v=20261110d"></script>
 </body>
 </html>

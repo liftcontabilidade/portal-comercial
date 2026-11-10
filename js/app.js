@@ -65,6 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 function initStorage(motivoBackup = 'Ao abrir o portal') {
     carregarMetas();
+    carregarTrafego();
     const STORAGE_KEY_CLIENTES = 'lift_comercial_2026_oficial_clientes';
     const STORAGE_KEY_SAIDAS = 'lift_comercial_2026_oficial_saidas';
     const STORAGE_KEY_LEADS = 'lift_comercial_2026_oficial_leads';
@@ -128,7 +129,8 @@ function saveStorage() {
             saidas: AppState.saidas,
             leads: AppState.oportunidadesLeads,
             segmentos: getSegmentosSalvos(),
-            metas: AppState.metas
+            metas: AppState.metas,
+            trafego: AppState.trafego
         });
     }
     syncToGoogleSheets(); // Sincronização automática com a planilha do Google
@@ -143,7 +145,8 @@ window.lerDadosLocais = function () {
         saidas: ler('lift_comercial_2026_oficial_saidas', []),
         leads: ler('lift_comercial_2026_oficial_leads', {}),
         segmentos: ler(STORAGE_KEY_SEGMENTOS, []),
-        metas: ler(STORAGE_KEY_METAS, null)
+        metas: ler(STORAGE_KEY_METAS, null),
+        trafego: ler(STORAGE_KEY_TRAFEGO, [])
     };
 };
 
@@ -196,7 +199,8 @@ function lerAssinaturaStorage() {
         return [
             localStorage.getItem('lift_comercial_2026_oficial_clientes') || '',
             localStorage.getItem('lift_comercial_2026_oficial_saidas') || '',
-            localStorage.getItem('lift_comercial_2026_oficial_leads') || ''
+            localStorage.getItem('lift_comercial_2026_oficial_leads') || '',
+            localStorage.getItem('lift_comercial_2026_oficial_trafego') || ''
         ].join('|');
     } catch (e) { return ''; }
 }
@@ -211,10 +215,11 @@ function criarBackupAutomatico(forcar = false, motivo = 'Automático') {
         const dados = {
             clientes: localStorage.getItem('lift_comercial_2026_oficial_clientes'),
             saidas: localStorage.getItem('lift_comercial_2026_oficial_saidas'),
-            leads: localStorage.getItem('lift_comercial_2026_oficial_leads')
+            leads: localStorage.getItem('lift_comercial_2026_oficial_leads'),
+            trafego: localStorage.getItem('lift_comercial_2026_oficial_trafego')
         };
         if (!dados.clientes) return;
-        const assinatura = [dados.clientes, dados.saidas, dados.leads].join('|');
+        const assinatura = [dados.clientes, dados.saidas, dados.leads, dados.trafego || ''].join('|');
         const lista = getBackups();
         const ultimo = lista[0];
         if (ultimo && ultimo.assinatura === assinatura) return;
@@ -236,7 +241,9 @@ function exportarDados() {
         clientes: AppState.clientes,
         saidas: AppState.saidas,
         leads: AppState.oportunidadesLeads,
-        segmentos: getSegmentosSalvos()
+        segmentos: getSegmentosSalvos(),
+        metas: AppState.metas,
+        trafego: AppState.trafego || []
     };
     const hoje = new Date().toISOString().slice(0, 10);
     baixarArquivo(JSON.stringify(dados, null, 2), `portal-comercial-dados-${hoje}.json`, 'application/json');
@@ -285,6 +292,8 @@ function importarDados(arquivo) {
         AppState.clientes = dados.clientes;
         AppState.saidas = dados.saidas;
         if (dados.leads) AppState.oportunidadesLeads = dados.leads;
+        if (Array.isArray(dados.trafego)) { AppState.trafego = dados.trafego; salvarTrafegoLocal(); }
+        if (dados.metas && dados.metas.porAno) { AppState.metas = dados.metas; try { localStorage.setItem(STORAGE_KEY_METAS, JSON.stringify(dados.metas)); } catch (e) { /* ignora */ } }
         if (Array.isArray(dados.segmentos)) {
             try { localStorage.setItem(STORAGE_KEY_SEGMENTOS, JSON.stringify(dados.segmentos)); } catch (e) { /* ignora */ }
         }
@@ -332,6 +341,7 @@ function abrirBackups() {
             localStorage.setItem('lift_comercial_2026_oficial_clientes', b.clientes);
             localStorage.setItem('lift_comercial_2026_oficial_saidas', b.saidas);
             if (b.leads) localStorage.setItem('lift_comercial_2026_oficial_leads', b.leads);
+            if (b.trafego) localStorage.setItem('lift_comercial_2026_oficial_trafego', b.trafego);
             initStorage(null);
             saveStorage();
             renderAll();
@@ -413,6 +423,8 @@ function switchView(viewName) {
         renderOrigensView();
     } else if (viewName === 'metas') {
         renderMetasView();
+    } else if (viewName === 'trafego') {
+        renderTrafegoView();
     }
 }
 
@@ -429,6 +441,7 @@ function renderAll() {
     renderChurnView();
     renderOrigensView();
     renderMetasView();
+    if (typeof renderTrafegoView === 'function') renderTrafegoView();
 }
 
 /* ==========================================================================
@@ -1004,7 +1017,7 @@ function registrarSegmento(texto) {
 }
 
 /* ---------- Origem do cliente (de onde veio) ---------- */
-const ORIGENS_PADRAO = ['Indicação', 'Instagram', 'Google', 'Site', 'WhatsApp', 'Facebook', 'LinkedIn', 'Evento', 'Parceiro', 'Prospecção ativa', 'Outros'];
+const ORIGENS_PADRAO = ['Indicação', 'Instagram', 'Google', 'Site', 'WhatsApp', 'Facebook', 'LinkedIn', 'Evento', 'Parceiro', 'Prospecção ativa', 'Tráfego pago', 'Outros'];
 
 function getListaOrigens() {
     const mapa = new Map();

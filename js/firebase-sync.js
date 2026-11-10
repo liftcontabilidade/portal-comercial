@@ -38,12 +38,14 @@ function iniciar() {
 
     const colClientes = collection(db, 'portalComercial', 'dados', 'clientes');
     const colSaidas = collection(db, 'portalComercial', 'dados', 'saidas');
+    const colTrafego = collection(db, 'portalComercial', 'dados', 'trafego');
     const docLeads = doc(db, 'portalComercial', 'dados', 'config', 'leads');
     const docSegmentos = doc(db, 'portalComercial', 'dados', 'config', 'segmentos');
     const docMetas = doc(db, 'portalComercial', 'dados', 'config', 'metas');
 
     // Último estado recebido/gravado no banco (para gravar só o que mudou)
-    const sincronizado = { clientes: new Map(), saidas: new Map(), leads: null, segmentos: null, metas: null };
+    const sincronizado = { clientes: new Map(), saidas: new Map(), trafego: new Map(), leads: null, segmentos: null, metas: null };
+    let trafegoRecebido = false;
     const recebido = { clientes: false, saidas: false, leads: false };
     let cancelar = [];
     let migracaoVerificada = false;
@@ -173,6 +175,11 @@ function iniciar() {
             recebido.leads = true;
             aplicar();
         }, erroPermissao));
+        cancelar.push(onSnapshot(colTrafego, (snap) => {
+            sincronizado.trafego = new Map(snap.docs.map(d => [d.id, assinatura(d.data())]));
+            trafegoRecebido = true;
+            window.aplicarTrafegoDaNuvem && window.aplicarTrafegoDaNuvem([...sincronizado.trafego.values()].map(v => JSON.parse(v)));
+        }, () => {}));
         cancelar.push(onSnapshot(docMetas, (snap) => {
             sincronizado.metas = snap.exists() ? assinatura(snap.data().metas || null) : null;
             if (snap.exists() && snap.data().metas) window.aplicarMetasDaNuvem(snap.data().metas);
@@ -187,6 +194,7 @@ function iniciar() {
         cancelar.forEach(fn => fn());
         cancelar = [];
         recebido.clientes = recebido.saidas = recebido.leads = false;
+        trafegoRecebido = false;
     }
 
     /* ---------- Primeira vez: envia os dados deste computador ---------- */
@@ -225,6 +233,7 @@ function iniciar() {
         ops.push(['set', docLeads, { porAno: limpo(dados.leads || {}) }]);
         if (dados.segmentos) ops.push(['set', docSegmentos, { lista: limpo(dados.segmentos) }]);
         if (dados.metas) ops.push(['set', docMetas, { metas: limpo(dados.metas) }]);
+        (dados.trafego || []).forEach(t => ops.push(['set', doc(colTrafego, String(t.id)), limpo(t)]));
         for (let i = 0; i < ops.length; i += 400) {
             const lote = writeBatch(db);
             ops.slice(i, i + 400).forEach(([, ref, val]) => lote.set(ref, val));
@@ -241,7 +250,7 @@ function iniciar() {
         const diff = (lista, mapa, col) => {
             const atuais = new Map();
             lista.forEach(item => {
-                if (!item.id) item.id = (col === colClientes ? 'cli-' : 'sai-') + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+                if (!item.id) item.id = (col === colClientes ? 'cli-' : col === colTrafego ? 'tr-' : 'sai-') + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
                 atuais.set(String(item.id), assinatura(item));
             });
             atuais.forEach((sig, id) => {
@@ -254,6 +263,7 @@ function iniciar() {
         };
         const novosCli = diff(estado.clientes, sincronizado.clientes, colClientes);
         const novasSai = diff(estado.saidas, sincronizado.saidas, colSaidas);
+        const novoTrafego = (trafegoRecebido && Array.isArray(estado.trafego)) ? diff(estado.trafego, sincronizado.trafego, colTrafego) : null;
         const sigLeads = assinatura(estado.leads || {});
         if (sigLeads !== sincronizado.leads) { lote.set(docLeads, { porAno: JSON.parse(sigLeads) }); n++; }
         const sigSeg = assinatura(estado.segmentos || []);
@@ -264,6 +274,7 @@ function iniciar() {
         // Atualiza o estado conhecido já (o retorno do banco confirma em seguida)
         sincronizado.clientes = novosCli;
         sincronizado.saidas = novasSai;
+        if (novoTrafego) sincronizado.trafego = novoTrafego;
         sincronizado.leads = sigLeads;
         if (estado.segmentos) sincronizado.segmentos = sigSeg;
         if (sigMetas) sincronizado.metas = sigMetas;
