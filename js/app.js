@@ -2340,7 +2340,6 @@ function renderIndicacoes(ano) {
             <span class="or-nome"><span class="ind-seta">›</span>${escHtml(g.nome)}</span>
             <span class="or-barra-cell"><span class="or-barra"><i style="width:${(g.clientes.length / max) * 100}%"></i></span><b>${g.clientes.length}</b></span>
             <span class="right">${g.receita ? formatBRL(g.receita) : '—'}</span>
-            <span class="center ${g.sairam ? 'or-saida' : 'or-zero'}">${g.sairam}</span>
         </button>
         ${aberto ? `<div class="ind-clientes">${nomes.map(c => `<span class="${c.status === 'Cancelado' ? 'saiu' : ''}">${escHtml(c.nome)}${c.mesEntrada ? ` <small>${escHtml(c.mesEntrada)}</small>` : ''}${c.status === 'Cancelado' ? ' <small>· saiu</small>' : ''}</span>`).join('')}</div>` : ''}`;
     }).join('') : `<div class="home-empty">Nenhuma indicação com o nome de quem indicou ${todos ? 'ainda' : 'em ' + ano}. Ao cadastrar um cliente com origem <b>Indicação</b>, informe quem indicou.</div>`;
