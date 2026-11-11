@@ -2328,18 +2328,27 @@ function renderIndicacoes(ano) {
     const titulo = document.getElementById('ind-titulo');
     if (titulo) titulo.textContent = `QUEM MAIS INDICOU — ${todos ? 'TODOS OS ANOS' : ano}`;
     const max = Math.max(1, ...lista.map(g => g.clientes.length));
+    if (!AppState._indAbertos) AppState._indAbertos = new Set();
+    const abertos = AppState._indAbertos;
     box.innerHTML = lista.length ? lista.map((g, i) => {
         const nomes = g.clientes.slice().sort((a, b) => String(b.dataEntrada).localeCompare(String(a.dataEntrada)));
+        const chave = g.nome.toLocaleLowerCase('pt-BR');
+        const aberto = abertos.has(chave);
         return `
-        <div class="opp-row ind-row">
+        <button type="button" class="opp-row ind-row ${aberto ? 'aberto' : ''}" data-ind="${escHtml(chave)}" title="Ver os clientes indicados">
             <span class="ind-pos ${i < 3 ? 'top' : ''}">${i + 1}º</span>
-            <span class="or-nome">${escHtml(g.nome)}</span>
+            <span class="or-nome"><span class="ind-seta">›</span>${escHtml(g.nome)}</span>
             <span class="or-barra-cell"><span class="or-barra"><i style="width:${(g.clientes.length / max) * 100}%"></i></span><b>${g.clientes.length}</b></span>
-            <span class="ind-clientes" title="${escHtml(nomes.map(c => c.nome + (c.mesEntrada ? ' (' + c.mesEntrada + ')' : '')).join('\n'))}">${nomes.map(c => `<span class="${c.status === 'Cancelado' ? 'saiu' : ''}">${escHtml(c.nome)}${c.mesEntrada ? ` <small>${escHtml(c.mesEntrada)}</small>` : ''}</span>`).join('')}</span>
             <span class="right">${g.receita ? formatBRL(g.receita) : '—'}</span>
             <span class="center ${g.sairam ? 'or-saida' : 'or-zero'}">${g.sairam}</span>
-        </div>`;
+        </button>
+        ${aberto ? `<div class="ind-clientes">${nomes.map(c => `<span class="${c.status === 'Cancelado' ? 'saiu' : ''}">${escHtml(c.nome)}${c.mesEntrada ? ` <small>${escHtml(c.mesEntrada)}</small>` : ''}${c.status === 'Cancelado' ? ' <small>· saiu</small>' : ''}</span>`).join('')}</div>` : ''}`;
     }).join('') : `<div class="home-empty">Nenhuma indicação com o nome de quem indicou ${todos ? 'ainda' : 'em ' + ano}. Ao cadastrar um cliente com origem <b>Indicação</b>, informe quem indicou.</div>`;
+    box.querySelectorAll('.ind-row[data-ind]').forEach(btn => btn.onclick = () => {
+        const k = btn.dataset.ind;
+        if (abertos.has(k)) abertos.delete(k); else abertos.add(k);
+        renderIndicacoes(ano);
+    });
     const aviso = document.getElementById('ind-aviso');
     if (aviso) aviso.textContent = semNome
         ? `${semNome} ${semNome === 1 ? 'cliente com origem Indicação está' : 'clientes com origem Indicação estão'} sem o nome de quem indicou. Preencha pelo ✏️ na aba Clientes para entrar no ranking.`
