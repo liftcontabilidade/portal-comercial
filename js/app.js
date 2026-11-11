@@ -1470,25 +1470,32 @@ function calculateMonthlyDataForYear(year, _semAnoAnterior = false) {
             churnFormatted = churnPercent.toFixed(1).replace('.', ',') + '%';
         }
 
-        // LTV/meses = 1 / Churn rate
-        let ltvMeses = 0;
-        let ltvRaw = 0;
-        if (saidasNoMes > 0 && previousBase > 0) {
-            const churnTaxa = saidasNoMes / previousBase;
-            ltvRaw = 1 / churnTaxa;
-            ltvMeses = Math.round(ltvRaw);
-        }
+        // LTV/meses = 1 / Churn rate (Base anterior ÷ Saídas).
+        // Mês sem saída não tem churn: o LTV não é calculável (não é zero), então
+        // aparece "—" e não puxa a média para baixo.
+        const hojeComp = new Date();
+        const mesFuturo = year > hojeComp.getFullYear() || (year === hojeComp.getFullYear() && idx > hojeComp.getMonth());
+        let ltvRaw = null;
+        if (saidasNoMes > 0 && previousBase > 0) ltvRaw = previousBase / saidasNoMes;
+        const ltvMeses = ltvRaw !== null ? Math.round(ltvRaw) : (mesFuturo ? '' : '—');
 
         // LTV méd = (LTV/meses do mês anterior + LTV/meses do mês) / 2
-        // (mesma fórmula da planilha: =SOMA(F3:F4)/2)
-        let ltvAnteriorRaw = 0;
+        // (mesma fórmula da planilha: =SOMA(F3:F4)/2), usando só os meses com saída.
+        // Se nenhum dos dois meses teve saída, repete a última média calculada.
+        let ltvAnteriorRaw = null;
+        let ltvMedioAnterior = null;
         if (idx > 0) {
             ltvAnteriorRaw = rows[idx - 1].ltvRaw;
+            ltvMedioAnterior = rows[idx - 1].ltvMedioRaw;
         } else if (!_semAnoAnterior) {
             const anoAnterior = calculateMonthlyDataForYear(year - 1, true);
-            ltvAnteriorRaw = anoAnterior.rows[11] ? anoAnterior.rows[11].ltvRaw : 0;
+            const ult = anoAnterior.rows[11];
+            ltvAnteriorRaw = ult ? ult.ltvRaw : null;
+            ltvMedioAnterior = ult ? ult.ltvMedioRaw : null;
         }
-        const ltvMedio = Math.round((ltvAnteriorRaw + ltvRaw) / 2);
+        const validos = [ltvAnteriorRaw, ltvRaw].filter(v => v !== null);
+        const ltvMedioRaw = validos.length ? validos.reduce((a, b) => a + b, 0) / validos.length : ltvMedioAnterior;
+        const ltvMedio = mesFuturo ? '' : (ltvMedioRaw !== null ? Math.round(ltvMedioRaw) : '—');
 
         // Se for um mês futuro com zero movimentações, mantém consistente
         const hasData = entradasNoMes > 0 || saidasNoMes > 0 || (idx <= 10 && year === 2026);
@@ -1503,6 +1510,7 @@ function calculateMonthlyDataForYear(year, _semAnoAnterior = false) {
             ltvMeses: ltvMeses,
             ltvMedio: ltvMedio,
             ltvRaw: ltvRaw,
+            ltvMedioRaw: ltvMedioRaw,
             hasData: hasData
         });
     });
