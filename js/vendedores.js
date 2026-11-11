@@ -47,7 +47,8 @@ function calcularVendedores(ano) {
     const lista = [...grupos.values()].map(g => ({ ...g, ticket: g.comValor ? g.receita / g.comValor : null }))
         .sort((a, b) => b.clientes.length - a.clientes.length || b.receita - a.receita || a.nome.localeCompare(b.nome, 'pt-BR'));
     const comVendedor = lista.reduce((s, g) => s + g.clientes.length, 0);
-    return { lista, comVendedor, semVendedor: doAno.length - comVendedor, totalAno: doAno.length };
+    const semLista = doAno.filter(c => !String(c.vendedor || '').trim());
+    return { lista, comVendedor, semVendedor: semLista.length, semLista, totalAno: doAno.length };
 }
 
 function renderVendedoresView() {
@@ -56,7 +57,7 @@ function renderVendedoresView() {
     const ano = AppState.selectedYearVendedores || new Date().getFullYear();
     renderYearDropdown('vendedores');
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-    const { lista, comVendedor, semVendedor } = calcularVendedores(ano);
+    const { lista, comVendedor, semVendedor, semLista } = calcularVendedores(ano);
     const receitaTotal = lista.reduce((s, g) => s + g.receita, 0);
 
     const top = lista[0];
@@ -86,23 +87,43 @@ function renderVendedoresView() {
             <span class="right">${g.ticket !== null ? formatBRL(g.ticket) : '—'}</span>
             <span class="center">${comVendedor ? formatPct((g.clientes.length / comVendedor) * 100, 0) : '—'}</span>
         </button>
-        ${aberto ? `<div class="vd-detalhe">
-            <div class="vd-cli vd-cli-head"><span>Cliente</span><span>Entrada</span><span>Origem</span><span class="right">Mensalidade</span></div>
-            ${clientes.map(c => `<div class="vd-cli ${c.status === 'Cancelado' ? 'saiu' : ''}">
-                <span class="vd-cli-nome">${escHtml(c.nome || '—')}${c.status === 'Cancelado' ? ' <small>· saiu</small>' : ''}</span>
-                <span>${escHtml(c.dataEntrada ? formatDateBR(c.dataEntrada) : (c.mesEntrada || '—'))}</span>
-                <span>${escHtml(c.origemCliente || '—')}</span>
-                <span class="right">${temValor(c.valorMensal) ? formatBRL(Number(c.valorMensal)) : '—'}</span>
-            </div>`).join('')}
-        </div>` : ''}`;
+        ${aberto ? vdDetalhe(clientes) : ''}`;
     }).join('') : `<div class="home-empty">Nenhum cliente de ${ano} com vendedor informado. Ao cadastrar um cliente, preencha o campo <b>Vendedor</b>.</div>`;
 
+    // Clientes do ano sem vendedor informado (no fim da lista)
+    if (semLista.length) {
+        const aberto = abertos.has('__sem__');
+        const ord = semLista.slice().sort((a, b) => String(b.dataEntrada || '').localeCompare(String(a.dataEntrada || '')));
+        box.innerHTML += `
+        <button type="button" class="opp-row vd-row vd-sem ${aberto ? 'aberto' : ''}" data-vd="__sem__" title="Ver os clientes sem vendedor">
+            <span class="ind-pos">—</span>
+            <span class="or-nome"><span class="ind-seta">›</span>Sem vendedor</span>
+            <span class="vd-sem-qtd"><b>${semLista.length}</b> ${semLista.length === 1 ? 'cliente' : 'clientes'}</span>
+            <span class="right">—</span>
+            <span class="right">—</span>
+            <span class="center">—</span>
+        </button>
+        ${aberto ? vdDetalhe(ord, true) : ''}`;
+    }
+
+    box.querySelectorAll('[data-vd-editar]').forEach(b => b.onclick = (e) => { e.stopPropagation(); openEditClienteModal(b.dataset.vdEditar); });
     box.querySelectorAll('.vd-row[data-vd]').forEach(btn => btn.onclick = () => {
         const k = btn.dataset.vd;
         if (abertos.has(k)) abertos.delete(k); else abertos.add(k);
         renderVendedoresView();
     });
-    set('vd-aviso', semVendedor
-        ? `${semVendedor} ${semVendedor === 1 ? 'cliente fechado' : 'clientes fechados'} em ${ano} ${semVendedor === 1 ? 'está' : 'estão'} sem vendedor informado. Preencha pelo ✏️ na aba Clientes para entrar no ranking.`
-        : '');
+    set('vd-aviso', semVendedor ? 'Os clientes "Sem vendedor" não entram no ranking. Clique no ✏️ ao lado de cada um para informar quem fechou.' : '');
+}
+
+function vdDetalhe(clientes, comEditar = false) {
+    return `<div class="vd-detalhe ${comEditar ? 'com-editar' : ''}">
+        <div class="vd-cli vd-cli-head"><span>Cliente</span><span>Entrada</span><span>Origem</span><span class="right">Mensalidade</span>${comEditar ? '<span></span>' : ''}</div>
+        ${clientes.map(c => `<div class="vd-cli ${c.status === 'Cancelado' ? 'saiu' : ''}">
+            <span class="vd-cli-nome">${escHtml(c.nome || '—')}${c.status === 'Cancelado' ? ' <small>· saiu</small>' : ''}</span>
+            <span>${escHtml(c.dataEntrada ? formatDateBR(c.dataEntrada) : (c.mesEntrada || '—'))}</span>
+            <span>${escHtml(c.origemCliente || '—')}</span>
+            <span class="right">${temValor(c.valorMensal) ? formatBRL(Number(c.valorMensal)) : '—'}</span>
+            ${comEditar ? `<span class="right"><button type="button" class="tr-btn-icone" data-vd-editar="${escHtml(c.id)}" title="Informar vendedor">✎</button></span>` : ''}
+        </div>`).join('')}
+    </div>`;
 }
