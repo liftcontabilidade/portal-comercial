@@ -2327,16 +2327,13 @@ function renderIndicacoes(ano) {
     document.querySelectorAll('#ind-escopo button').forEach(b => b.classList.toggle('active', b.dataset.escopo === (todos ? 'todos' : 'ano')));
     const titulo = document.getElementById('ind-titulo');
     if (titulo) titulo.textContent = `QUEM MAIS INDICOU — ${todos ? 'TODOS OS ANOS' : ano}`;
-    const nomesCad = new Map(AppState.clientes.map(c => [(c.nome || '').trim().toLocaleLowerCase('pt-BR'), c]));
     const max = Math.max(1, ...lista.map(g => g.clientes.length));
     box.innerHTML = lista.length ? lista.map((g, i) => {
-        const cad = nomesCad.get(g.nome.toLocaleLowerCase('pt-BR'));
-        const selo = cad ? (cad.status === 'Cancelado' ? '<small class="ind-selo ex">ex-cliente</small>' : '<small class="ind-selo">cliente</small>') : '';
         const nomes = g.clientes.slice().sort((a, b) => String(b.dataEntrada).localeCompare(String(a.dataEntrada)));
         return `
         <div class="opp-row ind-row">
             <span class="ind-pos ${i < 3 ? 'top' : ''}">${i + 1}º</span>
-            <span class="or-nome">${escHtml(g.nome)}${selo}</span>
+            <span class="or-nome">${escHtml(g.nome)}</span>
             <span class="or-barra-cell"><span class="or-barra"><i style="width:${(g.clientes.length / max) * 100}%"></i></span><b>${g.clientes.length}</b></span>
             <span class="ind-clientes" title="${escHtml(nomes.map(c => c.nome + (c.mesEntrada ? ' (' + c.mesEntrada + ')' : '')).join('\n'))}">${nomes.map(c => `<span class="${c.status === 'Cancelado' ? 'saiu' : ''}">${escHtml(c.nome)}${c.mesEntrada ? ` <small>${escHtml(c.mesEntrada)}</small>` : ''}</span>`).join('')}</span>
             <span class="right">${g.receita ? formatBRL(g.receita) : '—'}</span>
