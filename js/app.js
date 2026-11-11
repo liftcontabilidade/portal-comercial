@@ -1230,7 +1230,8 @@ function renderTabelaClientesFechados(lista) {
             (c.contrato || '').toLowerCase().includes(q) ||
             (c.nome || '').toLowerCase().includes(q) ||
             (c.segmento || '').toLowerCase().includes(q) ||
-            (c.origemCliente || '').toLowerCase().includes(q)
+            (c.origemCliente || '').toLowerCase().includes(q) ||
+            (c.indicadoPor || '').toLowerCase().includes(q)
         );
     }
 
@@ -1273,7 +1274,7 @@ function renderTabelaClientesFechados(lista) {
                 ${c.status === 'Cancelado' ? `<span class="tag-saiu">Saiu${c.mesSaida ? ' em ' + c.mesSaida : ''}</span>` : ''}
             </td>
             <td>${c.segmento ? `<span class="tag-segmento">${c.segmento}</span>` : '<span style="color: var(--text-muted);">—</span>'}</td>
-            <td>${c.origemCliente ? `<span class="tag-origem">${escHtml(c.origemCliente)}</span>` : '<span style="color: var(--text-muted);">—</span>'}</td>
+            <td>${c.origemCliente ? `<span class="tag-origem">${escHtml(c.origemCliente)}</span>${c.indicadoPor ? `<small class="tag-indicador">por ${escHtml(c.indicadoPor)}</small>` : ''}` : '<span style="color: var(--text-muted);">—</span>'}</td>
             <td><strong>${c.mesEntrada}</strong></td>
             <td>${formatDateBR(c.dataEntrada)}</td>
             <td>
@@ -1391,6 +1392,9 @@ function renderTabelaSaidas(lista) {
             </td>
             <td>
                 <div class="table-actions">
+                    <button class="btn-action-icon" title="Editar Saída" onclick="openEditarSaidaModal('${s.id}')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    </button>
                     <button class="btn-action-icon danger" title="Excluir Registro" onclick="confirmDeleteSaida('${s.id}')">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </button>
@@ -2247,6 +2251,8 @@ function renderOrigensView() {
             <span class="center ${g.sairam ? 'or-saida' : 'or-zero'}">${g.sairam ? `${g.sairam} · ${formatPct(g.taxaSaida, 0)}` : '0'}</span>
         </button>`).join('') : `<div class="home-empty">Nenhum cliente cadastrado em ${ano}.</div>`, true);
 
+    renderIndicacoes(ano);
+
     document.querySelectorAll('#or-rows .or-row').forEach(btn => btn.onclick = () => {
         AppState.selectedYearClientes = ano;
         AppState.filterMesClientes = '';
@@ -2257,6 +2263,90 @@ function renderOrigensView() {
         if (selMes) selMes.value = '';
         switchView('clientes');
     });
+}
+
+/* ==========================================================================
+   INDICAÇÕES — quem indicou clientes que fecharam
+   ========================================================================== */
+const ehIndicacao = (origem) => /indica/i.test(String(origem || '').normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
+
+function atualizarCampoIndicador(pre) {
+    const grupo = document.getElementById(pre + '-indicador-grupo');
+    const input = document.getElementById(pre + '-indicador');
+    if (!grupo || !input) return;
+    const mostrar = ehIndicacao(document.getElementById(pre + '-origem').value);
+    grupo.classList.toggle('oculto', !mostrar);
+    input.required = mostrar;
+    if (mostrar) {
+        const dl = document.getElementById('lista-clientes-nomes');
+        if (dl) {
+            const nomes = new Map();
+            AppState.clientes.forEach(c => { const n = (c.nome || '').trim(); if (n) nomes.set(n.toLocaleLowerCase('pt-BR'), n); });
+            AppState.clientes.forEach(c => { const n = (c.indicadoPor || '').trim(); if (n && !nomes.has(n.toLocaleLowerCase('pt-BR'))) nomes.set(n.toLocaleLowerCase('pt-BR'), n); });
+            dl.innerHTML = [...nomes.values()].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(n => `<option value="${escHtml(n)}"></option>`).join('');
+        }
+    }
+}
+
+// Lê o "Quem indicou?": '' se não for indicação; false se faltar o nome
+function lerIndicador(pre, idProprio) {
+    if (!ehIndicacao(document.getElementById(pre + '-origem').value)) return '';
+    const v = document.getElementById(pre + '-indicador').value.trim().replace(/\s+/g, ' ');
+    if (!v) { alert('Informe o nome do cliente que fez a indicação.'); return false; }
+    const chave = v.toLocaleLowerCase('pt-BR');
+    // Usa a grafia já cadastrada (cliente ou indicador anterior) para somar certo no ranking
+    const cad = AppState.clientes.find(c => c.id !== idProprio && (c.nome || '').trim().toLocaleLowerCase('pt-BR') === chave);
+    if (cad) return cad.nome.trim();
+    const ant = AppState.clientes.find(c => c.id !== idProprio && (c.indicadoPor || '').trim().toLocaleLowerCase('pt-BR') === chave);
+    return ant ? ant.indicadoPor.trim() : v;
+}
+
+function calcularIndicacoes(ano) {
+    const todos = AppState.indicacoesEscopo === 'todos';
+    const base = AppState.clientes.filter(c => todos || Number(c.ano) === ano);
+    const grupos = new Map();
+    base.forEach(c => {
+        const nome = (c.indicadoPor || '').trim();
+        if (!nome) return;
+        const k = nome.toLocaleLowerCase('pt-BR');
+        if (!grupos.has(k)) grupos.set(k, { nome, clientes: [], receita: 0, sairam: 0 });
+        const g = grupos.get(k);
+        g.clientes.push(c);
+        if (temValor(c.valorMensal) && c.status !== 'Cancelado') g.receita += Number(c.valorMensal);
+        if (c.status === 'Cancelado') g.sairam += 1;
+    });
+    const lista = [...grupos.values()].sort((a, b) => b.clientes.length - a.clientes.length || b.receita - a.receita || a.nome.localeCompare(b.nome, 'pt-BR'));
+    const semNome = base.filter(c => ehIndicacao(c.origemCliente) && !(c.indicadoPor || '').trim()).length;
+    return { lista, semNome, todos };
+}
+
+function renderIndicacoes(ano) {
+    const box = document.getElementById('ind-rows');
+    if (!box) return;
+    const { lista, semNome, todos } = calcularIndicacoes(ano);
+    document.querySelectorAll('#ind-escopo button').forEach(b => b.classList.toggle('active', b.dataset.escopo === (todos ? 'todos' : 'ano')));
+    const titulo = document.getElementById('ind-titulo');
+    if (titulo) titulo.textContent = `QUEM MAIS INDICOU — ${todos ? 'TODOS OS ANOS' : ano}`;
+    const nomesCad = new Map(AppState.clientes.map(c => [(c.nome || '').trim().toLocaleLowerCase('pt-BR'), c]));
+    const max = Math.max(1, ...lista.map(g => g.clientes.length));
+    box.innerHTML = lista.length ? lista.map((g, i) => {
+        const cad = nomesCad.get(g.nome.toLocaleLowerCase('pt-BR'));
+        const selo = cad ? (cad.status === 'Cancelado' ? '<small class="ind-selo ex">ex-cliente</small>' : '<small class="ind-selo">cliente</small>') : '';
+        const nomes = g.clientes.slice().sort((a, b) => String(b.dataEntrada).localeCompare(String(a.dataEntrada)));
+        return `
+        <div class="opp-row ind-row">
+            <span class="ind-pos ${i < 3 ? 'top' : ''}">${i + 1}º</span>
+            <span class="or-nome">${escHtml(g.nome)}${selo}</span>
+            <span class="or-barra-cell"><span class="or-barra"><i style="width:${(g.clientes.length / max) * 100}%"></i></span><b>${g.clientes.length}</b></span>
+            <span class="ind-clientes" title="${escHtml(nomes.map(c => c.nome + (c.mesEntrada ? ' (' + c.mesEntrada + ')' : '')).join('\n'))}">${nomes.map(c => `<span class="${c.status === 'Cancelado' ? 'saiu' : ''}">${escHtml(c.nome)}${c.mesEntrada ? ` <small>${escHtml(c.mesEntrada)}</small>` : ''}</span>`).join('')}</span>
+            <span class="right">${g.receita ? formatBRL(g.receita) : '—'}</span>
+            <span class="center ${g.sairam ? 'or-saida' : 'or-zero'}">${g.sairam}</span>
+        </div>`;
+    }).join('') : `<div class="home-empty">Nenhuma indicação com o nome de quem indicou ${todos ? 'ainda' : 'em ' + ano}. Ao cadastrar um cliente com origem <b>Indicação</b>, informe quem indicou.</div>`;
+    const aviso = document.getElementById('ind-aviso');
+    if (aviso) aviso.textContent = semNome
+        ? `${semNome} ${semNome === 1 ? 'cliente com origem Indicação está' : 'clientes com origem Indicação estão'} sem o nome de quem indicou. Preencha pelo ✏️ na aba Clientes para entrar no ranking.`
+        : '';
 }
 
 /* ==========================================================================
@@ -2299,6 +2389,16 @@ function setupModals() {
         });
     }
 
+    // Campo "Quem indicou?" só aparece quando a origem é Indicação
+    ['input-cliente', 'edit-cliente'].forEach(pre => {
+        const origem = document.getElementById(pre + '-origem');
+        if (origem) ['input', 'change'].forEach(ev => origem.addEventListener(ev, () => atualizarCampoIndicador(pre)));
+    });
+    document.querySelectorAll('#ind-escopo button').forEach(b => b.addEventListener('click', () => {
+        AppState.indicacoesEscopo = b.dataset.escopo;
+        renderOrigensView();
+    }));
+
     // Nova Saída (botão na aba Clientes)
     const btnNovaSaida = document.getElementById('btn-open-nova-saida');
     if (btnNovaSaida) btnNovaSaida.addEventListener('click', () => openNovaSaidaModal());
@@ -2306,7 +2406,8 @@ function setupModals() {
     if (formNovaSaida) {
         formNovaSaida.addEventListener('submit', (e) => {
             e.preventDefault();
-            handleNovaSaidaSubmit();
+            const idEdicao = document.getElementById('ns-id').value;
+            if (idEdicao) handleEditarSaidaSubmit(idEdicao); else handleNovaSaidaSubmit();
         });
     }
 
@@ -2347,6 +2448,8 @@ function openNovoClienteModal() {
     renderListasSegmentos();
     document.getElementById('input-cliente-segmento').value = '';
     document.getElementById('input-cliente-origem').value = '';
+    document.getElementById('input-cliente-indicador').value = '';
+    atualizarCampoIndicador('input-cliente');
     document.getElementById('input-cliente-data').value = new Date().toISOString().split('T')[0];
     document.getElementById('input-cliente-assinado').value = 'Sim';
     document.getElementById('input-cliente-ticket').value = '2500';
@@ -2375,6 +2478,8 @@ function handleNovoClienteSubmit() {
         alert('Por favor, informe um valor de mensalidade válido (ex: 697 ou 697,50).');
         return;
     }
+    const indicadoPor = lerIndicador('input-cliente');
+    if (indicadoPor === false) return;
     const segmento = registrarSegmento(segmentoDigitado);
 
     const dateParts = dataEntrada.split('-');
@@ -2395,6 +2500,7 @@ function handleNovoClienteSubmit() {
         ano: ano,
         status: 'Ativo'
     };
+    if (indicadoPor) novoCliente.indicadoPor = indicadoPor;
 
     AppState.clientes.unshift(novoCliente);
     saveStorage();
@@ -2414,6 +2520,8 @@ function openEditClienteModal(clienteId) {
     renderListasSegmentos();
     document.getElementById('edit-cliente-segmento').value = cliente.segmento || '';
     document.getElementById('edit-cliente-origem').value = cliente.origemCliente || '';
+    document.getElementById('edit-cliente-indicador').value = cliente.indicadoPor || '';
+    atualizarCampoIndicador('edit-cliente');
     document.getElementById('edit-cliente-data').value = cliente.dataEntrada;
     document.getElementById('edit-cliente-assinado').value = cliente.assinado || '';
     document.getElementById('edit-cliente-ticket').value = temValor(cliente.valorMensal) ? formatValorInput(cliente.valorMensal) : '';
@@ -2433,6 +2541,9 @@ function handleEditClienteSubmit() {
         return;
     }
 
+    const indicadoPor = lerIndicador('edit-cliente', cliente.id);
+    if (indicadoPor === false) return;
+
     const dataEntrada = document.getElementById('edit-cliente-data').value;
     const dateParts = dataEntrada.split('-');
     const ano = parseInt(dateParts[0]);
@@ -2443,6 +2554,7 @@ function handleEditClienteSubmit() {
     const segmentoEditado = document.getElementById('edit-cliente-segmento').value.trim();
     cliente.segmento = segmentoEditado ? registrarSegmento(segmentoEditado) : '';
     cliente.origemCliente = normalizarOrigem(document.getElementById('edit-cliente-origem').value);
+    if (indicadoPor) cliente.indicadoPor = indicadoPor; else delete cliente.indicadoPor;
     cliente.dataEntrada = dataEntrada;
     cliente.mesEntrada = `${mes}/${ano}`;
     cliente.ano = ano;
@@ -2467,6 +2579,74 @@ function getClientesAtivos() {
 }
 
 function openNovaSaidaModal() {
+    document.getElementById('ns-id').value = '';
+    document.getElementById('ns-titulo').textContent = 'Registrar Nova Saída';
+    document.getElementById('ns-botao').textContent = 'Salvar Saída';
+    preencherMotivosSaida();
+    ['ns-nome', 'ns-aviso', 'ns-motivo', 'ns-valor'].forEach(id => { document.getElementById(id).value = ''; });
+    document.getElementById('ns-saida').value = new Date().toISOString().split('T')[0];
+    document.getElementById('modal-nova-saida').classList.add('active');
+    setTimeout(() => document.getElementById('ns-nome').focus(), 50);
+}
+
+// Editar uma saída já registrada (abre a mesma janela da Nova Saída, preenchida)
+function openEditarSaidaModal(saidaId) {
+    const s = AppState.saidas.find(x => String(x.id) === String(saidaId));
+    if (!s) return;
+    preencherMotivosSaida();
+    document.getElementById('ns-id').value = s.id;
+    document.getElementById('ns-titulo').textContent = 'Editar Saída';
+    document.getElementById('ns-botao').textContent = 'Salvar Alterações';
+    document.getElementById('ns-nome').value = s.nome || '';
+    const av = String(s.dataAviso || '').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    document.getElementById('ns-aviso').value = av ? `${av[3]}-${av[2]}-${av[1]}` : (/^\d{4}-\d{2}-\d{2}$/.test(s.dataAviso || '') ? s.dataAviso : '');
+    document.getElementById('ns-saida').value = s.dataSaida || '';
+    document.getElementById('ns-motivo').value = s.motivo || '';
+    document.getElementById('ns-valor').value = temValor(s.valorMensal) ? formatValorInput(s.valorMensal) : '';
+    document.getElementById('modal-nova-saida').classList.add('active');
+    setTimeout(() => document.getElementById('ns-nome').focus(), 50);
+}
+
+function handleEditarSaidaSubmit(saidaId) {
+    const s = AppState.saidas.find(x => String(x.id) === String(saidaId));
+    if (!s) return;
+    const nome = document.getElementById('ns-nome').value.trim();
+    const dataSaida = document.getElementById('ns-saida').value;
+    const motivo = document.getElementById('ns-motivo').value.trim();
+    if (!nome || !dataSaida || !motivo) {
+        alert('Preencha o cliente, a data da saída e o motivo.');
+        return;
+    }
+    const valorTxt = document.getElementById('ns-valor').value.trim();
+    const valor = valorTxt ? parseValorBR(valorTxt) : null;
+    if (valorTxt && isNaN(valor)) {
+        alert('Valor da mensalidade inválido. Use por exemplo 697 ou 697,50.');
+        return;
+    }
+    const aviso = document.getElementById('ns-aviso').value;
+    const [aS, mS] = dataSaida.split('-');
+    s.nome = nome;
+    s.dataAviso = aviso ? formatDateBR(aviso) : 'N/D';
+    s.dataSaida = dataSaida;
+    s.mesSaida = `${mS}/${aS}`;
+    s.ano = parseInt(aS, 10);
+    s.motivo = motivo;
+    if (valor === null) delete s.valorMensal; else s.valorMensal = valor;
+    // Mantém o cliente ligado a esta saída com o mês de saída atualizado
+    const cliente = AppState.clientes.find(c => (s.clienteId && c.id === s.clienteId) || (c.saidaId && c.saidaId === s.id));
+    if (cliente) {
+        cliente.mesSaida = s.mesSaida;
+        if (cliente.dataEntrada) s.mesesAtivos = Math.max(1, Math.round((new Date(dataSaida) - new Date(cliente.dataEntrada)) / (1000 * 60 * 60 * 24 * 30.4)));
+    }
+    saveStorage();
+    document.getElementById('modal-nova-saida').classList.remove('active');
+    AppState.selectedYearClientes = s.ano;
+    AppState.activeClientesTab = 'saidas';
+    showToast(`Saída de ${s.nome} atualizada.`);
+    renderAll();
+}
+
+function preencherMotivosSaida() {
     const motivos = new Map();
     [...MOTIVOS_SAIDA_PADRAO, ...AppState.saidas.map(s => s.motivo)].forEach(m => {
         const v = (m || '').trim();
@@ -2474,11 +2654,6 @@ function openNovaSaidaModal() {
     });
     const dlMotivos = document.getElementById('lista-motivos-saida');
     if (dlMotivos) dlMotivos.innerHTML = [...motivos.values()].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(m => `<option value="${m}"></option>`).join('');
-
-    ['ns-nome', 'ns-aviso', 'ns-motivo', 'ns-valor'].forEach(id => { document.getElementById(id).value = ''; });
-    document.getElementById('ns-saida').value = new Date().toISOString().split('T')[0];
-    document.getElementById('modal-nova-saida').classList.add('active');
-    setTimeout(() => document.getElementById('ns-nome').focus(), 50);
 }
 
 function encontrarClienteAtivoPorNome(nome) {

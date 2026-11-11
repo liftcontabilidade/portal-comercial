@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <!-- Estilos do Portal -->
-    <link rel="stylesheet" href="css/styles.css?v=20261110f">
+    <link rel="stylesheet" href="css/styles.css?v=20261111a">
 </head>
 <body>
     <div class="app-container">
@@ -880,6 +880,28 @@
                         </div>
                         <div class="or-aviso" id="or-aviso"></div>
                     </div>
+
+                    <div class="opp-card ind-card">
+                        <div class="opp-card-head ind-head">
+                            <span class="dash-section-title" id="ind-titulo">QUEM MAIS INDICOU — 2026</span>
+                            <div class="tr-tipos" id="ind-escopo">
+                                <button type="button" data-escopo="ano" class="active">Ano selecionado</button>
+                                <button type="button" data-escopo="todos">Todos os anos</button>
+                            </div>
+                        </div>
+                        <div class="opp-table">
+                            <div class="opp-row ind-row opp-row-head">
+                                <span>#</span>
+                                <span>Quem indicou</span>
+                                <span>Indicações fechadas</span>
+                                <span>Clientes indicados</span>
+                                <span class="right">Receita ativa (mensal)</span>
+                                <span class="center">Saíram</span>
+                            </div>
+                            <div id="ind-rows"></div>
+                        </div>
+                        <div class="or-aviso" id="ind-aviso"></div>
+                    </div>
                 </section>
 
                 <!-- ------------------------------------------------------------
@@ -1017,6 +1039,11 @@
                         <input type="text" class="form-input" id="input-cliente-origem" list="lista-origens" placeholder="Digite ou escolha: Indicação, Instagram, Google..." autocomplete="off">
                     </div>
 
+                    <div class="form-group oculto" id="input-cliente-indicador-grupo">
+                        <label class="form-label">Quem indicou?</label>
+                        <input type="text" class="form-input" id="input-cliente-indicador" list="lista-clientes-nomes" placeholder="Nome do cliente que fez a indicação" autocomplete="off">
+                    </div>
+
                     <div class="form-grid-2">
                         <div class="form-group">
                             <label class="form-label">Data da Entrada</label>
@@ -1075,6 +1102,11 @@
                     <div class="form-group">
                         <label class="form-label">Origem do Cliente</label>
                         <input type="text" class="form-input" id="edit-cliente-origem" list="lista-origens" placeholder="Digite ou escolha: Indicação, Instagram, Google..." autocomplete="off">
+                    </div>
+
+                    <div class="form-group oculto" id="edit-cliente-indicador-grupo">
+                        <label class="form-label">Quem indicou?</label>
+                        <input type="text" class="form-input" id="edit-cliente-indicador" list="lista-clientes-nomes" placeholder="Nome do cliente que fez a indicação" autocomplete="off">
                     </div>
 
                     <div class="form-grid-2">
@@ -1160,11 +1192,12 @@
     <div class="modal-backdrop" id="modal-nova-saida">
         <div class="modal-dialog">
             <div class="modal-header">
-                <span class="modal-title">Registrar Nova Saída</span>
+                <span class="modal-title" id="ns-titulo">Registrar Nova Saída</span>
                 <button class="modal-close-btn">&times;</button>
             </div>
             <form id="form-nova-saida" autocomplete="off">
                 <div class="modal-body">
+                    <input type="hidden" id="ns-id">
                     <div class="form-group">
                         <label class="form-label">Cliente</label>
                         <input type="text" class="form-input" id="ns-nome" placeholder="Nome do cliente" required>
@@ -1192,12 +1225,13 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-secondary btn-modal-cancel">Cancelar</button>
-                    <button type="submit" class="btn-lift-action">Salvar Saída</button>
+                    <button type="submit" class="btn-lift-action" id="ns-botao">Salvar Saída</button>
                 </div>
             </form>
         </div>
     </div>
     <datalist id="lista-motivos-saida"></datalist>
+    <datalist id="lista-clientes-nomes"></datalist>
 
     <!-- ====================================================================
          MODAIS: TRÁFEGO PAGO (lançamento manual e importação)
@@ -1483,12 +1517,12 @@
     <!-- Scripts da Aplicação -->
     <datalist id="lista-segmentos"></datalist>
     <datalist id="lista-origens"></datalist>
-    <script src="js/data.js?v=20261110f"></script>
-    <script src="js/charts.js?v=20261110f"></script>
-    <script src="js/firebase-config.js?v=20261110f"></script>
-    <script src="js/app.js?v=20261110f"></script>
-    <script src="js/trafego.js?v=20261110f"></script>
-    <script src="js/meta-ads.js?v=20261110f"></script>
-    <script type="module" src="js/firebase-sync.js?v=20261110f"></script>
+    <script src="js/data.js?v=20261111a"></script>
+    <script src="js/charts.js?v=20261111a"></script>
+    <script src="js/firebase-config.js?v=20261111a"></script>
+    <script src="js/app.js?v=20261111a"></script>
+    <script src="js/trafego.js?v=20261111a"></script>
+    <script src="js/meta-ads.js?v=20261111a"></script>
+    <script type="module" src="js/firebase-sync.js?v=20261111a"></script>
 </body>
 </html>
