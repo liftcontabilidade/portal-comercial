@@ -2466,8 +2466,7 @@ function openNovoClienteModal() {
     document.getElementById('input-cliente-segmento').value = '';
     document.getElementById('input-cliente-origem').value = '';
     document.getElementById('input-cliente-indicador').value = '';
-    document.getElementById('input-cliente-vendedor').value = '';
-    preencherListaVendedores();
+    preencherListaVendedores({ 'input-cliente-vendedor': '' });
     atualizarCampoIndicador('input-cliente');
     document.getElementById('input-cliente-data').value = new Date().toISOString().split('T')[0];
     document.getElementById('input-cliente-assinado').value = 'Sim';
@@ -2542,8 +2541,7 @@ function openEditClienteModal(clienteId) {
     document.getElementById('edit-cliente-segmento').value = cliente.segmento || '';
     document.getElementById('edit-cliente-origem').value = cliente.origemCliente || '';
     document.getElementById('edit-cliente-indicador').value = cliente.indicadoPor || '';
-    document.getElementById('edit-cliente-vendedor').value = cliente.vendedor || '';
-    preencherListaVendedores();
+    preencherListaVendedores({ 'edit-cliente-vendedor': cliente.vendedor || '' });
     atualizarCampoIndicador('edit-cliente');
     document.getElementById('edit-cliente-data').value = cliente.dataEntrada;
     document.getElementById('edit-cliente-assinado').value = cliente.assinado || '';

@@ -9,9 +9,19 @@ function listaVendedores() {
     return [...nomes.values()].sort((a, b) => a.localeCompare(b, 'pt-BR'));
 }
 
-function preencherListaVendedores() {
-    const dl = document.getElementById('lista-vendedores');
-    if (dl) dl.innerHTML = listaVendedores().map(n => `<option value="${escHtml(n)}"></option>`).join('');
+const VENDEDORES_OPCOES = ['Tom Gomes', 'Levi e Lucas'];
+
+// Monta as opções do campo Vendedor (mantém um nome antigo, se o cliente já tiver outro)
+function preencherListaVendedores(valores = {}) {
+    ['input-cliente-vendedor', 'edit-cliente-vendedor'].forEach(id => {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        const atual = id in valores ? String(valores[id] || '').trim() : sel.value;
+        const extras = atual && !VENDEDORES_OPCOES.some(n => chaveVendedor(n) === chaveVendedor(atual)) ? [atual] : [];
+        sel.innerHTML = '<option value="">Selecione</option>' + VENDEDORES_OPCOES.concat(extras).map(n => `<option value="${escHtml(n)}">${escHtml(n)}</option>`).join('');
+        const igual = VENDEDORES_OPCOES.find(n => chaveVendedor(n) === chaveVendedor(atual));
+        sel.value = igual || atual;
+    });
 }
 
 // Lê o vendedor digitado, usando a grafia já cadastrada (para somar certo no ranking)
