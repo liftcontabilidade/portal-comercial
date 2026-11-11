@@ -2175,3 +2175,19 @@ button.ind-row:hover, button.ind-row.aberto { background: #F8FAFC; }
 .ind-clientes span.saiu { color: #991B1B; background: #FEF2F2; border-color: #FECACA; text-decoration: line-through; }
 .ind-clientes small { color: var(--text-muted); font-weight: 500; }
 @media (max-width: 900px) { .ind-row { grid-template-columns: 34px 1fr 1fr; } .ind-row > :nth-child(n+4) { display: none; } .ind-clientes { padding-left: 14px; } }
+
+/* ===== Vendedores ===== */
+.vd-row { grid-template-columns: 44px 1.5fr 1.6fr 1.1fr 1fr .8fr; min-height: 46px; }
+button.vd-row { width: 100%; border: 0; background: transparent; font: inherit; text-align: left; cursor: pointer; }
+button.vd-row:hover, button.vd-row.aberto { background: #F8FAFC; }
+.vd-row.aberto .ind-seta { transform: rotate(90deg); color: var(--lift-orange); }
+#vd-rows > * + * { border-top: 1px solid var(--border-subtle); border-radius: 0; }
+.vd-detalhe { background: #F8FAFC; padding: 4px 16px 12px 72px; }
+.vd-cli { display: grid; grid-template-columns: 2fr 1fr 1.2fr 1fr; gap: 12px; padding: 7px 10px; font-size: 12.5px; color: var(--text-primary); border-bottom: 1px solid var(--border-subtle); }
+.vd-cli:last-child { border-bottom: 0; }
+.vd-cli-head { font-size: 10.5px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; color: var(--text-muted); }
+.vd-cli .right { text-align: right; }
+.vd-cli-nome { font-weight: 700; color: var(--lift-blue); }
+.vd-cli.saiu .vd-cli-nome { color: #991B1B; text-decoration: line-through; }
+.vd-cli small { color: var(--text-muted); font-weight: 500; }
+@media (max-width: 900px) { .vd-row { grid-template-columns: 34px 1fr 1fr; } .vd-row > :nth-child(n+4) { display: none; } .vd-detalhe { padding-left: 12px; } .vd-cli { grid-template-columns: 1.6fr 1fr; } .vd-cli > :nth-child(n+3) { display: none; } }

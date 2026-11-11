@@ -421,6 +421,8 @@ function switchView(viewName) {
         renderChurnView();
     } else if (viewName === 'origens') {
         renderOrigensView();
+    } else if (viewName === 'vendedores') {
+        renderVendedoresView();
     } else if (viewName === 'metas') {
         renderMetasView();
     } else if (viewName === 'trafego') {
@@ -440,6 +442,7 @@ function renderAll() {
     renderReceitaView();
     renderChurnView();
     renderOrigensView();
+    if (typeof renderVendedoresView === 'function') renderVendedoresView();
     renderMetasView();
     if (typeof renderTrafegoView === 'function') renderTrafegoView();
 }
@@ -1169,7 +1172,8 @@ const YEAR_DROPDOWNS = {
     oportunidades: { get: () => AppState.selectedYearOportunidades || 2026, set: (a) => { AppState.selectedYearOportunidades = a; }, render: () => renderOportunidadesView() },
     receita:  { get: () => AppState.selectedYearReceita || new Date().getFullYear(), set: (a) => { AppState.selectedYearReceita = a; }, render: () => renderReceitaView() },
     churn:    { get: () => AppState.selectedYearChurn || new Date().getFullYear(), set: (a) => { AppState.selectedYearChurn = a; }, render: () => renderChurnView() },
-    origens:  { get: () => AppState.selectedYearOrigens || new Date().getFullYear(), set: (a) => { AppState.selectedYearOrigens = a; }, render: () => renderOrigensView() }
+    origens:  { get: () => AppState.selectedYearOrigens || new Date().getFullYear(), set: (a) => { AppState.selectedYearOrigens = a; }, render: () => renderOrigensView() },
+    vendedores: { get: () => AppState.selectedYearVendedores || new Date().getFullYear(), set: (a) => { AppState.selectedYearVendedores = a; }, render: () => renderVendedoresView() }
 };
 
 function renderYearDropdown(prefixo) {
@@ -1231,7 +1235,8 @@ function renderTabelaClientesFechados(lista) {
             (c.nome || '').toLowerCase().includes(q) ||
             (c.segmento || '').toLowerCase().includes(q) ||
             (c.origemCliente || '').toLowerCase().includes(q) ||
-            (c.indicadoPor || '').toLowerCase().includes(q)
+            (c.indicadoPor || '').toLowerCase().includes(q) ||
+            (c.vendedor || '').toLowerCase().includes(q)
         );
     }
 
@@ -2461,6 +2466,8 @@ function openNovoClienteModal() {
     document.getElementById('input-cliente-segmento').value = '';
     document.getElementById('input-cliente-origem').value = '';
     document.getElementById('input-cliente-indicador').value = '';
+    document.getElementById('input-cliente-vendedor').value = '';
+    preencherListaVendedores();
     atualizarCampoIndicador('input-cliente');
     document.getElementById('input-cliente-data').value = new Date().toISOString().split('T')[0];
     document.getElementById('input-cliente-assinado').value = 'Sim';
@@ -2513,6 +2520,8 @@ function handleNovoClienteSubmit() {
         status: 'Ativo'
     };
     if (indicadoPor) novoCliente.indicadoPor = indicadoPor;
+    const vendedorNovo = lerVendedor('input-cliente');
+    if (vendedorNovo) novoCliente.vendedor = vendedorNovo;
 
     AppState.clientes.unshift(novoCliente);
     saveStorage();
@@ -2533,6 +2542,8 @@ function openEditClienteModal(clienteId) {
     document.getElementById('edit-cliente-segmento').value = cliente.segmento || '';
     document.getElementById('edit-cliente-origem').value = cliente.origemCliente || '';
     document.getElementById('edit-cliente-indicador').value = cliente.indicadoPor || '';
+    document.getElementById('edit-cliente-vendedor').value = cliente.vendedor || '';
+    preencherListaVendedores();
     atualizarCampoIndicador('edit-cliente');
     document.getElementById('edit-cliente-data').value = cliente.dataEntrada;
     document.getElementById('edit-cliente-assinado').value = cliente.assinado || '';
@@ -2567,6 +2578,8 @@ function handleEditClienteSubmit() {
     cliente.segmento = segmentoEditado ? registrarSegmento(segmentoEditado) : '';
     cliente.origemCliente = normalizarOrigem(document.getElementById('edit-cliente-origem').value);
     if (indicadoPor) cliente.indicadoPor = indicadoPor; else delete cliente.indicadoPor;
+    const vendedorEd = lerVendedor('edit-cliente');
+    if (vendedorEd) cliente.vendedor = vendedorEd; else delete cliente.vendedor;
     cliente.dataEntrada = dataEntrada;
     cliente.mesEntrada = `${mes}/${ano}`;
     cliente.ano = ano;
@@ -3017,6 +3030,7 @@ function setupEventListeners() {
     setupYearDropdown('receita');
     setupYearDropdown('churn');
     setupYearDropdown('origens');
+    setupYearDropdown('vendedores');
     setupMetasInputs();
     setupValorSaidas();
     setupOportunidadesInputs();
