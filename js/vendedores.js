@@ -68,11 +68,22 @@ function renderVendedoresView() {
     set('vd-kpi-receita-sub', topRec && topRec.receita ? `${formatBRL(topRec.receita)}/mês` : '');
     set('vd-kpi-total', comVendedor);
     set('vd-kpi-total-sub', `${lista.length} ${lista.length === 1 ? 'vendedor' : 'vendedores'} em ${ano}`);
+    const subTotal = document.getElementById('vd-kpi-total-sub');
+    if (subTotal && semVendedor) {
+        subTotal.innerHTML = `${escHtml(subTotal.textContent)} · <button type="button" class="vd-link-sem" id="vd-ver-sem">${semVendedor} sem vendedor</button>`;
+        document.getElementById('vd-ver-sem').onclick = () => {
+            AppState._vdAbertos.add('__sem__');
+            renderVendedoresView();
+            const linha = document.querySelector('#vd-rows .vd-sem');
+            if (linha) linha.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
+    }
     set('vd-kpi-receita-total', receitaTotal ? formatBRL(receitaTotal) : '—');
     set('vd-kpi-receita-total-sub', comVendedor ? 'soma das mensalidades fechadas' : '');
     set('vd-titulo', `RANKING DE VENDEDORES — ${ano}`);
 
-    if (!AppState._vdAbertos) AppState._vdAbertos = new Set();
+    // A lista "Sem vendedor" já começa aberta
+    if (!AppState._vdAbertos) AppState._vdAbertos = new Set(['__sem__']);
     const abertos = AppState._vdAbertos;
     const max = Math.max(1, ...lista.map(g => g.clientes.length));
     box.innerHTML = lista.length ? lista.map((g, i) => {

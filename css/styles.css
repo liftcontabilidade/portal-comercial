@@ -2196,3 +2196,4 @@ button.vd-row:hover, button.vd-row.aberto { background: #F8FAFC; }
 .vd-sem-qtd b { color: var(--lift-orange); font-size: 14px; }
 .vd-detalhe.com-editar .vd-cli { grid-template-columns: 2fr 1fr 1.2fr 1fr 40px; align-items: center; }
 .vd-detalhe.com-editar .tr-btn-icone { width: 26px; height: 26px; }
+.vd-link-sem { border: 0; background: none; padding: 0; font: inherit; font-weight: 700; color: var(--lift-orange); text-decoration: underline; cursor: pointer; }
