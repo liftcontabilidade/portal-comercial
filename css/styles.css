@@ -2027,7 +2027,7 @@ body.cloud-on .cloud-only { display: flex !important; }
    ========================================================================== */
 .or-kpi-txt { min-width: 0; }
 .or-kpi-nome { font-size: 20px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.or-row { grid-template-columns: 1.3fr 2fr 1fr 1fr 0.9fr; }
+.or-row { grid-template-columns: 1.3fr 2fr 1fr 1fr; }
 button.or-row { width: 100%; background: transparent; border: none; font-family: inherit; text-align: left; cursor: pointer; }
 #or-rows .or-row + .or-row { border-top: 1px solid var(--border-subtle); border-radius: 0; }
 #or-rows .or-row:hover { background: var(--lift-orange-light); }

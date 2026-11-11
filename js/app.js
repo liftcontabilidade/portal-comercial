@@ -2248,7 +2248,6 @@ function renderOrigensView() {
             <span class="or-barra-cell"><span class="or-barra"><i style="width:${(g.clientes / maxCli) * 100}%"></i></span><b>${g.clientes}</b><small>${formatPct((g.clientes / total) * 100, 0)}</small></span>
             <span class="right">${g.receita ? formatBRL(g.receita) : '—'}</span>
             <span class="right">${g.ticket !== null ? formatBRL(g.ticket) : '—'}</span>
-            <span class="center ${g.sairam ? 'or-saida' : 'or-zero'}">${g.sairam ? `${g.sairam} · ${formatPct(g.taxaSaida, 0)}` : '0'}</span>
         </button>`).join('') : `<div class="home-empty">Nenhum cliente cadastrado em ${ano}.</div>`, true);
 
     renderIndicacoes(ano);
