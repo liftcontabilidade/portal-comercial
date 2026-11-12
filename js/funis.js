@@ -12,7 +12,6 @@
    ========================================================================== */
 const CRM_STORAGE_LOCAL = 'lift_comercial_crm';
 const CRM_INTERVALO = 5 * 60 * 1000;
-const CRM_REGEX_PAGO = /tr[aá]fego|an[uú]ncio|\bads\b|facebook|instagram|meta|google|patrocinad|pago|campanha/i;
 
 const Funis = {
     cfg: null, cfgRecebida: false, funis: null, dados: new Map(), carregando: new Set(),
@@ -202,12 +201,10 @@ function crmSeparaOrigem(f) {
     return !/prospec/i.test(f.nome || '');
 }
 
+// Regra da LIFT: Tráfego Pago = negociação com Fonte "Anúncio"; todo o resto é Orgânico
+const crmSemAcento = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 function crmEhPago(n) {
-    const pagos = Funis.cfg && Array.isArray(Funis.cfg.fontesPagas) ? Funis.cfg.fontesPagas.map(x => x.toLocaleLowerCase('pt-BR')) : null;
-    const nomes = [n.fonte, n.campanha].filter(Boolean).map(x => String(x).toLocaleLowerCase('pt-BR'));
-    const conhecidas = Funis.cfg && Array.isArray(Funis.cfg.fontesConhecidas) ? Funis.cfg.fontesConhecidas.map(x => x.toLocaleLowerCase('pt-BR')) : [];
-    // Fonte escolhida na configuração; fonte nova (que ainda não estava na lista) segue o nome
-    return nomes.some(x => (pagos && conhecidas.includes(x)) ? pagos.includes(x) : (pagos && pagos.includes(x)) || CRM_REGEX_PAGO.test(x));
+    return /anuncio/.test(crmSemAcento(n.fonte));
 }
 
 function crmMontarFunil(f, lista) {
@@ -343,10 +340,9 @@ async function crmTestar() {
         const fontes = new Map();
         for (const f of funis.filter(x => atuais.includes(String(x.id)) || !atuais.length)) {
             const negs = (await crmChamar({ acao: 'negociacoes', funil: f.id, inicio: ini, fim: hoje }, cfg)).negociacoes || [];
-            negs.forEach(n => [n.fonte, n.campanha].filter(Boolean).forEach(x => fontes.set(x, (fontes.get(x) || 0) + 1)));
+            negs.forEach(n => { if (n.fonte) fontes.set(n.fonte, (fontes.get(n.fonte) || 0) + 1); });
         }
         Funis._teste = { ...cfg, funisLista: funis };
-        const pagas = Funis.cfg && Array.isArray(Funis.cfg.fontesPagas) ? Funis.cfg.fontesPagas : null;
         const separar = Funis.cfg && Array.isArray(Funis.cfg.separar) ? Funis.cfg.separar : funis.filter(f => !/prospec/i.test(f.nome)).map(f => String(f.id));
         info.innerHTML = `<span class="tr-txt-bom">Conexão OK:</span> ${funis.length} ${funis.length === 1 ? 'funil encontrado' : 'funis encontrados'} no RD Station CRM.`;
         opc.innerHTML = `
@@ -354,9 +350,9 @@ async function crmTestar() {
                 ${funis.map(f => `<label class="crm-op"><input type="checkbox" name="crm-funil" value="${escHtml(f.id)}" ${(!atuais.length || atuais.includes(String(f.id))) ? 'checked' : ''}> <b>${escHtml(f.nome)}</b> <small>${(f.etapas || []).length} etapas</small>
                     <span class="crm-sep"><input type="checkbox" name="crm-separar" value="${escHtml(f.id)}" ${separar.includes(String(f.id)) ? 'checked' : ''}> separar Orgânico × Tráfego Pago</span></label>`).join('')}
             </div>
-            <div class="crm-bloco"><div class="ct-secao">Fontes / campanhas que contam como Tráfego Pago</div>
-                ${fontes.size ? [...fontes.entries()].sort((a, b) => b[1] - a[1]).map(([nome, qtd]) => `<label class="crm-op"><input type="checkbox" name="crm-fonte" value="${escHtml(nome)}" ${(pagas ? pagas.includes(nome) : CRM_REGEX_PAGO.test(nome)) ? 'checked' : ''}> ${escHtml(nome)} <small>${qtd} negociações em 90 dias</small></label>`).join('')
-                    : '<p class="tr-form-dica">Nenhuma fonte ou campanha preenchida nas negociações dos últimos 90 dias. Sem isso, tudo conta como Orgânico. No RD Station CRM, preencha a <b>Fonte</b> da negociação (ex.: "Tráfego pago").</p>'}
+            <div class="crm-bloco"><div class="ct-secao">Orgânico × Tráfego Pago</div>
+                <p class="tr-form-dica">Conta como <b>Tráfego Pago</b> a negociação com <b>Fonte = Anúncio</b>; todas as outras contam como <b>Orgânico</b>.</p>
+                ${fontes.size ? [...fontes.entries()].sort((a, b) => b[1] - a[1]).map(([nome, qtd]) => `<div class="crm-op">${/anuncio/.test(crmSemAcento(nome)) ? '<span class="tr-txt-bom">Tráfego Pago</span>' : '<span class="tr-txt-neutro">Orgânico</span>'} · ${escHtml(nome)} <small>${qtd} negociações em 90 dias</small></div>`).join('') : ''}
             </div>`;
         document.getElementById('crm-salvar').disabled = false;
     } catch (e) {
@@ -368,11 +364,8 @@ async function crmSalvarDaTela() {
     const t = Funis._teste;
     if (!t) return showToast('Clique em "Testar conexão" antes de salvar.');
     const marcados = (nome) => [...document.querySelectorAll(`#crm-opcoes input[name="${nome}"]:checked`)].map(i => i.value);
-    const temFontes = document.querySelectorAll('#crm-opcoes input[name="crm-fonte"]').length > 0;
     const cfg = {
         url: t.url, chave: t.chave, funis: marcados('crm-funil'), separar: marcados('crm-separar'),
-        fontesPagas: temFontes ? marcados('crm-fonte') : null,
-        fontesConhecidas: [...document.querySelectorAll('#crm-opcoes input[name="crm-fonte"]')].map(i => i.value),
         atualizadoPor: (document.getElementById('cloud-user') || {}).textContent || '', atualizadoEm: new Date().toISOString()
     };
     if (!cfg.funis.length) return showToast('Escolha pelo menos um funil.');
