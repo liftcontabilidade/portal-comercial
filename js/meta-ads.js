@@ -298,8 +298,51 @@ async function metaTestar() {
         info.innerHTML = `<span class="tr-txt-bom">Conexão OK:</span> conta <b>${escHtml(c.name)}</b> (${escHtml(c.currency || '')}).${c.account_status !== 1 ? ' <span class="tr-txt-ruim">Atenção: a conta não está ativa.</span>' : ''} Confira abaixo o que conta como "Resultado" e clique em Salvar.`;
         document.getElementById('mc-salvar').disabled = false;
     } catch (e) {
-        info.innerHTML = `<span class="tr-txt-ruim">${escHtml(e.message)}</span>`;
+        info.innerHTML = `<span class="tr-txt-ruim">${escHtml(e.message)}</span><div class="mc-diag">Verificando o token…</div>`;
+        info.querySelector('.mc-diag').innerHTML = await metaDiagnostico(token, conta, e);
+        info.querySelectorAll('[data-mc-conta]').forEach(b => b.onclick = () => {
+            document.getElementById('mc-conta').value = b.dataset.mcConta;
+            metaTestar();
+        });
     }
+}
+
+// Quando o teste falha: mostra o que o token consegue ver, para achar o problema
+async function metaDiagnostico(token, conta, erro) {
+    const linhas = [];
+    const meta = erro && erro.meta;
+    if (meta) linhas.push(`<div class="mc-diag-orig">Resposta do Meta: ${escHtml(meta.message || '')} (código ${escHtml(meta.code)}${meta.error_subcode ? '/' + escHtml(meta.error_subcode) : ''})</div>`);
+    try {
+        const eu = await metaGet('me', { fields: 'id,name' }, token);
+        linhas.push(`✔ O token é válido — pertence a <b>${escHtml(eu.name || eu.id)}</b>.`);
+    } catch (e2) {
+        linhas.push(`✖ O token não funciona: ${escHtml(e2.message)}`);
+        return linhas.join('<br>');
+    }
+    try {
+        const perms = await metaGet('me/permissions', {}, token);
+        const ok = (perms.data || []).filter(x => x.status === 'granted').map(x => x.permission);
+        linhas.push(ok.includes('ads_read') || ok.includes('ads_management')
+            ? `✔ Permissões do token: ${escHtml(ok.join(', '))}.`
+            : `✖ O token <b>não tem a permissão ads_read</b> (tem: ${escHtml(ok.join(', ') || 'nenhuma')}). Gere um token novo marcando <b>ads_read</b>.`);
+    } catch (e3) { /* alguns tokens não listam permissões */ }
+    try {
+        const contas = await metaGetTodos('me/adaccounts', { fields: 'account_id,name,account_status', limit: 100 }, token);
+        if (!contas.length) {
+            linhas.push('✖ O token <b>não enxerga nenhuma conta de anúncios</b>. No Gerenciador de Negócios, abra o usuário do sistema → <b>Atribuir ativos → Contas de anúncios</b>, marque a conta e salve. Depois gere um <b>token novo</b>.');
+        } else {
+            const achou = contas.find(c => String(c.account_id) === String(conta));
+            if (achou) {
+                linhas.push(`✔ O token enxerga a conta <b>${escHtml(achou.name)}</b>, mas o Meta recusou a leitura. Confira se o app está ligado ao mesmo portfólio da conta e gere um token novo com <b>ads_read</b>.`);
+            } else {
+                linhas.push(`✖ O ID <b>${escHtml(conta)}</b> não está entre as contas que o token enxerga. Provavelmente é o ID do portfólio/empresa, e não da conta de anúncios. Contas disponíveis (clique para usar):`);
+                linhas.push(contas.map(c => `<button type="button" class="mc-conta-op" data-mc-conta="${escHtml(c.account_id)}">${escHtml(c.name || 'Sem nome')} — ${escHtml(c.account_id)}</button>`).join(''));
+            }
+        }
+    } catch (e4) {
+        linhas.push(`Não foi possível listar as contas do token: ${escHtml(e4.message)}`);
+    }
+    return linhas.join('<br>');
 }
 
 async function metaSalvarDaTela() {

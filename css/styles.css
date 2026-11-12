@@ -2275,3 +2275,7 @@ button.vd-row:hover, button.vd-row.aberto { background: #F8FAFC; }
 .sidebar-simbolo { display: none; }
 .sidebar.recolhida .sidebar-logo { display: none; }
 .sidebar.recolhida .sidebar-simbolo { display: block; width: 40px; height: auto; }
+.mc-diag { margin-top: 8px; padding: 10px 12px; background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: 8px; font-size: 12px; line-height: 1.7; color: var(--text-primary); }
+.mc-diag-orig { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; word-break: break-word; }
+.mc-conta-op { display: block; width: 100%; text-align: left; margin-top: 4px; padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-card); font: inherit; font-size: 12px; color: var(--lift-blue); cursor: pointer; }
+.mc-conta-op:hover { border-color: var(--lift-orange); color: var(--lift-orange); }
