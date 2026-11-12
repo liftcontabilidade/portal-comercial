@@ -425,6 +425,8 @@ function switchView(viewName) {
         renderVendedoresView();
     } else if (viewName === 'contratos') {
         renderContratosView();
+    } else if (viewName === 'funis') {
+        renderFunisView();
     } else if (viewName === 'metas') {
         renderMetasView();
     } else if (viewName === 'trafego') {

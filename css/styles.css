@@ -2280,3 +2280,38 @@ button.vd-row:hover, button.vd-row.aberto { background: #F8FAFC; }
 .mc-conta-op { display: block; width: 100%; text-align: left; margin-top: 4px; padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-card); font: inherit; font-size: 12px; color: var(--lift-blue); cursor: pointer; }
 .mc-conta-op:hover { border-color: var(--lift-orange); color: var(--lift-orange); }
 .tr-pausada { display: inline-block; margin-left: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; padding: 1px 6px; border-radius: 999px; background: rgba(255,255,255,.2); color: #FED7AA; vertical-align: middle; }
+
+/* ===== Funis (RD Station CRM) ===== */
+.fn-card { margin-bottom: 16px; }
+.fn-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.fn-resumo { font-size: 12.5px; color: var(--text-secondary); }
+.fn-verde { color: #15803D; } .fn-vermelho { color: #DC2626; }
+.fn-tabela th { white-space: nowrap; }
+.fn-tabela .fn-perca-th { color: #FCA5A5; }
+.fn-tabela td.fn-perca { color: #DC2626; font-weight: 700; }
+.fn-tabela td.fn-total { font-weight: 800; }
+.fn-linha { cursor: pointer; }
+.fn-linha:hover td { background: #F8FAFC; }
+.fn-linha td.fn-etapa { text-align: left; font-weight: 700; color: var(--lift-blue); }
+.fn-linha.aberto .ind-seta { transform: rotate(90deg); color: var(--lift-orange); }
+.fn-linha.ganho td { background: #F0FDF4; font-weight: 800; }
+.fn-linha.ganho td.fn-etapa { color: #15803D; }
+.fn-det td { background: #F8FAFC; text-align: left !important; white-space: normal !important; }
+.fn-neg { display: inline-block; margin: 3px 4px 3px 0; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--lift-blue); background: #FFFFFF; border: 1px solid var(--border-subtle); }
+.fn-neg small { font-weight: 700; }
+.fn-neg.perdida { color: #991B1B; background: #FEF2F2; border-color: #FECACA; }
+.fn-neg.ganha { color: #166534; background: #F0FDF4; border-color: #BBF7D0; }
+.fn-neg.pausada { color: #92400E; background: #FFFBEB; border-color: #FDE68A; }
+.fn-neg-vazio { font-size: 12px; color: var(--text-muted); }
+.fn-vazio { padding: 28px; text-align: center; }
+.fn-vazio h3 { margin: 0 0 8px; color: var(--lift-blue); }
+.fn-vazio p { color: var(--text-secondary); font-size: 13.5px; margin: 0 0 16px; }
+.crm-dialog { max-width: 760px; }
+.crm-passos { margin: 0 0 14px; padding-left: 20px; font-size: 13px; line-height: 1.6; color: var(--text-primary); }
+.crm-passos code { background: var(--bg-page); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+.crm-codigo { height: 140px; font-family: Consolas, 'Courier New', monospace; font-size: 11.5px; white-space: pre; resize: vertical; }
+.crm-link { border: 0; background: none; padding: 0; margin-left: 8px; font: inherit; font-size: 12px; font-weight: 700; color: var(--lift-orange); cursor: pointer; text-decoration: underline; }
+.crm-bloco { margin-top: 12px; }
+.crm-op { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 6px 0; font-size: 13px; border-bottom: 1px solid var(--border-subtle); }
+.crm-op small { color: var(--text-muted); }
+.crm-sep { margin-left: auto; font-size: 12px; color: var(--text-secondary); display: inline-flex; align-items: center; gap: 4px; }
