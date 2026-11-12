@@ -22,6 +22,12 @@ const ctCorpoAtual = () => (Contratos.modelo && Contratos.modelo.corpo) || CONTR
 // Texto da capa (abaixo da foto)
 const CT_CAPA_PADRAO = '<p>{{razao}}</p><p>CNPJ: {{cnpj}}</p><p>Contrato {{contrato}}</p><p>Serviços Contábeis</p>';
 const ctCapaAtual = () => (Contratos.modelo && Contratos.modelo.capa) || CT_CAPA_PADRAO;
+// Faixa azul do topo e rodapé (aparecem em todas as páginas)
+const CT_CAB_PADRAO = 'Contrato de Serviços Contábeis';
+const CT_ROD_PADRAO = 'LIFT Contabilidade<br>Av. Dr. Silas Munguba, 643 - Salas 108, 113 e 115 - Parangaba, Fortaleza - CE, 60740-005<br>Telefone: (85) 3063 3607<br><b>www.liftcontabilidade.com.br</b>';
+const ctCabAtual = () => (Contratos.modelo && Contratos.modelo.cabecalho) || CT_CAB_PADRAO;
+const ctRodAtual = () => (Contratos.modelo && Contratos.modelo.rodape) || CT_ROD_PADRAO;
+const CT_AREAS_EDITOR = ['ct-editor', 'ct-editor-capa', 'ct-editor-cab', 'ct-editor-rod'];
 
 /* ---------- Modelo salvo ---------- */
 function ctCarregarModeloLocal() {
@@ -41,11 +47,11 @@ async function ctSalvarModelo(modelo) {
 }
 
 window.aplicarModeloContratoDaNuvem = function (m) {
-    const antes = ctCorpoAtual() + ctCapaAtual();
+    const antes = ctCorpoAtual() + ctCapaAtual() + ctCabAtual() + ctRodAtual();
     Contratos.modelo = m && m.corpo ? m : null;
     if (!Contratos.editorSujo) ctEditorCarregar();
     ctEditorStatus();
-    if (antes !== ctCorpoAtual() + ctCapaAtual() && typeof ctAtualizarPreview === 'function') ctAtualizarPreview();
+    if (antes !== ctCorpoAtual() + ctCapaAtual() + ctCabAtual() + ctRodAtual() && typeof ctAtualizarPreview === 'function') ctAtualizarPreview();
 };
 
 /* ---------- Conversão texto do modelo <-> editor ---------- */
@@ -81,6 +87,10 @@ function ctEditorCarregar() {
     ed.innerHTML = ctParaEditor(ctCorpoAtual());
     const capa = document.getElementById('ct-editor-capa');
     if (capa) capa.innerHTML = ctParaEditor(ctCapaAtual());
+    const cab = document.getElementById('ct-editor-cab');
+    if (cab) cab.innerHTML = ctParaEditor(ctCabAtual());
+    const rod = document.getElementById('ct-editor-rod');
+    if (rod) rod.innerHTML = ctParaEditor(ctRodAtual());
     Contratos.editorSujo = false;
     ctEditorStatus();
 }
@@ -117,10 +127,12 @@ async function ctEditorSalvar() {
     const ed = document.getElementById('ct-editor');
     const corpo = ctDoEditor(ed);
     const capa = ctDoEditor(document.getElementById('ct-editor-capa'));
+    const cabecalho = ctDoEditor(document.getElementById('ct-editor-cab'));
+    const rodape = ctDoEditor(document.getElementById('ct-editor-rod'));
     if (corpo.replace(/<[^>]+>|&nbsp;|\s/g, '').length < 50) return showToast('O contrato ficou praticamente vazio. Confira antes de salvar.');
     const faltam = ['razao', 'cnpj', 'valor', 'dataExtenso'].filter(k => !corpo.includes(`{{${k}}}`));
     if (faltam.length && !confirm(`Estes campos não aparecem mais no texto: ${faltam.map(ctRotuloCampo).join(', ')}.\nSalvar mesmo assim?`)) return;
-    const modelo = { corpo, capa, atualizadoEm: new Date().toISOString(), por: (document.getElementById('cloud-user') || {}).textContent || '' };
+    const modelo = { corpo, capa, cabecalho, rodape, atualizadoEm: new Date().toISOString(), por: (document.getElementById('cloud-user') || {}).textContent || '' };
     try {
         await ctSalvarModelo(modelo);
     } catch (e) {
@@ -163,7 +175,7 @@ function ctInserirCampo(k) {
 
 // Qual área editável (capa ou corpo) contém o nó
 function ctEditorDe(no) {
-    return ['ct-editor', 'ct-editor-capa'].map(id => document.getElementById(id)).find(el => el && el.contains(no)) || null;
+    return CT_AREAS_EDITOR.map(id => document.getElementById(id)).find(el => el && el.contains(no)) || null;
 }
 
 function setupContratoEditor() {
@@ -172,7 +184,7 @@ function setupContratoEditor() {
     ctCarregarModeloLocal();
     document.execCommand('defaultParagraphSeparator', false, 'p');
     document.querySelectorAll('#ct-abas button').forEach(b => b.addEventListener('click', () => ctTrocarAba(b.dataset.aba)));
-    [ed, document.getElementById('ct-editor-capa')].forEach(area => {
+    CT_AREAS_EDITOR.map(id => document.getElementById(id)).forEach(area => {
         area.addEventListener('input', ctEditorMudou);
         // Colar sempre como texto simples (sem a formatação de outros programas)
         area.addEventListener('paste', (e) => {
@@ -196,6 +208,13 @@ function setupContratoEditor() {
         ins.value = '';
     });
     document.getElementById('ct-ed-salvar').addEventListener('click', ctEditorSalvar);
+    // PDF direto do editor: usa o texto que está na tela (mesmo sem salvar) com os dados do formulário
+    document.getElementById('ct-ed-pdf').addEventListener('click', () => ctGerarPDF({
+        corpo: ctDoEditor(ed),
+        capa: ctDoEditor(document.getElementById('ct-editor-capa')),
+        cab: ctDoEditor(document.getElementById('ct-editor-cab')),
+        rod: ctDoEditor(document.getElementById('ct-editor-rod'))
+    }));
     document.getElementById('ct-ed-descartar').addEventListener('click', () => { if (confirm('Descartar as alterações não salvas?')) ctEditorCarregar(); });
     document.getElementById('ct-ed-restaurar').addEventListener('click', ctEditorRestaurar);
     window.addEventListener('beforeunload', (e) => { if (Contratos.editorSujo) { e.preventDefault(); e.returnValue = ''; } });

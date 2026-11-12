@@ -149,8 +149,9 @@ function ctFaltando(d) {
 /* ---------- Documento ---------- */
 function ctUrl(caminho) { return new URL(caminho, location.href).href; }
 
-function ctMontarHTML(d, paraTela) {
-    let corpo = ctCorpoAtual();
+// o = textos vindos do editor (opcional): { corpo, capa, cab, rod }
+function ctMontarHTML(d, paraTela, o = {}) {
+    let corpo = o.corpo != null ? o.corpo : ctCorpoAtual();
     const blocoEF = d.ef === '1' || d.ef === '2' ? (corpo.match(new RegExp(`<!--EF${d.ef}-->([\\s\\S]*?)<!--\\/EF${d.ef}-->`)) || [])[1] : '';
     const efTemTexto = !!blocoEF && blocoEF.replace(/<[^>]+>|&nbsp;|\s/g, '').length > 0;
     const v = ctValores(d, efTemTexto);
@@ -173,7 +174,7 @@ function ctMontarHTML(d, paraTela) {
     const capa = `
     <div class="capa">
         <div class="capa-foto"><img src="${ctUrl('assets/contrato/capa.jpg')}" alt=""><div class="capa-brilho"><img class="capa-logo" src="${ctUrl('assets/contrato/logo-azul.png')}" alt=""></div></div>
-        <div class="capa-txt">${preencher(ctCapaAtual())}</div>
+        <div class="capa-txt">${preencher(o.capa != null ? o.capa : ctCapaAtual())}</div>
     </div>`;
     return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>${escHtml(titulo)}</title>
 <style>
@@ -182,10 +183,11 @@ function ctMontarHTML(d, paraTela) {
 html, body { margin: 0; padding: 0; }
 body { font-family: Arial, 'Liberation Sans', Helvetica, sans-serif; font-size: 12pt; color: #002060; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .cab { position: fixed; top: 0; left: 0; width: 210mm; height: 22mm; background: #195A7D; z-index: 2; }
-.cab span { position: absolute; left: 19mm; top: 6.3mm; font-family: 'Proxima Nova', 'Segoe UI', Calibri, Arial, sans-serif; font-size: 20pt; color: #FFFFFF; }
+.cab span { position: absolute; left: 19mm; right: 62mm; top: 6.3mm; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'Proxima Nova', 'Segoe UI', Calibri, Arial, sans-serif; font-size: 20pt; color: #FFFFFF; }
 .cab img { position: absolute; right: 13mm; top: 3mm; height: 16mm; }
 .rod { position: fixed; bottom: 0; left: 0; width: 210mm; height: 24mm; background: #EAF0F4; color: #4F81BD; font-size: 9pt; line-height: 1.35; text-align: center; padding-top: 5mm; z-index: 2; }
 .rod b { font-weight: bold; }
+.rod p, .cab span p { margin: 0; }
 table.pg { width: 100%; border-collapse: collapse; }
 table.pg > thead > tr > td { height: 30mm; padding: 0; }
 table.pg > tfoot > tr > td { height: 30mm; padding: 0; }
@@ -216,8 +218,8 @@ table.ass .linha { border-top: 1px solid #002060; margin: 0 12pt 6pt; }
     body { padding-bottom: 30mm; }
 }
 </style></head><body>
-<div class="cab"><span>Contrato de Serviços Contábeis</span><img src="${ctUrl('assets/contrato/logo-laranja.png')}" alt=""></div>
-<div class="rod">LIFT Contabilidade<br>Av. Dr. Silas Munguba, 643 - Salas 108, 113 e 115 - Parangaba, Fortaleza - CE, 60740-005<br>Telefone: (85) 3063 3607<br><b>www.liftcontabilidade.com.br</b></div>
+<div class="cab"><span>${preencher(o.cab != null ? o.cab : ctCabAtual())}</span><img src="${ctUrl('assets/contrato/logo-laranja.png')}" alt=""></div>
+<div class="rod">${preencher(o.rod != null ? o.rod : ctRodAtual())}</div>
 <table class="pg"><thead><tr><td></td></tr></thead><tfoot><tr><td></td></tr></tfoot><tbody><tr><td>
 ${capa}
 ${corpo}
@@ -298,7 +300,8 @@ function ctEscolherCliente(nome) {
     ctAtualizarPreview();
 }
 
-function ctGerarPDF() {
+function ctGerarPDF(o) {
+    if (o && o.type) o = undefined; // chamado pelo clique do botão
     const d = ctLerFormulario();
     const falta = ctFaltando(d);
     if (falta.length && !confirm(`Ainda faltam ${falta.length} campo(s):\n• ${falta.join('\n• ')}\n\nGerar o contrato mesmo assim? (os campos vazios saem marcados em amarelo)`)) return;
@@ -314,7 +317,7 @@ function ctGerarPDF() {
     frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
     document.body.appendChild(frame);
     const doc = frame.contentWindow.document;
-    doc.open(); doc.write(ctMontarHTML(d, false)); doc.close();
+    doc.open(); doc.write(ctMontarHTML(d, false, o || {})); doc.close();
     const tituloOriginal = document.title;
     document.title = `Contrato ${d.contrato || ''} - ${d.razao || 'LIFT'}`.replace(/\s+/g, ' ').trim();
     const imprimir = () => {

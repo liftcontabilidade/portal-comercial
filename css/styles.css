@@ -2337,3 +2337,8 @@ button.vd-row:hover, button.vd-row.aberto { background: #F8FAFC; }
 .fn-legenda .organico::before { background: #2563EB; }
 .fn-legenda .perdida::before { background: #DC2626; }
 @media (max-width: 760px) { .fn-item { grid-template-columns: 1fr auto; } .fn-item-sit { display: none; } }
+.ct-editor-cab-folha, .ct-editor-rod-folha { min-height: 0 !important; padding: 8mm 19mm !important; margin-bottom: 16px !important; }
+.ct-editor-rod-folha { margin-top: 16px !important; margin-bottom: 0 !important; }
+.ct-cab-ed { background: #195A7D; color: #FFFFFF; font-family: 'Proxima Nova', 'Segoe UI', Calibri, Arial, sans-serif; font-size: 20pt; padding: 10px 16px; border-radius: 6px; outline: none; }
+.ct-rod-ed { background: #EAF0F4; color: #4F81BD; font-size: 9pt; line-height: 1.35; text-align: center; padding: 12px; border-radius: 6px; outline: none; }
+.ct-ed-pdf { background: #0B2545 !important; }

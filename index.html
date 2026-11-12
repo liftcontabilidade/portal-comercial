@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <!-- Estilos do Portal -->
-    <link rel="stylesheet" href="css/styles.css?v=20261112u">
+    <link rel="stylesheet" href="css/styles.css?v=20261112v">
 </head>
 <body>
     <div class="app-container">
@@ -1117,15 +1117,24 @@
                                     <button type="button" class="btn-secondary" id="ct-ed-restaurar">Restaurar original</button>
                                     <button type="button" class="btn-secondary" id="ct-ed-descartar" disabled>Descartar</button>
                                     <button type="button" class="btn-lift-action" id="ct-ed-salvar" disabled>Salvar alterações</button>
+                                    <button type="button" class="btn-lift-action ct-ed-pdf" id="ct-ed-pdf" title="Gera o PDF com o texto da tela e os dados preenchidos em Gerar contrato">Salvar em PDF</button>
                                 </div>
                             </div>
-                            <p class="ct-ed-dica">Clique em qualquer trecho para editar. As etiquetas <span class="ct-chip">azuis</span> são preenchidas pelo formulário (dá para apagar ou mover). A capa fica no primeiro quadro. Os quadros tracejados só entram no contrato com a opção de endereço fiscal escolhida. O texto salvo vale para todos os próximos contratos.</p>
+                            <p class="ct-ed-dica">Clique em qualquer trecho para editar. As etiquetas <span class="ct-chip">azuis</span> são preenchidas pelo formulário (dá para apagar ou mover). A faixa do topo, a capa e o rodapé também podem ser editados. <b>Salvar em PDF</b> gera o contrato com o texto que está na tela e os dados preenchidos em Gerar contrato, mesmo sem salvar o modelo. Os quadros tracejados só entram no contrato com a opção de endereço fiscal escolhida. O texto salvo vale para todos os próximos contratos.</p>
                             <div class="ct-ed-folha">
+                                <div class="ct-editor ct-editor-cab-folha">
+                                    <div class="ct-ef-rot">Faixa do topo (todas as páginas)</div>
+                                    <div class="ct-cab-ed" id="ct-editor-cab" contenteditable="true" spellcheck="true" lang="pt-BR"></div>
+                                </div>
                                 <div class="ct-editor ct-editor-capa-folha">
                                     <div class="ct-ef-rot">Capa — texto abaixo da foto</div>
                                     <div class="ct-capa-ed" id="ct-editor-capa" contenteditable="true" spellcheck="true" lang="pt-BR"></div>
                                 </div>
                                 <div class="ct-editor" id="ct-editor" contenteditable="true" spellcheck="true" lang="pt-BR"></div>
+                                <div class="ct-editor ct-editor-rod-folha">
+                                    <div class="ct-ef-rot">Rodapé (todas as páginas)</div>
+                                    <div class="ct-rod-ed" id="ct-editor-rod" contenteditable="true" spellcheck="true" lang="pt-BR"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1779,8 +1788,8 @@
     <script src="js/firebase-config.js?v=20261112g"></script>
     <script src="js/app.js?v=20261112l"></script>
     <script src="js/contrato-modelo.js?v=20261112g"></script>
-    <script src="js/contratos.js?v=20261112g"></script>
-    <script src="js/contrato-editor.js?v=20261112g"></script>
+    <script src="js/contratos.js?v=20261112v"></script>
+    <script src="js/contrato-editor.js?v=20261112v"></script>
     <script src="js/vendedores.js?v=20261112g"></script>
     <script src="js/funis.js?v=20261112u"></script>
     <script src="js/trafego.js?v=20261112l"></script>
