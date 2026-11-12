@@ -177,7 +177,7 @@ async function crmCarregarJanela(j, forcar = false) {
                     crmChamar({ acao: 'negociacoes', funil: f.id, inicio: j.ini, fim: j.fim, por: 'fechamento' })
                 ]);
                 // Conector antigo ignora "por=fechamento" e devolve as negociações criadas (com abertas no meio)
-                if ((g.negociacoes || []).some(n => n.ganha !== true)) Funis.conectorAntigo = true;
+                Funis.conectorAntigo = (g.negociacoes || []).some(n => n.ganha !== true);
                 // Ganho: vendida com data de venda dentro do período
                 const naJanela = (n) => { const d = String(n.fechada || '').slice(0, 10); return d >= j.ini && d <= j.fim; };
                 Funis.dados.set(k, { em: Date.now(), lista: r.negociacoes || [], ganhas: (g.negociacoes || []).filter(n => n.ganha === true && naJanela(n)) });
