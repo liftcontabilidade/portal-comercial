@@ -171,10 +171,21 @@ async function metaSincronizar(manual = false) {
         const mantidos = antes.filter(l => !((l.plataforma || 'Meta') === 'Meta' && dentro(l)));
         const removidosManuais = antes.filter(l => (l.plataforma || 'Meta') === 'Meta' && l.fonte !== 'api' && dentro(l)).length;
         const porId = new Map(antes.map(l => [l.id, l]));
-        const final = mantidos.concat(novos.map(n => {
+        let final = mantidos.concat(novos.map(n => {
             const velho = porId.get(n.id);
-            return velho && JSON.stringify({ ...velho, criadoEm: undefined }) === JSON.stringify({ ...n, criadoEm: undefined }) ? velho : { ...n, criadoEm: new Date().toISOString() };
+            const igual = velho && JSON.stringify({ ...velho, criadoEm: undefined, statusAd: undefined }) === JSON.stringify({ ...n, criadoEm: undefined, statusAd: undefined });
+            return igual ? velho : { ...n, statusAd: velho ? velho.statusAd : undefined, criadoEm: new Date().toISOString() };
         }));
+        // Situação atual de cada anúncio (ativo, pausado...) para o filtro "Só ativas"
+        try {
+            const ads = await metaGetTodos(metaConta(cfg.contaId) + '/ads', { fields: 'id,effective_status', limit: 500 });
+            const situacao = new Map(ads.map(a => [String(a.id), a.effective_status]));
+            final = final.map(l => {
+                if (l.fonte !== 'api') return l;
+                const st = situacao.get(String(l.adId)) || 'INATIVO';
+                return l.statusAd === st ? l : { ...l, statusAd: st };
+            });
+        } catch (e) { /* sem a situação dos anúncios, mantém a última conhecida */ }
         const mudou = JSON.stringify(final.map(x => x.id).sort()) !== JSON.stringify(antes.map(x => x.id).sort())
             || final.some(x => porId.get(x.id) !== x);
         if (mudou) {

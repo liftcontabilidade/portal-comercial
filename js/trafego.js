@@ -84,8 +84,16 @@ function trDeslocar(tipo, janela, passos) {
     return j;
 }
 
+// Anúncio veiculando agora (situação vinda do Meta)
+const TR_STATUS_ATIVOS = ['ACTIVE', 'IN_PROCESS', 'PENDING_REVIEW', 'PREAPPROVED'];
+const trAtivo = (l) => l.fonte !== 'api' || TR_STATUS_ATIVOS.includes(l.statusAd);
+const trSoAtivas = () => AppState.trafegoStatus === 'ativas';
+
 function trLancamentosDaJanela(j) {
-    return (AppState.trafego || []).filter(l => { const m = trMeioDoPeriodo(l); return m >= j.ini && m <= j.fim; });
+    return (AppState.trafego || []).filter(l => {
+        const m = trMeioDoPeriodo(l);
+        return m >= j.ini && m <= j.fim && (!trSoAtivas() || trAtivo(l));
+    });
 }
 
 /* ---------- Cálculos ---------- */
@@ -112,7 +120,10 @@ function trPorCopy(lista) {
         if (!grupos.has(chave)) grupos.set(chave, { nome: String(l.anuncio || '').trim() || '(sem nome)', plataforma: l.plataforma || 'Meta', itens: [] });
         grupos.get(chave).itens.push(l);
     });
-    return [...grupos.values()].map(g => ({ ...g, mostrarPlataforma: plataformas.size > 1, ...trSomar(g.itens) }))
+    return [...grupos.values()].map(g => ({
+        ...g, mostrarPlataforma: plataformas.size > 1, ...trSomar(g.itens),
+        pausada: g.itens.some(l => l.fonte === 'api') && !g.itens.some(l => l.fonte === 'api' && trAtivo(l))
+    }))
         .sort((a, b) => b.alcance - a.alcance || b.investimento - a.investimento);
 }
 
@@ -129,7 +140,10 @@ function trAplicarAlcanceReal(j, lista, copys, total) {
     const r = metaAlcanceDoPeriodo(j);
     if (!r) return;
     const somaManual = lista.filter(l => l.fonte !== 'api').reduce((s, l) => s + (Number(l.alcance) || 0), 0);
-    if (r.total !== null) total.alcance = r.total + somaManual;
+    if (trSoAtivas()) {
+        // Só as ativas: soma o alcance de cada anúncio ativo (aproximado)
+        total.alcance = [...new Set(api.map(l => l.adId))].reduce((s, id) => s + (r.porAd[id] || 0), 0) + somaManual;
+    } else if (r.total !== null) total.alcance = r.total + somaManual;
     (copys || []).forEach(c => {
         const ads = [...new Set(c.itens.filter(l => l.fonte === 'api').map(l => l.adId))];
         if (!ads.length) return;
@@ -174,6 +188,7 @@ function renderTrafegoView() {
     const set = (id, v, html = false) => { const el = document.getElementById(id); if (el) el[html ? 'innerHTML' : 'textContent'] = v; };
 
     document.querySelectorAll('#tr-tipos button').forEach(b => b.classList.toggle('active', b.dataset.tipo === tipo));
+    document.querySelectorAll('#tr-status button').forEach(b => b.classList.toggle('active', b.dataset.status === (trSoAtivas() ? 'ativas' : 'todas')));
     set('tr-periodo-label', j.label);
 
     // KPIs
@@ -205,7 +220,7 @@ function renderTrafegoView() {
                 { nome: 'Valor investido', v: c => c.investimento, f: trMoeda },
                 { nome: 'Custo por resultado', v: c => c.cpr, f: trMoeda, melhor: 'min' }
             ];
-            const head = `<thead><tr><th class="tr-metrica">Métrica</th>${copys.map(c => `<th>${escHtml(c.nome)}${c.mostrarPlataforma ? `<small class="tr-plat ${c.plataforma === 'Google' ? 'google' : ''}">${escHtml(c.plataforma)}</small>` : ''}</th>`).join('')}<th class="tr-total">Total</th></tr></thead>`;
+            const head = `<thead><tr><th class="tr-metrica">Métrica</th>${copys.map(c => `<th>${escHtml(c.nome)}${c.mostrarPlataforma ? `<small class="tr-plat ${c.plataforma === 'Google' ? 'google' : ''}">${escHtml(c.plataforma)}</small>` : ''}${c.pausada ? '<small class="tr-pausada">pausada</small>' : ''}</th>`).join('')}<th class="tr-total">Total</th></tr></thead>`;
             const corpo = metricas.map(m => {
                 const vals = copys.map(m.v);
                 const validos = vals.filter(v => v !== null && !isNaN(v) && (m.melhor !== 'max' || v > 0));
@@ -611,6 +626,12 @@ function setupTrafego() {
         const noPeriodo = trLancamentosDaJanela(j).map(trMeioDoPeriodo).sort().pop();
         AppState.trafegoTipo = b.dataset.tipo;
         AppState.trafegoRef = noPeriodo || j.ini;
+        renderTrafegoView();
+    }));
+    try { if (localStorage.getItem('lift_trafego_status') === 'ativas') AppState.trafegoStatus = 'ativas'; } catch (e) { /* ignora */ }
+    document.querySelectorAll('#tr-status button').forEach(b => b.addEventListener('click', () => {
+        AppState.trafegoStatus = b.dataset.status;
+        try { localStorage.setItem('lift_trafego_status', b.dataset.status); } catch (e) { /* ignora */ }
         renderTrafegoView();
     }));
     document.getElementById('tr-ant').addEventListener('click', () => { AppState.trafegoRef = trDeslocar(AppState.trafegoTipo || 'semana', trJanelaAtual(), -1).ini; renderTrafegoView(); });
