@@ -298,7 +298,7 @@ function renderFunisView() {
             const aberto = Funis.abertos.has(k);
             const nums = separa ? `<td>${l.organico}</td><td>${l.pago}</td>` : `<td>${l.organico + l.pago}</td>`;
             const conv = l.ganho ? formatPct(l.conversao, 2) : '—';
-            const det = aberto ? `<tr class="fn-det"><td colspan="${separa ? 6 : 5}">${l.negocios.length ? l.negocios.map(n => `<span class="fn-neg ${n.situacao}" title="${escHtml([n.situacao === 'perdida' && n.motivoPerda ? 'Motivo: ' + n.motivoPerda : '', n.fonte ? 'Fonte: ' + n.fonte : '', n.responsavel ? 'Responsável: ' + n.responsavel : ''].filter(Boolean).join(' · '))}">${escHtml(n.nome || 'Sem nome')}${n.situacao === 'perdida' ? ' <small>perdida</small>' : n.situacao === 'pausada' ? ' <small>pausada</small>' : ''}</span>`).join('') : '<span class="fn-neg-vazio">Nenhuma negociação nesta etapa.</span>'}</td></tr>` : '';
+            const det = aberto ? `<tr class="fn-det"><td colspan="${separa ? 6 : 5}">${crmListaNegocios(l.negocios)}</td></tr>` : '';
             return `<tr class="fn-linha ${l.ganho ? 'ganho' : ''} ${aberto ? 'aberto' : ''}" data-fn-linha="${escHtml(k)}"><td class="fn-etapa"><span class="ind-seta">›</span>${escHtml(l.nome)}</td>${nums}<td class="fn-perca">${l.perca}</td><td class="fn-total">${l.total}</td><td>${conv}</td></tr>${det}`;
         }).join('');
         return `<div class="opp-card fn-card">
@@ -310,6 +310,27 @@ function renderFunisView() {
             <div class="tr-legenda">A coluna Perca não é uma etapa do funil: indica quantas negociações foram perdidas em cada etapa. Clique numa etapa para ver as negociações.</div>
         </div>`;
     }).join('');
+}
+
+// Lista das negociações de uma etapa: uma embaixo da outra, com a origem ao lado.
+// Laranja = veio de anúncio · Azul = orgânico · Vermelho = perdida
+function crmListaNegocios(negocios) {
+    if (!negocios.length) return '<div class="fn-neg-vazio">Nenhuma negociação nesta etapa.</div>';
+    const ordem = { ganha: 0, aberta: 1, pausada: 1, perdida: 2 };
+    const lista = negocios.slice().sort((a, b) => (ordem[a.situacao] ?? 1) - (ordem[b.situacao] ?? 1) || String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR'));
+    return `<div class="fn-lista">${lista.map(n => {
+        const perdida = n.situacao === 'perdida';
+        const pago = crmEhPago(n);
+        const cls = perdida ? 'perdida' : pago ? 'anuncio' : 'organico';
+        const origem = n.fonte || 'Sem origem';
+        const extra = perdida ? `Perdida${n.motivoPerda ? ' · ' + n.motivoPerda : ''}` : n.situacao === 'pausada' ? 'Pausada' : n.situacao === 'ganha' ? 'Ganha' : '';
+        return `<div class="fn-item ${cls}">
+            <span class="fn-item-nome">${escHtml(n.nome || 'Sem nome')}${n.responsavel ? `<small>${escHtml(n.responsavel)}</small>` : ''}</span>
+            ${extra ? `<span class="fn-item-sit">${escHtml(extra)}</span>` : '<span></span>'}
+            <span class="fn-item-origem">${escHtml(origem)}${!perdida ? `<small>${pago ? 'Tráfego Pago' : 'Orgânico'}</small>` : ''}</span>
+        </div>`;
+    }).join('')}</div>
+    <div class="fn-legenda"><span class="anuncio">Anúncio</span><span class="organico">Orgânico</span><span class="perdida">Perdida</span></div>`;
 }
 
 function crmRenderStatus() {

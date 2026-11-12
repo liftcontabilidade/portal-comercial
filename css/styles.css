@@ -2315,3 +2315,25 @@ button.vd-row:hover, button.vd-row.aberto { background: #F8FAFC; }
 .crm-op { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 6px 0; font-size: 13px; border-bottom: 1px solid var(--border-subtle); }
 .crm-op small { color: var(--text-muted); }
 .crm-sep { margin-left: auto; font-size: 12px; color: var(--text-secondary); display: inline-flex; align-items: center; gap: 4px; }
+/* Lista de negociações da etapa (Funis) */
+.fn-det > td { padding: 10px 14px 14px 34px !important; }
+.fn-lista { display: flex; flex-direction: column; gap: 4px; max-height: 420px; overflow-y: auto; padding-right: 4px; }
+.fn-item { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr); gap: 12px; align-items: center; padding: 8px 12px; border-radius: 8px; border-left: 4px solid; font-size: 13px; background: #FFFFFF; }
+.fn-item-nome { font-weight: 700; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fn-item-nome small { display: block; font-weight: 500; font-size: 11px; color: var(--text-muted); }
+.fn-item-sit { font-size: 11.5px; font-weight: 700; }
+.fn-item-origem { justify-self: end; text-align: right; font-weight: 700; font-size: 12.5px; }
+.fn-item-origem small { display: block; font-size: 10.5px; font-weight: 600; opacity: .8; }
+.fn-item.anuncio { border-left-color: var(--lift-orange); background: #FFF7ED; }
+.fn-item.anuncio .fn-item-origem, .fn-item.anuncio .fn-item-sit { color: #C2410C; }
+.fn-item.organico { border-left-color: #2563EB; background: #EFF6FF; }
+.fn-item.organico .fn-item-origem, .fn-item.organico .fn-item-sit { color: #1D4ED8; }
+.fn-item.perdida { border-left-color: #DC2626; background: #FEF2F2; }
+.fn-item.perdida .fn-item-nome { color: #991B1B; }
+.fn-item.perdida .fn-item-origem, .fn-item.perdida .fn-item-sit { color: #DC2626; }
+.fn-legenda { display: flex; gap: 14px; margin-top: 8px; font-size: 11.5px; color: var(--text-secondary); }
+.fn-legenda span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+.fn-legenda .anuncio::before { background: var(--lift-orange); }
+.fn-legenda .organico::before { background: #2563EB; }
+.fn-legenda .perdida::before { background: #DC2626; }
+@media (max-width: 760px) { .fn-item { grid-template-columns: 1fr auto; } .fn-item-sit { display: none; } }
