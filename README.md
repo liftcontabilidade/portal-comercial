@@ -15,6 +15,7 @@ O site é publicado pelo **GitHub Pages**.
 | `js/data.js` | Histórico oficial (2024–2025), metas e dados iniciais |
 | `js/app.js` | Telas e cálculos |
 | `js/trafego.js` | Aba Tráfego Pago (lançamentos, importação e análise) |
+| `js/contratos.js` / `js/contrato-modelo.js` | Aba Contratos: gera o contrato padrão preenchido em PDF |
 | `js/meta-ads.js` | Busca automática dos números na conta de anúncios do Meta (Marketing API) |
 | `js/charts.js` | Gráficos |
 | `js/firebase-config.js` | Configuração do projeto Firebase |
