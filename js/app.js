@@ -818,7 +818,6 @@ function gerarRelatorioPDF() {
   ${kpi(r.projecao.label, r.projecao.valor, r.projecao.nota)}
   ${kpi('Receita nova', formatBRL(r.receita), r.contratos.length ? `ticket médio ${formatBRL(r.ticket)}` : '')}
   ${kpi('Saídas', r.saidas, `churn ${r.churn}`)}
-  ${kpi('Carteira total', r.carteira ?? '—', `saldo do mês ${r.saldo >= 0 ? '+' : ''}${r.saldo}`)}
   ${kpi('Leads', r.leads)}
   ${kpi('Conversão', r.conversao)}
   ${kpi('Receita perdida', r.receitaPerdida ? formatBRL(r.receitaPerdida) : '—', 'mensalidades das saídas')}
@@ -886,7 +885,6 @@ async function gerarRelatorioExcel() {
         ['Receita nova (mensalidades)', r.receita, r.contratos.length ? `ticket médio ${formatBRL(r.ticket)}` : ''],
         ['Saídas', r.saidas, `churn ${r.churn}`],
         ['Receita perdida (mensalidades)', r.receitaPerdida, ''],
-        ['Carteira total', r.carteira ?? '—', `saldo do mês ${r.saldo >= 0 ? '+' : ''}${r.saldo}`],
         ['Leads', r.leads, ''],
         ['Conversão', r.conversao, '']
     ];
