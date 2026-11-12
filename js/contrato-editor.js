@@ -19,6 +19,9 @@ const CT_CAMPOS_INSERIR = ['razao', 'cnpj', 'contrato', 'socio', 'cpf', 'enderec
 
 const ctRotuloCampo = (k) => CT_ROTULOS_EXTRA[k] || CT_ROTULOS[k] || k;
 const ctCorpoAtual = () => (Contratos.modelo && Contratos.modelo.corpo) || CONTRATO_MODELO_CORPO;
+// Texto da capa (abaixo da foto)
+const CT_CAPA_PADRAO = '<p>{{razao}}</p><p>CNPJ: {{cnpj}}</p><p>Contrato {{contrato}}</p><p>Serviços Contábeis</p>';
+const ctCapaAtual = () => (Contratos.modelo && Contratos.modelo.capa) || CT_CAPA_PADRAO;
 
 /* ---------- Modelo salvo ---------- */
 function ctCarregarModeloLocal() {
@@ -38,11 +41,11 @@ async function ctSalvarModelo(modelo) {
 }
 
 window.aplicarModeloContratoDaNuvem = function (m) {
-    const antes = ctCorpoAtual();
+    const antes = ctCorpoAtual() + ctCapaAtual();
     Contratos.modelo = m && m.corpo ? m : null;
     if (!Contratos.editorSujo) ctEditorCarregar();
     ctEditorStatus();
-    if (antes !== ctCorpoAtual() && typeof ctAtualizarPreview === 'function') ctAtualizarPreview();
+    if (antes !== ctCorpoAtual() + ctCapaAtual() && typeof ctAtualizarPreview === 'function') ctAtualizarPreview();
 };
 
 /* ---------- Conversão texto do modelo <-> editor ---------- */
@@ -76,6 +79,8 @@ function ctEditorCarregar() {
     const ed = document.getElementById('ct-editor');
     if (!ed) return;
     ed.innerHTML = ctParaEditor(ctCorpoAtual());
+    const capa = document.getElementById('ct-editor-capa');
+    if (capa) capa.innerHTML = ctParaEditor(ctCapaAtual());
     Contratos.editorSujo = false;
     ctEditorStatus();
 }
@@ -111,12 +116,13 @@ function ctTrocarAba(aba) {
 async function ctEditorSalvar() {
     const ed = document.getElementById('ct-editor');
     const corpo = ctDoEditor(ed);
+    const capa = ctDoEditor(document.getElementById('ct-editor-capa'));
     if (corpo.replace(/<[^>]+>|&nbsp;|\s/g, '').length < 50) return showToast('O contrato ficou praticamente vazio. Confira antes de salvar.');
     const faltam = ['razao', 'cnpj', 'valor', 'dataExtenso'].filter(k => !corpo.includes(`{{${k}}}`));
     if (faltam.length && !confirm(`Estes campos não aparecem mais no texto: ${faltam.map(ctRotuloCampo).join(', ')}.\nSalvar mesmo assim?`)) return;
-    const modelo = { corpo, atualizadoEm: new Date().toISOString(), por: (document.getElementById('cloud-user') || {}).textContent || '' };
+    const modelo = { corpo, capa, atualizadoEm: new Date().toISOString(), por: (document.getElementById('cloud-user') || {}).textContent || '' };
     try {
-        await ctSalvarModelo(corpo === CONTRATO_MODELO_CORPO ? null : modelo);
+        await ctSalvarModelo(modelo);
     } catch (e) {
         return showToast('Não foi possível salvar: ' + (e.message || e));
     }
@@ -135,7 +141,9 @@ async function ctEditorRestaurar() {
 }
 
 function ctEditorComando(cmd, valor) {
-    document.getElementById('ct-editor').focus();
+    const s = window.getSelection();
+    const dentro = s.rangeCount && ctEditorDe(s.anchorNode);
+    if (!dentro) document.getElementById('ct-editor').focus();
     document.execCommand(cmd, false, valor);
     ctEditorMudou();
 }
@@ -146,12 +154,16 @@ function ctEditorMudou() {
 
 function ctInserirCampo(k) {
     if (!k) return;
-    const ed = document.getElementById('ct-editor');
     const sel = window.getSelection();
-    if (!sel.rangeCount || !ed.contains(sel.anchorNode)) { showToast('Clique no texto onde o campo deve entrar e escolha de novo.'); return; }
+    if (!sel.rangeCount || !ctEditorDe(sel.anchorNode)) { showToast('Clique no texto onde o campo deve entrar e escolha de novo.'); return; }
     const chip = `<span class="ct-chip" contenteditable="false" data-k="${k}">${escHtml(ctRotuloCampo(k))}</span>&#8203;`;
     document.execCommand('insertHTML', false, chip);
     ctEditorMudou();
+}
+
+// Qual área editável (capa ou corpo) contém o nó
+function ctEditorDe(no) {
+    return ['ct-editor', 'ct-editor-capa'].map(id => document.getElementById(id)).find(el => el && el.contains(no)) || null;
 }
 
 function setupContratoEditor() {
@@ -160,12 +172,14 @@ function setupContratoEditor() {
     ctCarregarModeloLocal();
     document.execCommand('defaultParagraphSeparator', false, 'p');
     document.querySelectorAll('#ct-abas button').forEach(b => b.addEventListener('click', () => ctTrocarAba(b.dataset.aba)));
-    ed.addEventListener('input', ctEditorMudou);
-    // Colar sempre como texto simples (sem a formatação de outros programas)
-    ed.addEventListener('paste', (e) => {
-        e.preventDefault();
-        const txt = (e.clipboardData || window.clipboardData).getData('text/plain');
-        document.execCommand('insertText', false, txt);
+    [ed, document.getElementById('ct-editor-capa')].forEach(area => {
+        area.addEventListener('input', ctEditorMudou);
+        // Colar sempre como texto simples (sem a formatação de outros programas)
+        area.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const txt = (e.clipboardData || window.clipboardData).getData('text/plain');
+            document.execCommand('insertText', false, txt);
+        });
     });
     document.querySelectorAll('[data-ct-cmd]').forEach(b => b.addEventListener('mousedown', (e) => {
         e.preventDefault();
@@ -175,7 +189,7 @@ function setupContratoEditor() {
     ins.innerHTML = '<option value="">Inserir campo…</option>' + CT_CAMPOS_INSERIR.map(k => `<option value="${k}">${escHtml(ctRotuloCampo(k))}</option>`).join('');
     // Guarda onde estava o cursor antes de abrir a lista
     let faixa = null;
-    ins.addEventListener('mousedown', () => { const s = window.getSelection(); faixa = s.rangeCount && ed.contains(s.anchorNode) ? s.getRangeAt(0).cloneRange() : null; });
+    ins.addEventListener('mousedown', () => { const s = window.getSelection(); faixa = s.rangeCount && ctEditorDe(s.anchorNode) ? s.getRangeAt(0).cloneRange() : null; });
     ins.addEventListener('change', () => {
         if (faixa) { const s = window.getSelection(); s.removeAllRanges(); s.addRange(faixa); }
         ctInserirCampo(ins.value);

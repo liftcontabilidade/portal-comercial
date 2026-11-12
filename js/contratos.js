@@ -111,11 +111,12 @@ function ctPreencherFormulario(d) {
 }
 
 // Monta os valores que entram no texto do contrato
-function ctValores(d) {
+function ctValores(d, comEFTexto) {
     const valor = ctNumero(d.valor);
     const valorEF = ctNumero(d.valorEF);
     const fat = ctNumero(d.faturamento);
-    const comEF = d.ef === '1' || d.ef === '2';
+    // Opção escolhida com o texto apagado no editor conta como "sem parágrafo"
+    const comEF = (d.ef === '1' || d.ef === '2') && comEFTexto !== false;
     // Com o parágrafo de endereço fiscal os demais começam no Segundo; sem ele, no Primeiro
     const ord = (i) => CT_ORDINAIS[i - 1 - (comEF ? 0 : 1)];
     return {
@@ -149,32 +150,30 @@ function ctFaltando(d) {
 function ctUrl(caminho) { return new URL(caminho, location.href).href; }
 
 function ctMontarHTML(d, paraTela) {
-    const v = ctValores(d);
+    let corpo = ctCorpoAtual();
+    const blocoEF = d.ef === '1' || d.ef === '2' ? (corpo.match(new RegExp(`<!--EF${d.ef}-->([\\s\\S]*?)<!--\\/EF${d.ef}-->`)) || [])[1] : '';
+    const efTemTexto = !!blocoEF && blocoEF.replace(/<[^>]+>|&nbsp;|\s/g, '').length > 0;
+    const v = ctValores(d, efTemTexto);
     const campo = (k) => {
         const val = v[k];
         return val ? escHtml(val) : `<span class="vazio">${escHtml((CT_ROTULOS[k] || k).toUpperCase())}</span>`;
     };
-    let corpo = ctCorpoAtual();
     // Parágrafo do endereço fiscal: mantém só a opção escolhida
     corpo = corpo.replace(/<!--EF1-->([\s\S]*?)<!--\/EF1-->/, d.ef === '1' ? '$1' : '')
         .replace(/<!--EF2-->([\s\S]*?)<!--\/EF2-->/, d.ef === '2' ? '$1' : '');
-    corpo = corpo.replace(/\{\{(\w+)\}\}/g, (m, k) => {
+    const preencher = (txt) => txt.replace(/\{\{(\w+)\}\}/g, (m, k) => {
         if (/^p8[a-f]$/.test(k)) return escHtml(v[k]);
         if (k === 'valorExtenso') return v.valorExtenso ? escHtml(v.valorExtenso) : '<span class="vazio">VALOR POR EXTENSO</span>';
         if (k === 'valorTotal') return v.valorTotal ? escHtml(v.valorTotal) : '<span class="vazio">TOTAL</span>';
         if (k === 'dataExtenso') return v.dataExtenso ? escHtml(v.dataExtenso) : '<span class="vazio">DATA</span>';
         return campo(k);
     });
+    corpo = preencher(corpo);
     const titulo = `Contrato ${d.contrato || ''} - ${d.razao || 'LIFT'}`.trim();
     const capa = `
     <div class="capa">
-        <div class="capa-foto"><img src="${ctUrl('assets/contrato/capa.jpg')}" alt=""><div class="capa-brilho"></div><img class="capa-logo" src="${ctUrl('assets/contrato/logo-azul.png')}" alt=""></div>
-        <div class="capa-txt">
-            <p>${campo('razao')}</p>
-            <p>CNPJ: ${campo('cnpj')}</p>
-            <p>Contrato ${campo('contrato')}</p>
-            <p>Serviços Contábeis</p>
-        </div>
+        <div class="capa-foto"><img src="${ctUrl('assets/contrato/capa.jpg')}" alt=""><div class="capa-brilho"><img class="capa-logo" src="${ctUrl('assets/contrato/logo-azul.png')}" alt=""></div></div>
+        <div class="capa-txt">${preencher(ctCapaAtual())}</div>
     </div>`;
     return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>${escHtml(titulo)}</title>
 <style>
@@ -202,8 +201,8 @@ table.ass .linha { border-top: 1px solid #002060; margin: 0 12pt 6pt; }
 .capa { page-break-after: always; break-after: page; margin: -8mm -19mm 0; height: 236mm; display: flex; flex-direction: column; }
 .capa-foto { position: relative; width: 210mm; height: 150mm; flex: none; overflow: hidden; }
 .capa-foto > img:first-child { width: 100%; height: 100%; object-fit: cover; display: block; }
-.capa-brilho { position: absolute; left: 4mm; bottom: -22mm; width: 82mm; height: 82mm; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.95) 0%, rgba(255,255,255,.75) 35%, rgba(255,255,255,0) 70%); }
-.capa-logo { position: absolute; left: 14mm; bottom: 6mm; width: 52mm; }
+.capa-brilho { position: absolute; left: 4mm; bottom: -12mm; width: 84mm; height: 84mm; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.97) 0%, rgba(255,255,255,.8) 38%, rgba(255,255,255,0) 70%); display: flex; align-items: center; justify-content: center; }
+.capa-logo { width: 44mm; height: auto; }
 .capa-txt { flex: 1; display: flex; flex-direction: column; justify-content: center; text-align: center; }
 .capa-txt p { font-size: 20pt; font-weight: bold; margin: 0 0 9pt; }
 .vazio { background: #FFF200; color: #002060; font-weight: bold; }

@@ -2245,3 +2245,6 @@ button.vd-row:hover, button.vd-row.aberto { background: #F8FAFC; }
 .ct-ef { border: 2px dashed #F59E0B; border-radius: 8px; padding: 6px 10px 2px; margin: 0 0 10pt; background: #FFFBEB; }
 .ct-ef-rot { font-size: 10px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: #B45309; margin-bottom: 4px; user-select: none; }
 .ct-ef-corpo { outline: none; }
+.ct-editor-capa-folha { min-height: 0; margin-bottom: 16px !important; padding-top: 10mm; padding-bottom: 10mm; border-top: 6px solid #195A7D; }
+.ct-capa-ed { text-align: center; outline: none; min-height: 60px; padding-top: 6px; }
+.ct-capa-ed p { font-size: 20pt; font-weight: bold; margin: 0 0 9pt; }
