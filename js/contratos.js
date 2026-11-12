@@ -196,15 +196,15 @@ p { margin: 0 0 10pt; orphans: 3; widows: 3; }
 .titulo { margin-bottom: 14pt !important; }
 table.tb { width: 100%; border-collapse: collapse; margin: 0 0 12pt; page-break-inside: avoid; }
 table.tb td { border: 1px solid #8EA9C1; padding: 4pt 6pt; width: 50%; vertical-align: top; }
-table.ass { width: 100%; border-collapse: collapse; margin-top: 28pt; page-break-inside: avoid; }
-table.ass td { width: 50%; text-align: center; vertical-align: top; padding: 26pt 10pt 10pt; font-size: 11pt; }
+table.ass { width: 100%; border-collapse: collapse; margin-top: 20pt; page-break-inside: avoid; }
+table.ass td { width: 50%; text-align: center; vertical-align: top; padding: 62pt 16pt 8pt; font-size: 11pt; }
 table.ass .linha { border-top: 1px solid #002060; margin: 0 12pt 6pt; }
-.capa { page-break-after: always; break-after: page; margin: -8mm -19mm 0; }
-.capa-foto { position: relative; width: 210mm; height: 140mm; overflow: hidden; }
+.capa { page-break-after: always; break-after: page; margin: -8mm -19mm 0; height: 236mm; display: flex; flex-direction: column; }
+.capa-foto { position: relative; width: 210mm; height: 150mm; flex: none; overflow: hidden; }
 .capa-foto > img:first-child { width: 100%; height: 100%; object-fit: cover; display: block; }
 .capa-brilho { position: absolute; left: 4mm; bottom: -22mm; width: 82mm; height: 82mm; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.95) 0%, rgba(255,255,255,.75) 35%, rgba(255,255,255,0) 70%); }
 .capa-logo { position: absolute; left: 14mm; bottom: 6mm; width: 52mm; }
-.capa-txt { text-align: center; padding-top: 12mm; }
+.capa-txt { flex: 1; display: flex; flex-direction: column; justify-content: center; text-align: center; }
 .capa-txt p { font-size: 20pt; font-weight: bold; margin: 0 0 9pt; }
 .vazio { background: #FFF200; color: #002060; font-weight: bold; }
 @media screen {
@@ -213,7 +213,7 @@ table.ass .linha { border-top: 1px solid #002060; margin: 0 12pt 6pt; }
     .cab { position: absolute; }
     .rod { position: absolute; }
     table.pg > tfoot { display: none; }
-    .capa { padding-bottom: 14mm; border-bottom: 10mm solid #E5E7EB; margin-bottom: 10mm; }
+    .capa { border-bottom: 10mm solid #E5E7EB; margin-bottom: 10mm; height: 246mm; }
     body { padding-bottom: 30mm; }
 }
 </style></head><body>
