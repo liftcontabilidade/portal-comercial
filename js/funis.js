@@ -39,7 +39,7 @@ function doGet(e) {
     if (p.chave !== CHAVE) return resposta({ erro: 'Chave inválida.' });
     if (TOKEN_RD.indexOf('COLE_AQUI') === 0) return resposta({ erro: 'O token do RD Station CRM não foi colado no conector.' });
     if (p.acao === 'funis') return resposta({ funis: listarFunis() });
-    if (p.acao === 'negociacoes') return resposta({ negociacoes: listarNegociacoes(p.funil, p.inicio, p.fim) });
+    if (p.acao === 'negociacoes') return resposta({ negociacoes: listarNegociacoes(p.funil, p.inicio, p.fim, p.por) });
     return resposta({ ok: true });
   } catch (err) {
     return resposta({ erro: String((err && err.message) || err) });
@@ -68,17 +68,17 @@ function listarFunis() {
   });
 }
 
-function listarNegociacoes(funil, inicio, fim) {
+function listarNegociacoes(funil, inicio, fim, por) {
+  // por = 'fechamento': negociações GANHAS com data de venda no período; senão, criadas no período
   const cache = CacheService.getScriptCache();
-  const chaveCache = ['n', funil, inicio, fim].join('|');
+  const chaveCache = ['n', funil, inicio, fim, por || ''].join('|');
   const salvo = cache.get(chaveCache);
   if (salvo) return JSON.parse(salvo);
   const todas = [];
   for (var pagina = 1; pagina <= 60; pagina++) {
-    const d = rd('deals', {
-      deal_pipeline_id: funil, created_at_period: 'true',
-      start_date: inicio + 'T00:00:00', end_date: fim + 'T23:59:59', limit: 200, page: pagina
-    });
+    const filtro = { deal_pipeline_id: funil, start_date: inicio + 'T00:00:00', end_date: fim + 'T23:59:59', limit: 200, page: pagina };
+    if (por === 'fechamento') { filtro.win = 'true'; filtro.closed_at_period = 'true'; } else { filtro.created_at_period = 'true'; }
+    const d = rd('deals', filtro);
     const lista = d.deals || [];
     lista.forEach(function (n) {
       todas.push({
@@ -165,8 +165,11 @@ async function crmCarregarJanela(j, forcar = false) {
             buscou = true;
             if (AppState.currentView === 'funis') crmRenderStatus();
             try {
-                const r = await crmChamar({ acao: 'negociacoes', funil: f.id, inicio: j.ini, fim: j.fim });
-                Funis.dados.set(k, { em: Date.now(), lista: r.negociacoes || [] });
+                const [r, g] = await Promise.all([
+                    crmChamar({ acao: 'negociacoes', funil: f.id, inicio: j.ini, fim: j.fim }),
+                    crmChamar({ acao: 'negociacoes', funil: f.id, inicio: j.ini, fim: j.fim, por: 'fechamento' })
+                ]);
+                Funis.dados.set(k, { em: Date.now(), lista: r.negociacoes || [], ganhas: (g.negociacoes || []).filter(n => n.ganha === true) });
             } finally { Funis.carregando.delete(k); }
         }));
         if (buscou) { Funis.erro = ''; Funis.ultima = new Date(); }
@@ -207,18 +210,19 @@ function crmEhPago(n) {
     return /anuncio/.test(crmSemAcento(n.fonte));
 }
 
-function crmMontarFunil(f, lista) {
+// Ganho = vendas com data de venda no período (mesmo que a negociação tenha sido criada antes)
+function crmMontarFunil(f, lista, ganhas = []) {
     const ehGanho = (nome) => /^ganh/i.test(String(nome || '').trim());
     const etapas = (f.etapas || []).slice().sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0)).filter(e => !ehGanho(e.nome));
     const linhas = etapas.map(e => ({ id: String(e.id), nome: e.nome, organico: 0, pago: 0, perca: 0, negocios: [] }));
     const porId = new Map(linhas.map(l => [l.id, l]));
     const ganho = { id: '__ganho__', nome: 'Ganho', organico: 0, pago: 0, perca: 0, negocios: [], ganho: true };
+    ganhas.forEach(n => {
+        ganho[crmEhPago(n) ? 'pago' : 'organico']++;
+        ganho.negocios.push({ ...n, situacao: 'ganha' });
+    });
     lista.forEach(n => {
-        if (n.ganha === true) {
-            ganho[crmEhPago(n) ? 'pago' : 'organico']++;
-            ganho.negocios.push({ ...n, situacao: 'ganha' });
-            return;
-        }
+        if (n.ganha === true) return; // entra no Ganho do período em que foi vendida
         let linha = porId.get(String(n.etapa));
         if (!linha && ehGanho(n.etapaNome)) linha = null;
         if (!linha) {
@@ -272,7 +276,7 @@ function renderFunisView() {
         const d = Funis.dados.get(crmChaveJanela(f.id, j));
         const titulo = `${escHtml(f.nome)} — ${tipo === 'mes' ? escHtml(j.label) : `${trCurta(j.ini)} a ${trCompleta(j.fim)}`}`;
         if (!d) return `<div class="opp-card fn-card"><div class="opp-card-head"><span class="dash-section-title">${titulo}</span></div><div class="home-empty">Carregando…</div></div>`;
-        const r = crmMontarFunil(f, d.lista);
+        const r = crmMontarFunil(f, d.lista, d.ganhas || []);
         const separa = crmSeparaOrigem(f);
         const cab = separa ? '<th>Orgânico</th><th>Tráfego Pago</th>' : `<th>${escHtml(f.nome)}</th>`;
         const linhas = r.linhas.map(l => {
