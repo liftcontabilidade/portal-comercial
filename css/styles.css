@@ -2269,3 +2269,5 @@ button.vd-row:hover, button.vd-row.aberto { background: #F8FAFC; }
 .sidebar.recolhida .sidebar-footer { flex-direction: column; padding: 12px 8px; gap: 8px; }
 .sidebar.recolhida .sidebar-footer .sidebar-backup-btn + .sidebar-backup-btn { margin-left: 0; }
 .sidebar-nav { overflow-y: auto; }
+.sidebar.recolhida .sidebar-footer { align-items: center; }
+.sidebar.recolhida .sidebar-footer .sidebar-backup-btn { margin: 0 !important; }
