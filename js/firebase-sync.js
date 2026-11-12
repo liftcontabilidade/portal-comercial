@@ -43,6 +43,7 @@ function iniciar() {
     const docSegmentos = doc(db, 'portalComercial', 'dados', 'config', 'segmentos');
     const docMetas = doc(db, 'portalComercial', 'dados', 'config', 'metas');
     const docMetaAds = doc(db, 'portalComercial', 'dados', 'config', 'integracaoMeta');
+    const docModeloContrato = doc(db, 'portalComercial', 'dados', 'config', 'contratoModelo');
 
     // Último estado recebido/gravado no banco (para gravar só o que mudou)
     const sincronizado = { clientes: new Map(), saidas: new Map(), trafego: new Map(), leads: null, segmentos: null, metas: null };
@@ -181,6 +182,9 @@ function iniciar() {
             trafegoRecebido = true;
             window.aplicarTrafegoDaNuvem && window.aplicarTrafegoDaNuvem([...sincronizado.trafego.values()].map(v => JSON.parse(v)));
         }, () => {}));
+        cancelar.push(onSnapshot(docModeloContrato, (snap) => {
+            window.aplicarModeloContratoDaNuvem && window.aplicarModeloContratoDaNuvem(snap.exists() ? snap.data() : null);
+        }, () => {}));
         cancelar.push(onSnapshot(docMetaAds, (snap) => {
             window.aplicarConfigMetaAds && window.aplicarConfigMetaAds(snap.exists() ? snap.data() : null);
         }, () => {}));
@@ -302,7 +306,14 @@ function iniciar() {
         await b.commit();
     }
 
-    window.LiftCloud = { salvar, ativo: () => ativo, salvarConfigMeta };
+    // Texto do contrato editado na aba Contratos (null = volta ao modelo original)
+    async function salvarModeloContrato(modelo) {
+        const b = writeBatch(db);
+        if (modelo) b.set(docModeloContrato, limpo(modelo)); else b.delete(docModeloContrato);
+        await b.commit();
+    }
+
+    window.LiftCloud = { salvar, ativo: () => ativo, salvarConfigMeta, salvarModeloContrato };
 
     /* ---------- Entrou / saiu ---------- */
     onAuthStateChanged(auth, (user) => {

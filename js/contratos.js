@@ -154,7 +154,7 @@ function ctMontarHTML(d, paraTela) {
         const val = v[k];
         return val ? escHtml(val) : `<span class="vazio">${escHtml((CT_ROTULOS[k] || k).toUpperCase())}</span>`;
     };
-    let corpo = CONTRATO_MODELO_CORPO;
+    let corpo = ctCorpoAtual();
     // Parágrafo do endereço fiscal: mantém só a opção escolhida
     corpo = corpo.replace(/<!--EF1-->([\s\S]*?)<!--\/EF1-->/, d.ef === '1' ? '$1' : '')
         .replace(/<!--EF2-->([\s\S]*?)<!--\/EF2-->/, d.ef === '2' ? '$1' : '');

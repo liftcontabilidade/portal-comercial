@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <!-- Estilos do Portal -->
-    <link rel="stylesheet" href="css/styles.css?v=20261112a">
+    <link rel="stylesheet" href="css/styles.css?v=20261112c">
 </head>
 <body>
     <div class="app-container">
@@ -1000,6 +1000,13 @@
                      PAINEL: CONTRATOS (gerador do contrato padrão em PDF)
                      ------------------------------------------------------------ -->
                 <section id="panel-contratos" class="view-panel">
+                    <div class="ct-topo">
+                        <div class="tr-tipos ct-abas" id="ct-abas">
+                            <button type="button" data-aba="gerar" class="active">Gerar contrato</button>
+                            <button type="button" data-aba="editar">Editar cláusulas</button>
+                        </div>
+                    </div>
+                    <div id="ct-aba-gerar">
                     <div class="ct-grid">
                         <form class="opp-card ct-form" id="ct-form" autocomplete="off">
                             <div class="ct-cliente-box">
@@ -1052,6 +1059,35 @@
                         <div class="opp-card ct-preview-card">
                             <div class="opp-card-head"><span class="dash-section-title">PRÉ-VISUALIZAÇÃO</span><span class="ct-faltando" id="ct-faltando"></span></div>
                             <div class="ct-preview-wrap" id="ct-preview-wrap"><iframe id="ct-preview" title="Pré-visualização do contrato"></iframe></div>
+                        </div>
+                    </div>
+                                    </div>
+                    <div id="ct-aba-editar" class="oculto">
+                        <div class="opp-card ct-ed-card">
+                            <div class="ct-ed-barra">
+                                <div class="ct-ed-ferramentas">
+                                    <button type="button" class="ct-ed-btn" data-ct-cmd="bold" title="Negrito"><b>N</b></button>
+                                    <button type="button" class="ct-ed-btn" data-ct-cmd="italic" title="Itálico"><i>I</i></button>
+                                    <button type="button" class="ct-ed-btn" data-ct-cmd="underline" title="Sublinhado"><u>S</u></button>
+                                    <span class="ct-ed-sep"></span>
+                                    <button type="button" class="ct-ed-btn" data-ct-cmd="justifyFull" title="Justificar">≡</button>
+                                    <button type="button" class="ct-ed-btn" data-ct-cmd="justifyLeft" title="Alinhar à esquerda">⇤</button>
+                                    <button type="button" class="ct-ed-btn" data-ct-cmd="justifyCenter" title="Centralizar">↔</button>
+                                    <span class="ct-ed-sep"></span>
+                                    <button type="button" class="ct-ed-btn" data-ct-cmd="undo" title="Desfazer">↶</button>
+                                    <button type="button" class="ct-ed-btn" data-ct-cmd="redo" title="Refazer">↷</button>
+                                    <span class="ct-ed-sep"></span>
+                                    <select class="form-select ct-ed-campo" id="ct-ed-campo" title="Inserir um campo preenchido automaticamente"></select>
+                                </div>
+                                <div class="ct-ed-acoes">
+                                    <span class="ct-editor-status" id="ct-editor-status"></span>
+                                    <button type="button" class="btn-secondary" id="ct-ed-restaurar">Restaurar original</button>
+                                    <button type="button" class="btn-secondary" id="ct-ed-descartar" disabled>Descartar</button>
+                                    <button type="button" class="btn-lift-action" id="ct-ed-salvar" disabled>Salvar alterações</button>
+                                </div>
+                            </div>
+                            <p class="ct-ed-dica">Clique em qualquer trecho para editar. As etiquetas <span class="ct-chip">azuis</span> são preenchidas pelo formulário (dá para apagar ou mover). Os quadros tracejados só entram no contrato com a opção de endereço fiscal escolhida. O texto salvo vale para todos os próximos contratos.</p>
+                            <div class="ct-ed-folha"><div class="ct-editor" id="ct-editor" contenteditable="true" spellcheck="true" lang="pt-BR"></div></div>
                         </div>
                     </div>
                 </section>
@@ -1654,15 +1690,16 @@
     <!-- Scripts da Aplicação -->
     <datalist id="lista-segmentos"></datalist>
     <datalist id="lista-origens"></datalist>
-    <script src="js/data.js?v=20261112a"></script>
-    <script src="js/charts.js?v=20261112a"></script>
-    <script src="js/firebase-config.js?v=20261112a"></script>
-    <script src="js/app.js?v=20261112a"></script>
-    <script src="js/contrato-modelo.js?v=20261112a"></script>
-    <script src="js/contratos.js?v=20261112b"></script>
-    <script src="js/vendedores.js?v=20261112a"></script>
-    <script src="js/trafego.js?v=20261112a"></script>
-    <script src="js/meta-ads.js?v=20261112a"></script>
-    <script type="module" src="js/firebase-sync.js?v=20261112a"></script>
+    <script src="js/data.js?v=20261112c"></script>
+    <script src="js/charts.js?v=20261112c"></script>
+    <script src="js/firebase-config.js?v=20261112c"></script>
+    <script src="js/app.js?v=20261112c"></script>
+    <script src="js/contrato-modelo.js?v=20261112c"></script>
+    <script src="js/contratos.js?v=20261112c"></script>
+    <script src="js/contrato-editor.js?v=20261112c"></script>
+    <script src="js/vendedores.js?v=20261112c"></script>
+    <script src="js/trafego.js?v=20261112c"></script>
+    <script src="js/meta-ads.js?v=20261112c"></script>
+    <script type="module" src="js/firebase-sync.js?v=20261112c"></script>
 </body>
 </html>
