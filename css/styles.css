@@ -2271,3 +2271,7 @@ button.vd-row:hover, button.vd-row.aberto { background: #F8FAFC; }
 .sidebar-nav { overflow-y: auto; }
 .sidebar.recolhida .sidebar-footer { align-items: center; }
 .sidebar.recolhida .sidebar-footer .sidebar-backup-btn { margin: 0 !important; }
+/* Menu recolhido: mostra só o símbolo (asa) da LIFT, inteiro */
+.sidebar-simbolo { display: none; }
+.sidebar.recolhida .sidebar-logo { display: none; }
+.sidebar.recolhida .sidebar-simbolo { display: block; width: 40px; height: auto; }
