@@ -23,14 +23,14 @@ const crmNuvem = () => !!window.LIFT_FIREBASE_CONFIG && location.protocol !== 'f
 const crmConectado = () => !!(Funis.cfg && Funis.cfg.url && Funis.cfg.chave);
 
 /* ---------- Código do conector (Google Apps Script) ---------- */
-function crmCodigoConector(chave) {
+function crmCodigoConector(chave, token) {
     return `/**
  * Conector RD Station CRM -> Portal Comercial LIFT
  * 1) Cole o token do RD Station CRM na linha TOKEN_RD.
  * 2) Implantar > Nova implantação > App da Web
  *    Executar como: Eu | Quem pode acessar: Qualquer pessoa
  */
-const TOKEN_RD = 'COLE_AQUI_O_TOKEN_DO_RD_STATION_CRM';
+const TOKEN_RD = '${(token || '').replace(/[^A-Za-z0-9_-]/g, '') || 'COLE_AQUI_O_TOKEN_DO_RD_STATION_CRM'}';
 const CHAVE = '${chave}';
 const API = 'https://crm.rdstation.com/api/v1/';
 
@@ -316,6 +316,7 @@ function crmAbrirConfig() {
     const chave = cfg.chave || crmGerarChave();
     document.getElementById('crm-url').value = cfg.url || '';
     document.getElementById('crm-chave').value = chave;
+    document.getElementById('crm-token').value = '';
     document.getElementById('crm-codigo').value = crmCodigoConector(chave);
     document.getElementById('crm-info').innerHTML = '';
     document.getElementById('crm-opcoes').innerHTML = '';
@@ -416,7 +417,11 @@ function setupFunis() {
         if (!confirm('Gerar uma chave nova? Depois será preciso colar o código atualizado no conector e implantar de novo.')) return;
         const k = crmGerarChave();
         document.getElementById('crm-chave').value = k;
-        document.getElementById('crm-codigo').value = crmCodigoConector(k);
+        document.getElementById('crm-codigo').value = crmCodigoConector(k, document.getElementById('crm-token').value.trim());
+    });
+    // Token do RD: entra direto no código do conector (não fica salvo no portal)
+    document.getElementById('crm-token').addEventListener('input', (e) => {
+        document.getElementById('crm-codigo').value = crmCodigoConector(document.getElementById('crm-chave').value, e.target.value.trim());
     });
     document.getElementById('crm-copiar').addEventListener('click', async () => {
         const ta = document.getElementById('crm-codigo');

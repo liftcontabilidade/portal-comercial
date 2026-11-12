@@ -1459,11 +1459,15 @@
                 <div class="modal-body">
                     <ol class="crm-passos">
                         <li>No RD Station CRM, copie o <b>token</b> da conta (perfil do usuário ou <b>Configurações → Integrações → Token</b>).</li>
-                        <li>Abra <b>script.google.com</b> com a conta Google da LIFT → <b>Novo projeto</b>. Apague o que estiver lá e cole o código abaixo.</li>
-                        <li>Na linha <code>TOKEN_RD</code>, troque o texto pelo token do RD. Salve (Ctrl+S).</li>
+                        <li>Cole o token no campo abaixo e clique em <b>Copiar código</b> (o token já vai dentro do código).</li>
+                        <li>Abra <b>script.google.com</b> com a conta Google da LIFT → <b>Novo projeto</b>. Apague o que estiver lá, cole o código e salve (Ctrl+S).</li>
                         <li><b>Implantar → Nova implantação</b> → tipo <b>App da Web</b> → Executar como: <b>Eu</b> · Quem pode acessar: <b>Qualquer pessoa</b> → Implantar → autorize com a sua conta Google.</li>
                         <li>Copie o <b>URL do app da Web</b> (termina em <code>/exec</code>), cole abaixo e clique em <b>Testar conexão</b>.</li>
                     </ol>
+                    <div class="form-group">
+                        <label class="form-label">Token da instância do RD Station CRM</label>
+                        <input type="text" class="form-input" id="crm-token" placeholder="Cole aqui o token — ele já entra no código abaixo" autocomplete="off" spellcheck="false">
+                    </div>
                     <div class="form-group">
                         <label class="form-label">Código do conector <button type="button" class="crm-link" id="crm-copiar">Copiar código</button></label>
                         <textarea class="form-input crm-codigo" id="crm-codigo" readonly spellcheck="false"></textarea>
@@ -1778,7 +1782,7 @@
     <script src="js/contratos.js?v=20261112g"></script>
     <script src="js/contrato-editor.js?v=20261112g"></script>
     <script src="js/vendedores.js?v=20261112g"></script>
-    <script src="js/funis.js?v=20261112m"></script>
+    <script src="js/funis.js?v=20261112n"></script>
     <script src="js/trafego.js?v=20261112l"></script>
     <script src="js/meta-ads.js?v=20261112j"></script>
     <script type="module" src="js/firebase-sync.js?v=20261112l"></script>
