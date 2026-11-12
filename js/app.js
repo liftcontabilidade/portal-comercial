@@ -3030,6 +3030,7 @@ function setupEventListeners() {
     setupYearDropdown('receita');
     setupYearDropdown('churn');
     setupYearDropdown('origens');
+    setupSidebarToggle();
     setupYearDropdown('vendedores');
     setupMetasInputs();
     setupValorSaidas();
@@ -3279,4 +3280,30 @@ function debounce(func, wait) {
         clearTimeout(timeout);
         timeout = setTimeout(later, wait);
     };
+}
+
+
+/* ==========================================================================
+   MENU LATERAL RECOLHÍVEL (botão de seta no topo da barra lateral)
+   ========================================================================== */
+function setupSidebarToggle() {
+    const sidebar = document.getElementById('sidebar');
+    const btn = document.getElementById('btn-sidebar-toggle');
+    if (!sidebar || !btn) return;
+    const aplicar = (recolhida) => {
+        sidebar.classList.toggle('recolhida', recolhida);
+        btn.title = recolhida ? 'Expandir menu' : 'Recolher menu';
+        btn.setAttribute('aria-label', btn.title);
+        btn.setAttribute('aria-expanded', String(!recolhida));
+    };
+    let recolhida = false;
+    try { recolhida = localStorage.getItem('lift_sidebar_recolhida') === '1'; } catch (e) { /* ignora */ }
+    aplicar(recolhida);
+    btn.addEventListener('click', () => {
+        recolhida = !sidebar.classList.contains('recolhida');
+        aplicar(recolhida);
+        try { localStorage.setItem('lift_sidebar_recolhida', recolhida ? '1' : '0'); } catch (e) { /* ignora */ }
+        // Gráficos se ajustam à nova largura
+        setTimeout(() => window.dispatchEvent(new Event('resize')), 260);
+    });
 }
