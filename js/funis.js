@@ -169,6 +169,8 @@ async function crmCarregarJanela(j, forcar = false) {
                     crmChamar({ acao: 'negociacoes', funil: f.id, inicio: j.ini, fim: j.fim }),
                     crmChamar({ acao: 'negociacoes', funil: f.id, inicio: j.ini, fim: j.fim, por: 'fechamento' })
                 ]);
+                // Conector antigo ignora "por=fechamento" e devolve as negociações criadas (com abertas no meio)
+                if ((g.negociacoes || []).some(n => n.ganha !== true)) Funis.conectorAntigo = true;
                 Funis.dados.set(k, { em: Date.now(), lista: r.negociacoes || [], ganhas: (g.negociacoes || []).filter(n => n.ganha === true) });
             } finally { Funis.carregando.delete(k); }
         }));
@@ -213,7 +215,9 @@ function crmEhPago(n) {
 // Ganho = vendas com data de venda no período (mesmo que a negociação tenha sido criada antes)
 function crmMontarFunil(f, lista, ganhas = []) {
     const ehGanho = (nome) => /^ganh/i.test(String(nome || '').trim());
-    const etapas = (f.etapas || []).slice().sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0)).filter(e => !ehGanho(e.nome));
+    // "Ganho" vira a linha de vendas; a etapa "Perca" não é etapa do funil (as perdas ficam na coluna Perca)
+    const ehPerca = (nome) => /^(perca|perda|perdid)/i.test(String(nome || '').trim());
+    const etapas = (f.etapas || []).slice().sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0)).filter(e => !ehGanho(e.nome) && !ehPerca(e.nome));
     const linhas = etapas.map(e => ({ id: String(e.id), nome: e.nome, organico: 0, pago: 0, perca: 0, negocios: [] }));
     const porId = new Map(linhas.map(l => [l.id, l]));
     const ganho = { id: '__ganho__', nome: 'Ganho', organico: 0, pago: 0, perca: 0, negocios: [], ganho: true };
@@ -272,7 +276,8 @@ function renderFunisView() {
     const escolhidos = crmFunisEscolhidos();
     const faltam = escolhidos.some(f => !Funis.dados.has(crmChaveJanela(f.id, j)));
     if (faltam) crmCarregarJanela(j);
-    box.innerHTML = (Funis.erro ? `<div class="tri-erro">${escHtml(Funis.erro)}</div>` : '') + escolhidos.map(f => {
+    const aviso = Funis.conectorAntigo ? '<div class="tri-erro">O conector está com o código antigo: o Ganho ainda conta pela data de criação. Em ⚙ Configurar, copie o código novo, cole no Apps Script e implante uma <b>Nova versão</b>.</div>' : '';
+    box.innerHTML = aviso + (Funis.erro ? `<div class="tri-erro">${escHtml(Funis.erro)}</div>` : '') + escolhidos.map(f => {
         const d = Funis.dados.get(crmChaveJanela(f.id, j));
         const titulo = `${escHtml(f.nome)} — ${tipo === 'mes' ? escHtml(j.label) : `${trCurta(j.ini)} a ${trCompleta(j.fim)}`}`;
         if (!d) return `<div class="opp-card fn-card"><div class="opp-card-head"><span class="dash-section-title">${titulo}</span></div><div class="home-empty">Carregando…</div></div>`;
