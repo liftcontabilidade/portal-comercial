@@ -87,12 +87,20 @@ function trDeslocar(tipo, janela, passos) {
 // Anúncio veiculando agora (situação vinda do Meta)
 const TR_STATUS_ATIVOS = ['ACTIVE', 'IN_PROCESS', 'PENDING_REVIEW', 'PREAPPROVED'];
 const trAtivo = (l) => l.fonte !== 'api' || TR_STATUS_ATIVOS.includes(l.statusAd);
-const trSoAtivas = () => AppState.trafegoStatus === 'ativas';
+// Filtro de situação: 'ativas' (padrão), 'pausadas' ou 'todas'
+const trFiltroStatus = () => AppState.trafegoStatus || 'ativas';
+const trSoAtivas = () => trFiltroStatus() !== 'todas';
+function trPassaFiltro(l) {
+    const f = trFiltroStatus();
+    if (f === 'ativas') return trAtivo(l);
+    if (f === 'pausadas') return l.fonte === 'api' && !trAtivo(l);
+    return true;
+}
 
 function trLancamentosDaJanela(j) {
     return (AppState.trafego || []).filter(l => {
         const m = trMeioDoPeriodo(l);
-        return m >= j.ini && m <= j.fim && (!trSoAtivas() || trAtivo(l));
+        return m >= j.ini && m <= j.fim && trPassaFiltro(l);
     });
 }
 
@@ -188,7 +196,7 @@ function renderTrafegoView() {
     const set = (id, v, html = false) => { const el = document.getElementById(id); if (el) el[html ? 'innerHTML' : 'textContent'] = v; };
 
     document.querySelectorAll('#tr-tipos button').forEach(b => b.classList.toggle('active', b.dataset.tipo === tipo));
-    document.querySelectorAll('#tr-status button').forEach(b => b.classList.toggle('active', b.dataset.status === (trSoAtivas() ? 'ativas' : 'todas')));
+    document.querySelectorAll('#tr-status button').forEach(b => b.classList.toggle('active', b.dataset.status === trFiltroStatus()));
     set('tr-periodo-label', j.label);
 
     // KPIs
@@ -220,7 +228,7 @@ function renderTrafegoView() {
                 { nome: 'Valor investido', v: c => c.investimento, f: trMoeda },
                 { nome: 'Custo por resultado', v: c => c.cpr, f: trMoeda, melhor: 'min' }
             ];
-            const head = `<thead><tr><th class="tr-metrica">Métrica</th>${copys.map(c => `<th>${escHtml(c.nome)}${c.mostrarPlataforma ? `<small class="tr-plat ${c.plataforma === 'Google' ? 'google' : ''}">${escHtml(c.plataforma)}</small>` : ''}${c.pausada ? '<small class="tr-pausada">pausada</small>' : ''}</th>`).join('')}<th class="tr-total">Total</th></tr></thead>`;
+            const head = `<thead><tr><th class="tr-metrica">Métrica</th>${copys.map(c => `<th>${escHtml(c.nome)}${c.mostrarPlataforma ? `<small class="tr-plat ${c.plataforma === 'Google' ? 'google' : ''}">${escHtml(c.plataforma)}</small>` : ''}${c.pausada && trFiltroStatus() === 'todas' ? '<small class="tr-pausada">pausada</small>' : ''}</th>`).join('')}<th class="tr-total">Total</th></tr></thead>`;
             const corpo = metricas.map(m => {
                 const vals = copys.map(m.v);
                 const validos = vals.filter(v => v !== null && !isNaN(v) && (m.melhor !== 'max' || v > 0));
@@ -628,10 +636,10 @@ function setupTrafego() {
         AppState.trafegoRef = noPeriodo || j.ini;
         renderTrafegoView();
     }));
-    try { if (localStorage.getItem('lift_trafego_status') === 'ativas') AppState.trafegoStatus = 'ativas'; } catch (e) { /* ignora */ }
+    try { const f = localStorage.getItem('lift_trafego_status2'); if (['ativas', 'pausadas', 'todas'].includes(f)) AppState.trafegoStatus = f; } catch (e) { /* ignora */ }
     document.querySelectorAll('#tr-status button').forEach(b => b.addEventListener('click', () => {
         AppState.trafegoStatus = b.dataset.status;
-        try { localStorage.setItem('lift_trafego_status', b.dataset.status); } catch (e) { /* ignora */ }
+        try { localStorage.setItem('lift_trafego_status2', b.dataset.status); } catch (e) { /* ignora */ }
         renderTrafegoView();
     }));
     document.getElementById('tr-ant').addEventListener('click', () => { AppState.trafegoRef = trDeslocar(AppState.trafegoTipo || 'semana', trJanelaAtual(), -1).ini; renderTrafegoView(); });
