@@ -25,8 +25,9 @@ const crmConectado = () => !!(Funis.cfg && Funis.cfg.url && Funis.cfg.chave);
 function crmCodigoConector(chave, token) {
     return `/**
  * Conector RD Station CRM -> Portal Comercial LIFT
- * 1) Cole o token do RD Station CRM na linha TOKEN_RD.
- * 2) Implantar > Nova implantação > App da Web
+ * 1) Confira o token do RD Station CRM na linha TOKEN_RD.
+ * 2) Escolha a função "autorizar" ao lado de Depuração e clique em Executar (autorize).
+ * 3) Implantar > Nova implantação > App da Web
  *    Executar como: Eu | Quem pode acessar: Qualquer pessoa
  */
 const TOKEN_RD = '${(token || '').replace(/[^A-Za-z0-9_-]/g, '') || 'COLE_AQUI_O_TOKEN_DO_RD_STATION_CRM'}';
@@ -96,6 +97,12 @@ function listarNegociacoes(funil, inicio, fim, por) {
 
 function resposta(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}
+
+// Rode esta função uma vez pelo botão Executar para autorizar o acesso ao RD Station CRM
+function autorizar() {
+  const funis = listarFunis();
+  Logger.log('Conexão OK: ' + funis.length + ' funis encontrados no RD Station CRM.');
 }
 `;
 }
