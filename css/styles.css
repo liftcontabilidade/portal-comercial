@@ -2342,3 +2342,13 @@ button.vd-row:hover, button.vd-row.aberto { background: #F8FAFC; }
 .ct-cab-ed { background: #195A7D; color: #FFFFFF; font-family: 'Proxima Nova', 'Segoe UI', Calibri, Arial, sans-serif; font-size: 20pt; padding: 10px 16px; border-radius: 6px; outline: none; }
 .ct-rod-ed { background: #EAF0F4; color: #4F81BD; font-size: 9pt; line-height: 1.35; text-align: center; padding: 12px; border-radius: 6px; outline: none; }
 .ct-ed-pdf { background: #0B2545 !important; }
+/* Barra lateral: menu com rolagem para cima e para baixo quando não cabe na tela */
+.sidebar { height: 100vh; }
+.sidebar-header, .sidebar-footer { flex-shrink: 0; }
+.sidebar-nav { min-height: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.35) transparent; }
+.sidebar-nav .nav-item, .sidebar-nav .nav-section-title { flex-shrink: 0; }
+.sidebar-nav::-webkit-scrollbar { width: 6px; }
+.sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.3); border-radius: 999px; }
+.sidebar-nav::-webkit-scrollbar-thumb:hover { background: var(--lift-orange); }
+.sidebar-topo { flex: 1; min-height: 0; display: flex; flex-direction: column; }
