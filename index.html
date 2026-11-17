@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <!-- Estilos do Portal -->
-    <link rel="stylesheet" href="css/styles.css?v=20261117d">
+    <link rel="stylesheet" href="css/styles.css?v=20261117g">
 </head>
 <body>
     <div class="app-container">
@@ -194,6 +194,18 @@
                             </button>
                         </div>
                         </div>
+                    </div>
+
+                    <!-- Faixa de comemoração (aparece quando a meta do mês é batida) -->
+                    <div class="meta-sucesso" id="meta-sucesso" hidden>
+                        <div class="meta-sucesso-icone" aria-hidden="true">
+                            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"></path><path d="M17 5h2a2 2 0 0 1 2 2v1a3 3 0 0 1-3 3h-1"></path><path d="M7 5H5a2 2 0 0 0-2 2v1a3 3 0 0 0 3 3h1"></path></svg>
+                        </div>
+                        <div class="meta-sucesso-txt">
+                            <strong id="meta-sucesso-titulo">Meta batida!</strong>
+                            <span id="meta-sucesso-sub"></span>
+                        </div>
+                        <button type="button" class="meta-sucesso-festa" id="meta-sucesso-festa" title="Comemorar de novo">🎉</button>
                     </div>
 
                     <!-- Linha 1: 4 números principais -->
@@ -1799,7 +1811,7 @@
     <script src="js/data.js?v=20261112g"></script>
     <script src="js/charts.js?v=20261117e"></script>
     <script src="js/firebase-config.js?v=20261112g"></script>
-    <script src="js/app.js?v=20261117d"></script>
+    <script src="js/app.js?v=20261117g"></script>
     <script src="js/contrato-modelo.js?v=20261112g"></script>
     <script src="js/contratos.js?v=20261112v"></script>
     <script src="js/contrato-editor.js?v=20261112v"></script>

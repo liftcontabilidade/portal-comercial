@@ -537,7 +537,11 @@ function renderOverview() {
     setTxt('metric-fechados-count', fechadosNoMes);
     setTxt('perf-meta-mes', meta);
     setTxt('perf-meta-texto', `${meta} novos clientes`);
-    setTxt('metric-restantes-count', restantes);
+    setTxt('metric-restantes-count', fechadosNoMes >= meta && meta > 0 ? (fechadosNoMes > meta ? `+${fechadosNoMes - meta}` : '✓') : restantes);
+    const elRestLabel = document.getElementById('metric-restantes-count');
+    if (elRestLabel && elRestLabel.previousElementSibling) elRestLabel.previousElementSibling.textContent = fechadosNoMes >= meta && meta > 0 ? (fechadosNoMes > meta ? 'Acima da meta' : 'Meta alcançada') : 'Faltam para a meta';
+
+    renderMetaSucesso(fechadosNoMes, meta, mesSel, anoNum);
 
     const elPct = document.getElementById('gauge-percent-display');
     if (elPct) {
@@ -3364,3 +3368,67 @@ function setupModoTV() {
     aplicarZoomTela();
 }
 document.addEventListener('DOMContentLoaded', setupModoTV);
+
+
+/* ==========================================================================
+   VISÃO GERAL: tela de sucesso quando a meta de novos clientes do mês é batida
+   ========================================================================== */
+function renderMetaSucesso(fechados, meta, mes, ano) {
+    const painel = document.getElementById('panel-overview');
+    const faixa = document.getElementById('meta-sucesso');
+    if (!painel || !faixa) return;
+    const batida = meta > 0 && fechados >= meta;
+    painel.classList.toggle('meta-batida', batida);
+    faixa.hidden = !batida;
+    if (!batida) return;
+    const acima = fechados - meta;
+    const nomeMes = MONTH_NAMES_BR[mes].full;
+    document.getElementById('meta-sucesso-titulo').textContent = acima > 0 ? 'Meta superada! 🏆' : 'Meta batida! 🏆';
+    document.getElementById('meta-sucesso-sub').textContent =
+        `${fechados} de ${meta} novos clientes em ${nomeMes} de ${ano}` + (acima > 0 ? ` · ${acima} acima da meta (${Math.round((fechados / meta) * 100)}%)` : ' · parabéns ao time comercial!');
+    // Confete: uma vez por mês exibido (por sessão), e não com o portal escondido
+    const chave = `${mes}/${ano}`;
+    if (!AppState._confeteMostrado) AppState._confeteMostrado = new Set();
+    if (!AppState._confeteMostrado.has(chave) && AppState.currentView === 'overview' && document.visibilityState === 'visible') {
+        AppState._confeteMostrado.add(chave);
+        setTimeout(soltarConfete, 250);
+    }
+}
+
+function soltarConfete() {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const c = document.createElement('canvas');
+    c.className = 'confete-canvas';
+    document.body.appendChild(c);
+    const ctx = c.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const W = window.innerWidth, H = window.innerHeight;
+    c.width = W * dpr; c.height = H * dpr; ctx.scale(dpr, dpr);
+    const cores = ['#F36F21', '#0B2545', '#22C55E', '#00A3E0', '#FACC15', '#FFFFFF'];
+    const pecas = Array.from({ length: Math.min(220, Math.round(W / 6)) }, () => ({
+        x: W * (0.2 + Math.random() * 0.6), y: H * 0.35,
+        vx: (Math.random() - 0.5) * 16, vy: -8 - Math.random() * 12,
+        r: 4 + Math.random() * 5, giro: Math.random() * Math.PI, vg: (Math.random() - 0.5) * 0.3,
+        cor: cores[Math.floor(Math.random() * cores.length)], forma: Math.random() < 0.5
+    }));
+    const inicio = performance.now();
+    const passo = (t) => {
+        const dt = t - inicio;
+        ctx.clearRect(0, 0, W, H);
+        pecas.forEach(p => {
+            p.vy += 0.35; p.vx *= 0.99; p.x += p.vx; p.y += p.vy; p.giro += p.vg;
+            ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.giro);
+            ctx.globalAlpha = Math.max(0, 1 - Math.max(0, dt - 2200) / 900);
+            ctx.fillStyle = p.cor;
+            if (p.forma) ctx.fillRect(-p.r, -p.r / 2, p.r * 2, p.r); else { ctx.beginPath(); ctx.arc(0, 0, p.r / 1.6, 0, Math.PI * 2); ctx.fill(); }
+            ctx.restore();
+        });
+        if (dt < 3100) requestAnimationFrame(passo); else c.remove();
+    };
+    requestAnimationFrame(passo);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const b = document.getElementById('meta-sucesso-festa');
+    if (b) b.addEventListener('click', soltarConfete);
+});
