@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <!-- Estilos do Portal -->
-    <link rel="stylesheet" href="css/styles.css?v=20261117b">
+    <link rel="stylesheet" href="css/styles.css?v=20261117d">
 </head>
 <body>
     <div class="app-container">
@@ -19,6 +19,7 @@
              SIDEBAR LATERAL (NAVEGAÇÃO COM ABAS CLICÁVEIS)
              ==================================================================== -->
         <aside class="sidebar" id="sidebar">
+            <script>try { if (localStorage.getItem('lift_modo_tv') === '1') document.documentElement.classList.add('modo-tv-manual'); } catch (e) { /* ignora */ }</script>
             <script>try { if (localStorage.getItem('lift_sidebar_recolhida') === '1') document.getElementById('sidebar').classList.add('recolhida'); } catch (e) { /* ignora */ }</script>
             <div class="sidebar-topo">
                 <!-- Logotipo e Identidade LIFT Sem Fundo -->
@@ -142,6 +143,9 @@
                 <button type="button" class="sidebar-backup-btn cloud-only" id="btn-logout" title="Sair do portal">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
                 </button>
+                <button type="button" class="sidebar-backup-btn" id="btn-modo-tv" title="Modo TV (letras maiores para telão)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><polyline points="17 2 12 7 7 2"></polyline></svg>
+                </button>
                 <button type="button" class="sidebar-backup-btn" id="btn-abrir-backups" title="Cópias de segurança dos dados">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
                 </button>
@@ -151,7 +155,16 @@
         <!-- ====================================================================
              ÁREA PRINCIPAL DA APLICAÇÃO (HEADER + CONTEÚDO)
              ==================================================================== -->
+        <div class="menu-fundo" id="menu-fundo"></div>
         <div class="main-wrapper">
+            <!-- Barra do topo no celular: abre o menu lateral -->
+            <header class="mobile-topbar">
+                <button type="button" class="mobile-menu-btn" id="btn-menu-mobile" aria-label="Abrir menu">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+                <img src="assets/lift-simbolo-white.png" alt="LIFT" class="mobile-topbar-logo">
+                <span class="mobile-topbar-titulo" id="mobile-titulo">Visão Geral</span>
+            </header>
             <!-- ================================================================
                  CONTEÚDO DINÂMICO (PAINÉIS DE CADA ABA)
                  ================================================================ -->
@@ -1784,9 +1797,9 @@
     <datalist id="lista-segmentos"></datalist>
     <datalist id="lista-origens"></datalist>
     <script src="js/data.js?v=20261112g"></script>
-    <script src="js/charts.js?v=20261112g"></script>
+    <script src="js/charts.js?v=20261117e"></script>
     <script src="js/firebase-config.js?v=20261112g"></script>
-    <script src="js/app.js?v=20261112l"></script>
+    <script src="js/app.js?v=20261117d"></script>
     <script src="js/contrato-modelo.js?v=20261112g"></script>
     <script src="js/contratos.js?v=20261112v"></script>
     <script src="js/contrato-editor.js?v=20261112v"></script>

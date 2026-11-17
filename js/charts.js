@@ -16,10 +16,11 @@ class LiftCharts {
         if (!canvas) return;
 
         const ctx = canvas.getContext('2d');
-        const dpr = window.devicePixelRatio || 1;
+        const dpr = (window.devicePixelRatio || 1) * (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--zoom-tela')) || 1);
         
         // Ajusta resolução do canvas para telas Retina/High-DPI
-        const rect = canvas.getBoundingClientRect();
+        // Tamanho em pixels de layout (sem o zoom do modo TV)
+        const rect = { width: canvas.clientWidth || canvas.getBoundingClientRect().width, height: canvas.clientHeight || canvas.getBoundingClientRect().height };
         const width = rect.width || 320;
         const height = rect.height || 180;
 
@@ -102,8 +103,8 @@ class LiftCharts {
         if (!canvas) return;
 
         const ctx = canvas.getContext('2d');
-        const dpr = window.devicePixelRatio || 1;
-        const rect = canvas.getBoundingClientRect();
+        const dpr = (window.devicePixelRatio || 1) * (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--zoom-tela')) || 1);
+        const rect = { width: canvas.clientWidth || canvas.getBoundingClientRect().width, height: canvas.clientHeight || canvas.getBoundingClientRect().height };
         const width = rect.width || 800;
         const height = rect.height || 360;
 
@@ -292,8 +293,9 @@ class LiftCharts {
                 const st = canvas._liftMonthly;
                 if (!st) return;
                 const r = canvas.getBoundingClientRect();
-                const mx = ev.clientX - r.left;
-                const my = ev.clientY - r.top;
+                const z = canvas.clientWidth ? r.width / canvas.clientWidth : 1; // zoom do modo TV
+                const mx = (ev.clientX - r.left) / z;
+                const my = (ev.clientY - r.top) / z;
                 const hit = st.bars.find(b => mx >= b.x - 2 && mx <= b.x + b.w + 2 && my >= b.hitY && my <= b.y + b.h + 1) || null;
                 const key = hit ? `${hit.index}-${hit.tipo}` : null;
                 const prev = st.hover ? `${st.hover.index}-${st.hover.tipo}` : null;
@@ -310,8 +312,9 @@ class LiftCharts {
                 const st = canvas._liftMonthly;
                 if (!st || typeof st.options.onBarClick !== 'function') return;
                 const r = canvas.getBoundingClientRect();
-                const mx = ev.clientX - r.left;
-                const my = ev.clientY - r.top;
+                const z = canvas.clientWidth ? r.width / canvas.clientWidth : 1; // zoom do modo TV
+                const mx = (ev.clientX - r.left) / z;
+                const my = (ev.clientY - r.top) / z;
                 const hit = st.bars.find(b => mx >= b.x - 2 && mx <= b.x + b.w + 2 && my >= b.hitY && my <= b.y + b.h + 1);
                 if (!hit) return;
                 const ponto = st.serie[hit.index];
@@ -338,7 +341,7 @@ class LiftCharts {
         const st = canvas._liftMonthly;
         const serie = st.serie;
         const ctx = canvas.getContext('2d');
-        const dpr = window.devicePixelRatio || 1;
+        const dpr = (window.devicePixelRatio || 1) * (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--zoom-tela')) || 1);
         const holder = canvas.parentElement;
         const width = (holder && holder.clientWidth) || 900;
         const height = (holder && holder.clientHeight) || 420;
@@ -473,7 +476,7 @@ class LiftCharts {
             <div class="tt-row"><i class="tt-dot dark-orange"></i>Meta de Churn: <b>${d.metaChurn}</b></div>`;
         tip.classList.add('visible');
 
-        const box = canvas.getBoundingClientRect();
+        const box = { width: canvas.clientWidth || canvas.getBoundingClientRect().width };
         const tw = tip.offsetWidth, th = tip.offsetHeight;
         let left = mx + 14;
         if (left + tw > box.width) left = mx - tw - 14;

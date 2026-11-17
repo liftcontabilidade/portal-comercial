@@ -382,6 +382,9 @@ function setupNavigation() {
  */
 function switchView(viewName) {
     AppState.currentView = viewName;
+    const tituloMobile = document.getElementById('mobile-titulo');
+    const rotuloNav = document.querySelector(`.nav-item[data-view="${viewName}"] span:not(.nav-icon)`);
+    if (tituloMobile && rotuloNav) tituloMobile.textContent = rotuloNav.textContent.trim();
 
     // Atualiza classes ativas na Sidebar
     document.querySelectorAll('.nav-item[data-view]').forEach(item => {
@@ -3307,3 +3310,57 @@ function setupSidebarToggle() {
         setTimeout(() => window.dispatchEvent(new Event('resize')), 260);
     });
 }
+
+
+/* ==========================================================================
+   CELULAR: menu lateral abre por cima da tela (botão ☰ no topo)
+   ========================================================================== */
+function setupMenuMobile() {
+    const btn = document.getElementById('btn-menu-mobile');
+    const fundo = document.getElementById('menu-fundo');
+    if (!btn) return;
+    const fechar = () => document.body.classList.remove('menu-aberto');
+    btn.addEventListener('click', () => document.body.classList.toggle('menu-aberto'));
+    if (fundo) fundo.addEventListener('click', fechar);
+    document.querySelectorAll('.sidebar .nav-item').forEach(n => n.addEventListener('click', () => {
+        const t = document.getElementById('mobile-titulo');
+        const rot = n.querySelector('span:not(.nav-icon)');
+        if (t && rot) t.textContent = rot.textContent.trim();
+        fechar();
+    }));
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fechar(); });
+}
+document.addEventListener('DOMContentLoaded', setupMenuMobile);
+
+
+/* ==========================================================================
+   TELEVISÃO / TELÃO: aumenta tudo proporcionalmente
+   - Automático em telas muito largas (TV 4K, monitores grandes)
+   - Botão "Modo TV" no rodapé do menu (para TV Full HD vista de longe)
+   ========================================================================== */
+function aplicarZoomTela() {
+    const html = document.documentElement;
+    const manual = html.classList.contains('modo-tv-manual');
+    const largura = window.innerWidth;
+    let zoom = 1;
+    if (largura >= 2400) zoom = Math.min(2.6, largura / 1700);
+    if (manual) zoom = Math.max(zoom, largura >= 1200 ? Math.min(2.6, largura / 1280) : 1);
+    zoom = Math.round(zoom * 100) / 100;
+    html.style.setProperty('--zoom-tela', zoom);
+    html.classList.toggle('zoom-tela', zoom > 1);
+    const btn = document.getElementById('btn-modo-tv');
+    if (btn) { btn.classList.toggle('ativo', manual); btn.title = manual ? 'Sair do modo TV' : 'Modo TV (letras maiores para telão)'; }
+}
+function setupModoTV() {
+    const btn = document.getElementById('btn-modo-tv');
+    if (btn) btn.addEventListener('click', () => {
+        const ativo = document.documentElement.classList.toggle('modo-tv-manual');
+        try { localStorage.setItem('lift_modo_tv', ativo ? '1' : '0'); } catch (e) { /* ignora */ }
+        aplicarZoomTela();
+        setTimeout(() => window.dispatchEvent(new Event('resize')), 150);
+    });
+    let t;
+    window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(aplicarZoomTela, 120); });
+    aplicarZoomTela();
+}
+document.addEventListener('DOMContentLoaded', setupModoTV);

@@ -2352,3 +2352,58 @@ button.vd-row:hover, button.vd-row.aberto { background: #F8FAFC; }
 .sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.3); border-radius: 999px; }
 .sidebar-nav::-webkit-scrollbar-thumb:hover { background: var(--lift-orange); }
 .sidebar-topo { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
+/* ==========================================================================
+   RESPONSIVO — CELULAR / TABLET
+   ========================================================================== */
+.mobile-topbar, .menu-fundo { display: none; }
+@media (max-width: 900px) {
+    .mobile-topbar { display: flex; align-items: center; gap: 10px; flex-shrink: 0; height: 56px; padding: 0 12px; background: var(--lift-blue); color: #FFFFFF; position: sticky; top: 0; z-index: 15; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
+    .mobile-menu-btn { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 10px; background: rgba(255,255,255,.08); color: #FFFFFF; cursor: pointer; }
+    .mobile-topbar-logo { width: 30px; height: auto; }
+    .mobile-topbar-titulo { font-weight: 700; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    /* Menu lateral vira gaveta */
+    .sidebar, .sidebar.recolhida { position: fixed; top: 0; left: 0; bottom: 0; width: 270px; transform: translateX(-105%); transition: transform .25s ease; z-index: 60; }
+    .sidebar.recolhida .sidebar-logo { display: block; width: auto; height: 34px; object-fit: contain; }
+    .sidebar.recolhida .sidebar-simbolo { display: none; }
+    .sidebar.recolhida .sidebar-brand-text, .sidebar.recolhida .nav-section-title, .sidebar.recolhida .user-info { display: revert; }
+    .sidebar.recolhida .nav-item > span:not(.nav-icon) { display: inline; }
+    .sidebar.recolhida .sidebar-header { flex-direction: row; padding: 20px 18px; }
+    .sidebar.recolhida .sidebar-nav { padding: 20px 10px; }
+    .sidebar.recolhida .nav-item { justify-content: flex-start; padding: 10px 14px; gap: 12px; }
+    .sidebar.recolhida .sidebar-footer { flex-direction: row; }
+    .sidebar-toggle { display: none; }
+    body.menu-aberto .sidebar { transform: none; }
+    .menu-fundo { position: fixed; inset: 0; background: rgba(11,37,69,.45); z-index: 55; }
+    body.menu-aberto .menu-fundo { display: block; }
+    .main-wrapper { width: 100%; }
+    .content-body { height: auto; flex: 1; min-height: 0; padding: 14px 12px 24px; scrollbar-gutter: auto; }
+    /* Grades viram uma coluna */
+    .opp-kpi-grid, .opp-kpi-grid.cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .page-top-action-bar { flex-wrap: wrap; gap: 10px; }
+    .opp-card { min-width: 0; }
+    .modal-dialog { width: calc(100vw - 20px) !important; max-width: none !important; max-height: calc(100vh - 20px); overflow-y: auto; }
+    .form-grid-2 { grid-template-columns: 1fr !important; }
+    table { max-width: 100%; }
+}
+@media (max-width: 560px) {
+    .opp-kpi-grid, .opp-kpi-grid.cols-3 { grid-template-columns: 1fr; }
+    .content-body { padding: 12px 10px 24px; }
+}
+@media (max-width: 900px) {
+    .page-top-action-bar > div { flex-wrap: wrap; max-width: 100%; }
+    .page-top-action-bar .form-group { flex: 1 1 140px; min-width: 0; }
+    .page-top-action-bar .form-select { width: 100%; }
+    #panel-metas .opp-card { overflow-x: auto; }
+    #panel-metas .opp-table { min-width: 640px; }
+    .table-container { max-height: none; min-height: 0; }
+    #btn-modo-tv { display: none; }
+}
+
+/* ===== Televisão: tudo maior, na mesma proporção ===== */
+html.zoom-tela .app-container { zoom: var(--zoom-tela); width: calc(100vw / var(--zoom-tela)); height: calc(100vh / var(--zoom-tela)); }
+html.zoom-tela .sidebar, html.zoom-tela .main-wrapper { height: 100%; }
+html.zoom-tela .content-body { height: auto; flex: 1; min-height: 0; }
+html.zoom-tela .table-container { max-height: calc(100vh / var(--zoom-tela) - 280px); }
+html.zoom-tela .modal-dialog { zoom: var(--zoom-tela); max-height: calc(100vh / var(--zoom-tela) - 40px); overflow-y: auto; }
+#btn-modo-tv.ativo { background: var(--lift-orange); border-color: var(--lift-orange); color: #FFFFFF; }
