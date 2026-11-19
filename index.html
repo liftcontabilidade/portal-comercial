@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <!-- Estilos do Portal -->
-    <link rel="stylesheet" href="css/styles.css?v=20261117g">
+    <link rel="stylesheet" href="css/styles.css?v=20261119a">
 </head>
 <body>
     <div class="app-container">
@@ -1166,6 +1166,31 @@
                 </section>
 
                 <section id="panel-trafego" class="view-panel">
+                    <div class="ct-topo">
+                        <div class="tr-tipos ct-abas" id="tr-abas">
+                            <button type="button" data-aba="anuncios" class="active">Anúncios (Meta Ads)</button>
+                            <button type="button" data-aba="canais">Canais de aquisição (RD)</button>
+                        </div>
+                    </div>
+                    <div id="tr-aba-canais" class="oculto">
+                        <div class="page-top-action-bar tr-topo">
+                            <div class="tr-filtros">
+                                <div class="tr-tipos" id="cn-tipos">
+                                    <button type="button" data-tipo="semana">Semanal</button>
+                                    <button type="button" data-tipo="mes" class="active">Mensal</button>
+                                </div>
+                                <div class="tr-nav">
+                                    <button type="button" id="cn-ant" title="Período anterior">‹</button>
+                                    <span id="cn-periodo-label">—</span>
+                                    <button type="button" id="cn-prox" title="Próximo período">›</button>
+                                </div>
+                                <select class="form-select cn-funil" id="cn-funil" title="Funil do RD"></select>
+                            </div>
+                            <div class="tr-acoes"><button type="button" class="tr-btn-icone" id="cn-atualizar" title="Atualizar agora">↻</button></div>
+                        </div>
+                        <div id="cn-conteudo"></div>
+                    </div>
+                    <div id="tr-aba-anuncios">
                     <div class="page-top-action-bar tr-topo">
                         <div class="tr-filtros">
                             <div class="tr-tipos" id="tr-tipos">
@@ -1240,6 +1265,7 @@
                             </div>
                             <div id="tr-lancamentos"></div>
                         </div>
+                    </div>
                     </div>
                 </section>
 
@@ -1811,12 +1837,12 @@
     <script src="js/data.js?v=20261112g"></script>
     <script src="js/charts.js?v=20261117e"></script>
     <script src="js/firebase-config.js?v=20261112g"></script>
-    <script src="js/app.js?v=20261117g"></script>
+    <script src="js/app.js?v=20261119a"></script>
     <script src="js/contrato-modelo.js?v=20261112g"></script>
     <script src="js/contratos.js?v=20261112v"></script>
     <script src="js/contrato-editor.js?v=20261112v"></script>
     <script src="js/vendedores.js?v=20261112g"></script>
-    <script src="js/funis.js?v=20261112u"></script>
+    <script src="js/funis.js?v=20261119a"></script>
     <script src="js/trafego.js?v=20261112l"></script>
     <script src="js/meta-ads.js?v=20261112j"></script>
     <script type="module" src="js/firebase-sync.js?v=20261112l"></script>

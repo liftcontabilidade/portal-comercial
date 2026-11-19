@@ -433,7 +433,7 @@ function switchView(viewName) {
     } else if (viewName === 'metas') {
         renderMetasView();
     } else if (viewName === 'trafego') {
-        renderTrafegoView();
+        if (AppState.trafegoAba === 'canais' && typeof renderCanaisView === 'function') renderCanaisView(); else renderTrafegoView();
     }
 }
 

@@ -2433,3 +2433,22 @@ html.zoom-tela .modal-dialog { zoom: var(--zoom-tela); max-height: calc(100vh / 
 .confete-canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9999; }
 @media (prefers-reduced-motion: reduce) { .meta-sucesso, .meta-sucesso::after { animation: none; } }
 @media (max-width: 560px) { .meta-sucesso { padding: 14px; gap: 12px; } .meta-sucesso-icone { width: 44px; height: 44px; } .meta-sucesso-txt strong { font-size: 17px; } }
+
+/* ===== Tráfego Pago: canais de aquisição (RD) ===== */
+.cn-funil { width: auto; min-width: 170px; height: 36px; padding: 0 10px; font-size: 13px; }
+.cn-row { grid-template-columns: 1.6fr 1.3fr 1.3fr .7fr .7fr; min-height: 44px; }
+button.cn-row { width: 100%; border: 0; background: transparent; font: inherit; text-align: left; cursor: pointer; }
+button.cn-row:hover, button.cn-row.aberto { background: #F8FAFC; }
+.cn-row.aberto .ind-seta { transform: rotate(90deg); color: var(--lift-orange); }
+.cn-row.anuncio .or-nome { color: var(--lift-orange); }
+.or-barra.cn-leads i { background: #93C5FD; }
+#cn-conteudo .opp-table > * + * { border-top: 1px solid var(--border-subtle); border-radius: 0; }
+.cn-detalhe { background: #F8FAFC; padding: 6px 16px 14px 34px; }
+.cn-det-tit { font-size: 11px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; color: var(--text-muted); margin: 10px 0 6px; }
+.cn-leads-lista { display: flex; flex-wrap: wrap; }
+.cn-evol td small { display: block; font-size: 10.5px; color: var(--text-muted); font-weight: 500; }
+.cn-evol th.atual { background: var(--lift-orange); }
+.cn-evol td.atual { background: var(--lift-orange-light); }
+.cn-evol tr.anuncio td.tr-metrica { color: var(--lift-orange); }
+.cn-evol tr.cn-total td { font-weight: 800; background: #F1F5F9; }
+@media (max-width: 900px) { .cn-row { grid-template-columns: 1.4fr 1fr 1fr; } .cn-row > :nth-child(n+4) { display: none; } .cn-detalhe { padding-left: 12px; } }

@@ -156,13 +156,13 @@ async function crmChamar(params, cfg = Funis.cfg) {
 
 const crmChaveJanela = (funilId, j) => `${funilId}|${j.ini}|${j.fim}`;
 
-async function crmCarregarJanela(j, forcar = false) {
+async function crmCarregarJanela(j, forcar = false, alvo = null) {
     if (!crmConectado()) return;
     let buscou = false;
     const erroAntes = Funis.erro;
     try {
         if (!Funis.funis || forcar) { Funis.funis = (await crmChamar({ acao: 'funis' })).funis || []; buscou = true; }
-        const escolhidos = crmFunisEscolhidos();
+        const escolhidos = alvo ? alvo() : crmFunisEscolhidos();
         await Promise.all(escolhidos.map(async f => {
             const k = crmChaveJanela(f.id, j);
             if (Funis.carregando.has(k)) return;
@@ -189,6 +189,7 @@ async function crmCarregarJanela(j, forcar = false) {
     }
     // Só redesenha quando algo foi buscado (evita repetir sem parar enquanto carrega)
     if ((buscou || Funis.erro !== erroAntes) && AppState.currentView === 'funis') renderFunisView();
+    if ((buscou || Funis.erro !== erroAntes) && AppState.currentView === 'trafego' && AppState.trafegoAba === 'canais') renderCanaisView();
 }
 
 function crmAgendar(atraso = 0) {
@@ -468,3 +469,167 @@ function setupFunis() {
     crmAgendar(3000);
 }
 document.addEventListener('DOMContentLoaded', setupFunis);
+
+
+/* ==========================================================================
+   CANAIS DE AQUISIÇÃO (aba Tráfego Pago → "Canais de aquisição")
+   Quantos leads e quantos clientes vieram de cada canal (Fonte da negociação
+   no RD Station CRM), por semana ou por mês.
+   Leads = negociações criadas no período · Clientes = vendas (ganhas) com
+   data de venda no período.
+   ========================================================================== */
+function canaisJanela() {
+    const tipo = AppState.canaisTipo || 'mes';
+    if (!AppState.canaisRef) AppState.canaisRef = trIso(new Date());
+    return trJanela(tipo, AppState.canaisRef);
+}
+
+function canaisFunis() {
+    const todos = Funis.funis || [];
+    const sel = AppState.canaisFunil || 'comercial';
+    if (sel === 'todos') return todos;
+    if (sel === 'comercial') { const c = todos.filter(f => /comercial/i.test(f.nome || '')); return c.length ? c : todos; }
+    return todos.filter(f => String(f.id) === sel);
+}
+
+function canaisDados(j) {
+    const funis = canaisFunis();
+    if (!funis.length) return null;
+    const leads = [], clientes = [];
+    for (const f of funis) {
+        const d = Funis.dados.get(crmChaveJanela(f.id, j));
+        if (!d) return null;
+        leads.push(...d.lista);
+        clientes.push(...(d.ganhas || []));
+    }
+    const canais = new Map();
+    const pega = (nome) => {
+        const k = (nome || '').trim() || 'Sem origem';
+        if (!canais.has(k)) canais.set(k, { nome: k, leads: 0, clientes: 0, listaClientes: [], listaLeads: [] });
+        return canais.get(k);
+    };
+    leads.forEach(n => { const c = pega(n.fonte); c.leads++; c.listaLeads.push(n); });
+    clientes.forEach(n => { const c = pega(n.fonte); c.clientes++; c.listaClientes.push(n); });
+    const lista = [...canais.values()].sort((a, b) => b.clientes - a.clientes || b.leads - a.leads || a.nome.localeCompare(b.nome, 'pt-BR'));
+    return { lista, totalLeads: leads.length, totalClientes: clientes.length };
+}
+
+function renderCanaisView() {
+    const box = document.getElementById('cn-conteudo');
+    if (!box) return;
+    const tipo = AppState.canaisTipo || 'mes';
+    const j = canaisJanela();
+    document.querySelectorAll('#cn-tipos button').forEach(b => b.classList.toggle('active', b.dataset.tipo === tipo));
+    const lbl = document.getElementById('cn-periodo-label');
+    if (lbl) lbl.textContent = tipo === 'mes' ? j.label : `Semana de ${trCompleta(j.ini)} a ${trCompleta(j.fim)}`;
+    const sel = document.getElementById('cn-funil');
+    if (sel && Funis.funis) {
+        const atual = AppState.canaisFunil || 'comercial';
+        sel.innerHTML = '<option value="comercial">Funil Comercial</option><option value="todos">Todos os funis</option>' +
+            Funis.funis.filter(f => !/comercial/i.test(f.nome || '')).map(f => `<option value="${escHtml(f.id)}">${escHtml(f.nome)}</option>`).join('');
+        sel.value = atual;
+    }
+    if (!Funis.cfgRecebida) { box.innerHTML = '<div class="home-empty">Carregando…</div>'; return; }
+    if (!crmConectado()) {
+        box.innerHTML = `<div class="opp-card fn-vazio"><h3>Conecte o RD Station CRM</h3><p>Os canais de aquisição vêm da <b>Fonte</b> das negociações no RD Station CRM. Faça a conexão na aba <b>Funis</b>.</p><button type="button" class="btn-lift-action" onclick="switchView('funis')">Ir para Funis</button></div>`;
+        return;
+    }
+    if (!Funis.funis) { box.innerHTML = '<div class="home-empty">Buscando no RD Station CRM…</div>'; crmCarregarJanela(j, false, canaisFunis); return; }
+
+    // Período atual + 5 anteriores (evolução)
+    const periodos = [];
+    let pj = j;
+    for (let i = 0; i < 6; i++) { periodos.unshift(pj); pj = trDeslocar(tipo, pj, -1); }
+    periodos.forEach(p => { if (!canaisDados(p)) crmCarregarJanela(p, false, canaisFunis); });
+    const d = canaisDados(j);
+    if (!d) { box.innerHTML = (Funis.erro ? `<div class="tri-erro">${escHtml(Funis.erro)}</div>` : '') + '<div class="home-empty">Buscando no RD Station CRM…</div>'; return; }
+
+    const top = d.lista.find(c => c.clientes > 0);
+    const conv = d.totalLeads ? (d.totalClientes / d.totalLeads) * 100 : null;
+    const maxCli = Math.max(1, ...d.lista.map(c => c.clientes));
+    const maxLeads = Math.max(1, ...d.lista.map(c => c.leads));
+    if (!AppState._canaisAbertos) AppState._canaisAbertos = new Set();
+    const abertos = AppState._canaisAbertos;
+    const ehAnuncio = (nome) => /anuncio/.test(crmSemAcento(nome));
+
+    const linhas = d.lista.map(c => {
+        const aberto = abertos.has(c.nome);
+        const pct = d.totalClientes ? (c.clientes / d.totalClientes) * 100 : 0;
+        const cv = c.leads ? formatPct((c.clientes / c.leads) * 100, 0) : '—';
+        return `<button type="button" class="opp-row cn-row ${ehAnuncio(c.nome) ? 'anuncio' : ''} ${aberto ? 'aberto' : ''}" data-cn="${escHtml(c.nome)}">
+                <span class="or-nome"><span class="ind-seta">›</span>${escHtml(c.nome)}</span>
+                <span class="or-barra-cell"><span class="or-barra cn-leads"><i style="width:${(c.leads / maxLeads) * 100}%"></i></span><b>${c.leads}</b></span>
+                <span class="or-barra-cell"><span class="or-barra"><i style="width:${(c.clientes / maxCli) * 100}%"></i></span><b>${c.clientes}</b></span>
+                <span class="center">${cv}</span>
+                <span class="center">${d.totalClientes ? formatPct(pct, 0) : '—'}</span>
+            </button>
+            ${aberto ? `<div class="cn-detalhe">${c.listaClientes.length ? `<div class="cn-det-tit">Clientes (vendas no período)</div>${crmListaNegocios(c.listaClientes.map(n => ({ ...n, situacao: 'ganha' })))}` : '<div class="fn-neg-vazio">Nenhuma venda deste canal no período.</div>'}
+                ${c.listaLeads.length ? `<div class="cn-det-tit">Leads que entraram no período (${c.listaLeads.length})</div><div class="cn-leads-lista">${c.listaLeads.slice(0, 60).map(n => `<span class="fn-neg ${n.ganha === false ? 'perdida' : n.ganha === true ? 'ganha' : ''}">${escHtml(n.nome || 'Sem nome')}</span>`).join('')}${c.listaLeads.length > 60 ? `<span class="fn-neg-vazio">… e mais ${c.listaLeads.length - 60}</span>` : ''}</div>` : ''}</div>` : ''}`;
+    }).join('');
+
+    // Evolução: clientes por canal nos últimos 6 períodos
+    const dadosP = periodos.map(p => canaisDados(p));
+    const nomesCanais = [...new Set(dadosP.filter(Boolean).flatMap(x => x.lista.filter(c => c.clientes || c.leads).map(c => c.nome)))];
+    const totalPorCanal = (nome) => dadosP.reduce((s, x) => s + (x ? ((x.lista.find(c => c.nome === nome) || {}).clientes || 0) : 0), 0);
+    nomesCanais.sort((a, b) => totalPorCanal(b) - totalPorCanal(a));
+    const rotulo = (p) => tipo === 'mes' ? `${MESES_TR[trData(p.ini).getMonth()].slice(0, 3)}/${String(trData(p.ini).getFullYear()).slice(2)}` : `${trCurta(p.ini)}`;
+    const evol = `<table class="tr-tabela cn-evol"><thead><tr><th class="tr-metrica">Canal</th>${periodos.map(p => `<th class="${p.ini === j.ini ? 'atual' : ''}">${rotulo(p)}</th>`).join('')}</tr></thead><tbody>
+        ${nomesCanais.map(nome => `<tr class="${ehAnuncio(nome) ? 'anuncio' : ''}"><td class="tr-metrica">${escHtml(nome)}</td>${dadosP.map((x, i) => { const c = x && x.lista.find(y => y.nome === nome); return `<td class="${periodos[i].ini === j.ini ? 'atual' : ''}">${x ? `<b>${c ? c.clientes : 0}</b><small>${c ? c.leads : 0} leads</small>` : '…'}</td>`; }).join('')}</tr>`).join('')}
+        <tr class="cn-total"><td class="tr-metrica">Total</td>${dadosP.map((x, i) => `<td class="${periodos[i].ini === j.ini ? 'atual' : ''}">${x ? `<b>${x.totalClientes}</b><small>${x.totalLeads} leads</small>` : '…'}</td>`).join('')}</tr>
+    </tbody></table>`;
+
+    box.innerHTML = (Funis.erro ? `<div class="tri-erro">${escHtml(Funis.erro)}</div>` : '') + `
+        <div class="opp-kpi-grid">
+            <div class="opp-kpi-card accent-blue"><div><span class="opp-kpi-label">Leads no período</span><span class="opp-kpi-value">${d.totalLeads}</span><span class="opp-kpi-sub">negociações criadas</span></div></div>
+            <div class="opp-kpi-card accent-orange"><div><span class="opp-kpi-label">Clientes (vendas)</span><span class="opp-kpi-value orange">${d.totalClientes}</span><span class="opp-kpi-sub">pela data da venda</span></div></div>
+            <div class="opp-kpi-card accent-blue"><div><span class="opp-kpi-label">Conversão</span><span class="opp-kpi-value">${conv !== null ? formatPct(conv, 1) : '—'}</span><span class="opp-kpi-sub">clientes ÷ leads</span></div></div>
+            <div class="opp-kpi-card accent-blue"><div><span class="opp-kpi-label">Canal que mais trouxe clientes</span><span class="opp-kpi-value or-kpi-nome">${top ? escHtml(top.nome) : '—'}</span><span class="opp-kpi-sub">${top ? `${top.clientes} ${top.clientes === 1 ? 'cliente' : 'clientes'}` : 'nenhuma venda no período'}</span></div></div>
+        </div>
+        <div class="opp-card tr-bloco">
+            <div class="opp-card-head"><span class="dash-section-title">CLIENTES POR CANAL DE AQUISIÇÃO</span></div>
+            <div class="opp-table">
+                <div class="opp-row cn-row opp-row-head"><span>Canal (fonte no RD)</span><span>Leads</span><span>Clientes</span><span class="center">Conversão</span><span class="center">% dos clientes</span></div>
+                ${linhas || '<div class="home-empty">Nenhuma negociação no período.</div>'}
+            </div>
+            <div class="tr-legenda">Clique num canal para ver os clientes e os leads. "Sem origem" = negociação sem Fonte preenchida no RD.</div>
+        </div>
+        <div class="opp-card tr-bloco">
+            <div class="opp-card-head"><span class="dash-section-title">EVOLUÇÃO — CLIENTES POR CANAL (ÚLTIMOS 6 ${tipo === 'mes' ? 'MESES' : 'SEMANAS'})</span></div>
+            <div class="tr-tabela-wrap">${evol}</div>
+        </div>`;
+    box.querySelectorAll('[data-cn]').forEach(b => b.onclick = () => {
+        const k = b.dataset.cn; abertos.has(k) ? abertos.delete(k) : abertos.add(k); renderCanaisView();
+    });
+}
+
+function trocarAbaTrafego(aba) {
+    AppState.trafegoAba = aba;
+    try { localStorage.setItem('lift_trafego_aba', aba); } catch (e) { /* ignora */ }
+    document.querySelectorAll('#tr-abas button').forEach(b => b.classList.toggle('active', b.dataset.aba === aba));
+    document.getElementById('tr-aba-anuncios').classList.toggle('oculto', aba !== 'anuncios');
+    document.getElementById('tr-aba-canais').classList.toggle('oculto', aba !== 'canais');
+    if (aba === 'canais') renderCanaisView(); else renderTrafegoView();
+}
+
+function setupCanais() {
+    const abas = document.getElementById('tr-abas');
+    if (!abas) return;
+    try { AppState.trafegoAba = localStorage.getItem('lift_trafego_aba') === 'canais' ? 'canais' : 'anuncios'; } catch (e) { AppState.trafegoAba = 'anuncios'; }
+    abas.querySelectorAll('button').forEach(b => b.addEventListener('click', () => trocarAbaTrafego(b.dataset.aba)));
+    document.querySelectorAll('#cn-tipos button').forEach(b => b.addEventListener('click', () => {
+        const j = canaisJanela();
+        AppState.canaisTipo = b.dataset.tipo;
+        const hoje = trIso(new Date());
+        AppState.canaisRef = (j.ini <= hoje && j.fim >= hoje) ? hoje : j.ini;
+        renderCanaisView();
+    }));
+    document.getElementById('cn-ant').addEventListener('click', () => { AppState.canaisRef = trDeslocar(AppState.canaisTipo || 'mes', canaisJanela(), -1).ini; renderCanaisView(); });
+    document.getElementById('cn-prox').addEventListener('click', () => { AppState.canaisRef = trDeslocar(AppState.canaisTipo || 'mes', canaisJanela(), 1).ini; renderCanaisView(); });
+    document.getElementById('cn-funil').addEventListener('change', (e) => { AppState.canaisFunil = e.target.value; renderCanaisView(); });
+    document.getElementById('cn-atualizar').addEventListener('click', () => {
+        [...Funis.dados.keys()].forEach(k => Funis.dados.get(k).em = 0);
+        renderCanaisView();
+    });
+    trocarAbaTrafego(AppState.trafegoAba);
+}
+document.addEventListener('DOMContentLoaded', setupCanais);
