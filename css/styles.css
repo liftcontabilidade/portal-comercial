@@ -2556,3 +2556,11 @@ button.cn-row:hover, button.cn-row.aberto { background: #F8FAFC; }
 .pa-onde { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; font-size: 12.5px; color: var(--text-secondary); }
 .pa-onde > span { background: var(--bg-main, #F1F5F9); border: 1px solid var(--border-color); border-radius: 99px; padding: 3px 10px; }
 .pa-onde > span b { color: var(--text-primary); margin-left: 3px; }
+
+.pa-resumo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.pa-resumo { padding: 18px 20px; }
+.pa-resumo h3 { margin: 0 0 12px; font-size: 15px; }
+.pa-res-linha { display: grid; grid-template-columns: 140px 1fr 64px 44px; gap: 12px; align-items: center; font-size: 13px; padding: 7px 0; color: var(--text-primary); }
+.pa-res-linha b { text-align: right; }
+.pa-res-pct { text-align: right; color: var(--text-secondary); font-weight: 700; font-size: 12px; }
+@media (max-width: 900px) { .pa-resumo-grid { grid-template-columns: 1fr; } .pa-res-linha { grid-template-columns: 100px 1fr 56px 40px; } }

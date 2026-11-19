@@ -37,7 +37,10 @@ window.aplicarProspeccaoDaNuvem = function (dados) {
 };
 
 function paSemanaDe(iso) { return trJanela('semana', iso).ini; } // segunda-feira
-function paSemanaAtual() { return AppState.paSemana || (AppState.paSemana = paSemanaDe(trIso(new Date()))); }
+// Período escolhido no topo: Semana, Mês ou Ano (AppState.paRef = uma data dentro do período)
+function paTipo() { return AppState.paTipo || 'semana'; }
+function paRef() { return AppState.paRef || (AppState.paRef = trIso(new Date())); }
+function paSemanaAtual() { return paSemanaDe(paRef()); }
 function paDiaIso(segunda, i) { const d = trData(segunda); d.setDate(d.getDate() + i); return trIso(d); }
 function paFeitas(semana) { return Object.values(Prospeccao.checks[semana] || {}).filter(Boolean).length; }
 
@@ -65,22 +68,32 @@ async function paSalvar() {
 function paFunis() { return (Funis.funis || []).filter(f => /prospec/i.test(f.nome || '')); }
 
 function paJanelaMetas(semana) {
-    const tipo = AppState.paMetaTipo || 'mes';
+    const tipo = paTipo();
     // Semana: os leads importados no fim de semana anterior entram na semana em que serão contatados (sábado a sexta)
-    if (tipo === 'semana') { const w = trJanela('semana', semana); return { ini: paDiaIso(semana, -2), fim: paDiaIso(semana, 4), label: w.label, tipo }; }
-    if (tipo === 'ano') { const a = semana.slice(0, 4); return { ini: `${a}-01-01`, fim: `${a}-12-31`, label: `Ano de ${a}`, tipo }; }
-    return { ...trJanela('mes', paDiaIso(semana, 2)), tipo };
+    if (tipo === 'semana') { const sx = paDiaIso(semana, 4); return { ini: paDiaIso(semana, -2), fim: sx, label: `Semana de ${trCurta(semana)} a ${trCurta(sx)}/${sx.slice(0, 4)}`, tipo }; }
+    if (tipo === 'ano') { const a = paRef().slice(0, 4); return { ini: `${a}-01-01`, fim: `${a}-12-31`, label: `Ano de ${a}`, tipo }; }
+    return { ...trJanela('mes', paRef()), tipo };
 }
 
-// Quantas semanas de prospecção o período tem (só conta até a semana atual)
-function paSemanasNoPeriodo(j) {
-    if (j.tipo === 'semana') return 1;
-    const atual = paSemanaDe(trIso(new Date()));
-    let s = paSemanaDe(j.ini), n = 0;
-    if (s < j.ini) s = paDiaIso(s, 7);
-    for (; s <= j.fim && s <= atual; s = paDiaIso(s, 7)) n++;
-    return n;
+// Primeira semana de prospecção: a mais antiga entre o primeiro lead do funil no RD e a primeira tarefa marcada
+function paInicio(j) {
+    let ini = Object.keys(Prospeccao.checks).sort()[0] || '';
+    for (const f of paFunis()) {
+        const d = Funis.dados.get(crmChaveJanela(f.id, j));
+        (d ? d.lista : []).forEach(n => { const c = String(n.criada || '').slice(0, 10); if (c && (!ini || c < ini)) ini = c; });
+    }
+    return ini ? paSemanaDe(ini) : paSemanaDe(trIso(new Date()));
 }
+// Semanas de prospecção do período: só até a semana atual e a partir do início da prospecção
+function paSemanasLista(j) {
+    if (j.tipo === 'semana') return [paSemanaDe(paDiaIso(j.fim, -4))];
+    const atual = paSemanaDe(trIso(new Date())), inicio = paInicio(j), lista = [];
+    let s = paSemanaDe(j.ini);
+    if (s < j.ini) s = paDiaIso(s, 7);
+    for (; s <= j.fim && s <= atual; s = paDiaIso(s, 7)) if (s >= inicio) lista.push(s);
+    return lista;
+}
+function paSemanasNoPeriodo(j) { return paSemanasLista(j).length; }
 
 // Quantos leads (criados no período) chegaram a cada etapa
 function paConversao(j) {
@@ -117,7 +130,6 @@ function paHtmlMetas(semana) {
     const topo = `<div class="pa-metas-topo">
         <div><h3>Metas de conversão</h3><span>Funil Prospecção ativa (RD) · leads que entraram em: <b>${escHtml(j.label)}</b></span></div>
         <div class="pa-metas-acoes">
-            <div class="tr-tipos" id="pa-meta-tipos">${[['semana', 'Semana'], ['mes', 'Mês'], ['ano', 'Ano']].map(([k, t]) => `<button type="button" data-t="${k}"${k === tipo ? ' class="active"' : ''}>${t}</button>`).join('')}</div>
             <button type="button" class="btn-secondary" id="pa-meta-editar">${editar ? 'Salvar metas' : '✎ Editar metas'}</button>
         </div></div>`;
     let corpo;
@@ -178,17 +190,41 @@ function paDetalhe(dia, i, tarefa) {
     return '<small>Retornos e contatos pendentes</small>';
 }
 
+// Mês/Ano: quanto de cada tarefa e de cada dia foi feito no período
+function paHtmlResumo(semanas, nomePeriodo) {
+    if (!semanas.length) return `<div class="opp-card pa-resumo"><p class="pa-metas-aviso">Nenhuma semana desse período começou ainda.</p></div>`;
+    const n = semanas.length;
+    const barra = (f, t) => { const p = t ? Math.round(f / t * 100) : 0; return `<span class="pa-sem-barra"><i style="width:${p}%"></i></span><b>${f}/${t}</b><span class="pa-res-pct">${p}%</span>`; };
+    const porTarefa = PA_TAREFAS.map(t => { const f = semanas.reduce((a, w) => a + PA_DIAS.filter(d => (Prospeccao.checks[w] || {})[d.k + '-' + t.k]).length, 0); return `<div class="pa-res-linha"><span>${t.nome}</span>${barra(f, n * PA_DIAS.length)}</div>`; }).join('');
+    const porDia = PA_DIAS.map(d => { const f = semanas.reduce((a, w) => a + PA_TAREFAS.filter(t => (Prospeccao.checks[w] || {})[d.k + '-' + t.k]).length, 0); return `<div class="pa-res-linha"><span>${d.nome}</span>${barra(f, n * PA_TAREFAS.length)}</div>`; }).join('');
+    const completas = semanas.filter(w => paFeitas(w) === PA_TOTAL_SEMANA).length;
+    return `<div class="pa-resumo-grid">
+        <div class="opp-card pa-resumo"><h3>Por tarefa ${nomePeriodo}</h3>${porTarefa}</div>
+        <div class="opp-card pa-resumo"><h3>Por dia da semana</h3>${porDia}</div>
+    </div>
+    <p class="pa-metas-aviso">${completas} de ${n} semana${n === 1 ? '' : 's'} com a cadência 100% feita. Para marcar as tarefas, escolha <b>Semana</b> no topo.</p>`;
+}
+
 function renderProspeccaoView() {
     const box = document.getElementById('pa-conteudo');
     if (!box) return;
     const semana = paSemanaAtual();
+    const tipo = paTipo();
     const hoje = trIso(new Date());
     const fimSemana = paDiaIso(semana, 4);
+    const jan = paJanelaMetas(semana);
+    document.querySelectorAll('#pa-tipos button').forEach(b => b.classList.toggle('active', b.dataset.t === tipo));
     const lbl = document.getElementById('pa-periodo-label');
-    if (lbl) lbl.textContent = `Semana de ${trCurta(semana)} a ${trCurta(fimSemana)}/${fimSemana.slice(0, 4)}`;
+    if (lbl) lbl.textContent = tipo === 'semana' ? `Semana de ${trCurta(semana)} a ${trCurta(fimSemana)}/${fimSemana.slice(0, 4)}` : jan.label;
+    const hojeBtn = document.getElementById('pa-hoje');
+    if (hojeBtn) hojeBtn.textContent = tipo === 'semana' ? 'Esta semana' : tipo === 'mes' ? 'Este mês' : 'Este ano';
     const marc = Prospeccao.checks[semana] || {};
-    const feitas = paFeitas(semana);
-    const pct = Math.round(feitas / PA_TOTAL_SEMANA * 100);
+    // Semanas do período (até a semana atual) — no Mês/Ano as tarefas são somadas
+    const semanasPeriodo = paSemanasLista(jan);
+    const totalTarefas = semanasPeriodo.length * PA_TOTAL_SEMANA;
+    const feitas = semanasPeriodo.reduce((t, w) => t + paFeitas(w), 0);
+    const pct = totalTarefas ? Math.round(feitas / totalTarefas * 100) : 0;
+    const nomePeriodo = tipo === 'semana' ? 'na semana' : tipo === 'mes' ? 'no mês' : 'no ano';
 
     const dias = PA_DIAS.map((dia, i) => {
         const iso = paDiaIso(semana, i);
@@ -211,7 +247,7 @@ function renderProspeccaoView() {
 
     box.innerHTML = `
         <div class="opp-kpi-row pa-kpis">
-            <div class="opp-kpi-card accent-orange"><div><span class="opp-kpi-label">Feito na semana</span><span class="opp-kpi-value orange">${pct}%</span><span class="opp-kpi-sub">${feitas} de ${PA_TOTAL_SEMANA} tarefas</span></div></div>
+            <div class="opp-kpi-card accent-orange"><div><span class="opp-kpi-label">Feito ${nomePeriodo}</span><span class="opp-kpi-value orange">${pct}%</span><span class="opp-kpi-sub">${feitas} de ${totalTarefas} tarefas${tipo !== 'semana' ? ` · ${semanasPeriodo.length} semana${semanasPeriodo.length === 1 ? '' : 's'}` : ''}</span></div></div>
             <div class="pa-grupos-card">
                 <span class="opp-kpi-label">Grupos de leads <small>(os ${Prospeccao.metas.leadsSemana} importados da semana)</small></span>
                 <div class="pa-grupos">${PA_GRUPOS.map(x => `<span>${paGrupos(x.g)} leads ${x.faixa}</span>`).join('')}</div>
@@ -219,11 +255,10 @@ function renderProspeccaoView() {
         </div>
         <div class="pa-barra-semana"><i style="width:${pct}%"></i></div>
         ${paHtmlMetas(semana)}
-        <div class="pa-dias">${dias}</div>
+        ${tipo === 'semana' ? `<div class="pa-dias">${dias}</div>` : paHtmlResumo(semanasPeriodo, nomePeriodo)}
 `;
 
     box.querySelectorAll('input[data-ch]').forEach(inp => inp.addEventListener('change', () => paMarcar(semana, inp.dataset.ch, inp.checked)));
-    box.querySelectorAll('#pa-meta-tipos button').forEach(b => b.addEventListener('click', () => { AppState.paMetaTipo = b.dataset.t; renderProspeccaoView(); }));
     document.getElementById('pa-meta-editar')?.addEventListener('click', () => {
         if (AppState.paEditarMetas) {
             const novas = { ...Prospeccao.metas };
@@ -238,9 +273,20 @@ function renderProspeccaoView() {
 
 function setupProspeccao() {
     try { if (!Prospeccao.recebida) { const l = JSON.parse(localStorage.getItem('lift_prospeccao') || 'null'); if (l && l.checks) Prospeccao.checks = l.checks; if (l && l.metas) Prospeccao.metas = { ...PA_METAS_PADRAO, ...l.metas }; } } catch (e) { /* sem armazenamento */ }
-    const mover = (n) => { AppState.paSemana = paDiaIso(paSemanaAtual(), 7 * n); renderProspeccaoView(); };
+    const mover = (n) => {
+        const t = paTipo(), r = trData(paRef());
+        if (t === 'semana') r.setDate(r.getDate() + 7 * n);
+        else if (t === 'mes') { r.setDate(1); r.setMonth(r.getMonth() + n); }
+        else { r.setMonth(0, 1); r.setFullYear(r.getFullYear() + n); }
+        AppState.paRef = trIso(r); renderProspeccaoView();
+    };
     document.getElementById('pa-ant')?.addEventListener('click', () => mover(-1));
     document.getElementById('pa-prox')?.addEventListener('click', () => mover(1));
-    document.getElementById('pa-hoje')?.addEventListener('click', () => { AppState.paSemana = paSemanaDe(trIso(new Date())); renderProspeccaoView(); });
+    document.getElementById('pa-hoje')?.addEventListener('click', () => { AppState.paRef = trIso(new Date()); renderProspeccaoView(); });
+    document.querySelectorAll('#pa-tipos button').forEach(b => b.addEventListener('click', () => {
+        AppState.paTipo = b.dataset.t;
+        // Ao trocar, fica no período de hoje se ele estiver dentro do que estava aberto
+        renderProspeccaoView();
+    }));
 }
 document.addEventListener('DOMContentLoaded', setupProspeccao);

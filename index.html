@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <!-- Estilos do Portal -->
-    <link rel="stylesheet" href="css/styles.css?v=20261119l">
+    <link rel="stylesheet" href="css/styles.css?v=20261119m">
 </head>
 <body>
     <div class="app-container">
@@ -1067,10 +1067,15 @@
                 <section id="panel-prospeccao" class="view-panel">
                     <div class="page-top-action-bar tr-topo">
                         <div class="tr-filtros">
+                            <div class="tr-tipos" id="pa-tipos">
+                                <button type="button" data-t="semana" class="active">Semana</button>
+                                <button type="button" data-t="mes">Mês</button>
+                                <button type="button" data-t="ano">Ano</button>
+                            </div>
                             <div class="tr-nav">
-                                <button type="button" id="pa-ant" title="Semana anterior">‹</button>
+                                <button type="button" id="pa-ant" title="Período anterior">‹</button>
                                 <span id="pa-periodo-label">—</span>
-                                <button type="button" id="pa-prox" title="Próxima semana">›</button>
+                                <button type="button" id="pa-prox" title="Próximo período">›</button>
                             </div>
                             <button type="button" class="btn-secondary" id="pa-hoje">Esta semana</button>
                         </div>
@@ -1867,7 +1872,7 @@
     <script src="js/contrato-editor.js?v=20261112v"></script>
     <script src="js/vendedores.js?v=20261112g"></script>
     <script src="js/funis.js?v=20261119j"></script>
-    <script src="js/prospeccao.js?v=20261119e"></script>
+    <script src="js/prospeccao.js?v=20261119h"></script>
     <script src="js/trafego.js?v=20261112l"></script>
     <script src="js/meta-ads.js?v=20261112j"></script>
     <script type="module" src="js/firebase-sync.js?v=20261119a"></script>
