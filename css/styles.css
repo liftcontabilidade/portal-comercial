@@ -2452,3 +2452,27 @@ button.cn-row:hover, button.cn-row.aberto { background: #F8FAFC; }
 .cn-evol tr.anuncio td.tr-metrica { color: var(--lift-orange); }
 .cn-evol tr.cn-total td { font-weight: 800; background: #F1F5F9; }
 @media (max-width: 900px) { .cn-row { grid-template-columns: 1.4fr 1fr 1fr; } .cn-row > :nth-child(n+4) { display: none; } .cn-detalhe { padding-left: 12px; } }
+/* Gráfico do ano — canais de aquisição */
+.cn-graf-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.cn-graf { padding: 0 20px 14px; }
+.cn-graf-area { position: relative; }
+.cn-svg { width: 100%; height: auto; display: block; }
+.cn-g-grade { stroke: var(--border-subtle); stroke-width: 1; }
+.cn-g-eixo { font-size: 12px; fill: var(--text-muted); }
+.cn-g-total { font-size: 13px; font-weight: 800; fill: var(--lift-blue); }
+.cn-g-mes-rot { font-size: 13px; font-weight: 700; fill: var(--text-secondary); text-transform: capitalize; }
+.cn-g-alvo { fill: transparent; }
+.cn-g-mes { cursor: pointer; }
+.cn-g-mes:hover .cn-g-alvo { fill: rgba(11,37,69,.05); }
+.cn-g-mes.futuro { cursor: default; opacity: .45; }
+.cn-graf-legenda { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 8px; font-size: 12.5px; color: var(--text-secondary); }
+.cn-graf-legenda i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.cn-graf-legenda b { color: var(--text-primary); margin-left: 2px; }
+.cn-graf-tip { position: absolute; top: 4px; width: 210px; padding: 10px 12px; background: #0B2545; color: #FFFFFF; border-radius: 10px; font-size: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.2); opacity: 0; pointer-events: none; transition: opacity .12s ease; z-index: 3; }
+.cn-graf-tip.visivel { opacity: 1; }
+.cn-graf-tip b { display: block; margin-bottom: 6px; font-size: 12.5px; }
+.cn-graf-tip div { display: flex; align-items: center; gap: 6px; padding: 2px 0; }
+.cn-graf-tip div i { width: 9px; height: 9px; border-radius: 2px; flex: none; }
+.cn-graf-tip div span { margin-left: auto; font-weight: 800; }
+.cn-graf-tip div.tot { border-top: 1px solid rgba(255,255,255,.2); margin-top: 4px; padding-top: 5px; font-weight: 700; }
+.cn-graf-tip div i { box-shadow: 0 0 0 1.5px rgba(255,255,255,.7); }

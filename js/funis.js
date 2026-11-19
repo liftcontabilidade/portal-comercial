@@ -536,11 +536,12 @@ function renderCanaisView() {
     }
     if (!Funis.funis) { box.innerHTML = '<div class="home-empty">Buscando no RD Station CRM…</div>'; crmCarregarJanela(j, false, canaisFunis); return; }
 
-    // Período atual + 5 anteriores (evolução)
-    const periodos = [];
-    let pj = j;
-    for (let i = 0; i < 6; i++) { periodos.unshift(pj); pj = trDeslocar(tipo, pj, -1); }
-    periodos.forEach(p => { if (!canaisDados(p)) crmCarregarJanela(p, false, canaisFunis); });
+    // Meses do ano do período escolhido (gráfico de evolução), até o mês atual
+    const ano = trData(j.ini).getFullYear();
+    const hojeIso = trIso(new Date());
+    const meses = Array.from({ length: 12 }, (_, i) => trJanela('mes', `${ano}-${String(i + 1).padStart(2, '0')}-01`));
+    meses.filter(p => p.ini <= hojeIso).forEach(p => { if (!canaisDados(p)) crmCarregarJanela(p, false, canaisFunis); });
+    if (!canaisDados(j)) crmCarregarJanela(j, false, canaisFunis);
     const d = canaisDados(j);
     if (!d) { box.innerHTML = (Funis.erro ? `<div class="tri-erro">${escHtml(Funis.erro)}</div>` : '') + '<div class="home-empty">Buscando no RD Station CRM…</div>'; return; }
 
@@ -567,16 +568,7 @@ function renderCanaisView() {
                 ${c.listaLeads.length ? `<div class="cn-det-tit">Leads que entraram no período (${c.listaLeads.length})</div>${crmListaNegocios(c.listaLeads.map(n => ({ ...n, situacao: n.ganha === true ? 'ganha' : n.ganha === false ? 'perdida' : n.pausada ? 'pausada' : 'aberta' })))}` : ''}</div>` : ''}`;
     }).join('');
 
-    // Evolução: clientes por canal nos últimos 6 períodos
-    const dadosP = periodos.map(p => canaisDados(p));
-    const nomesCanais = [...new Set(dadosP.filter(Boolean).flatMap(x => x.lista.filter(c => c.clientes || c.leads).map(c => c.nome)))];
-    const totalPorCanal = (nome) => dadosP.reduce((s, x) => s + (x ? ((x.lista.find(c => c.nome === nome) || {}).clientes || 0) : 0), 0);
-    nomesCanais.sort((a, b) => totalPorCanal(b) - totalPorCanal(a));
-    const rotulo = (p) => tipo === 'mes' ? `${MESES_TR[trData(p.ini).getMonth()].slice(0, 3)}/${String(trData(p.ini).getFullYear()).slice(2)}` : `${trCurta(p.ini)}`;
-    const evol = `<table class="tr-tabela cn-evol"><thead><tr><th class="tr-metrica">Canal</th>${periodos.map(p => `<th class="${p.ini === j.ini ? 'atual' : ''}">${rotulo(p)}</th>`).join('')}</tr></thead><tbody>
-        ${nomesCanais.map(nome => `<tr class="${ehAnuncio(nome) ? 'anuncio' : ''}"><td class="tr-metrica">${escHtml(nome)}</td>${dadosP.map((x, i) => { const c = x && x.lista.find(y => y.nome === nome); return `<td class="${periodos[i].ini === j.ini ? 'atual' : ''}">${x ? `<b>${c ? c.clientes : 0}</b><small>${c ? c.leads : 0} leads</small>` : '…'}</td>`; }).join('')}</tr>`).join('')}
-        <tr class="cn-total"><td class="tr-metrica">Total</td>${dadosP.map((x, i) => `<td class="${periodos[i].ini === j.ini ? 'atual' : ''}">${x ? `<b>${x.totalClientes}</b><small>${x.totalLeads} leads</small>` : '…'}</td>`).join('')}</tr>
-    </tbody></table>`;
+    const grafico = canaisGraficoAno(meses, ano, hojeIso);
 
     box.innerHTML = (Funis.erro ? `<div class="tri-erro">${escHtml(Funis.erro)}</div>` : '') + `
         <div class="opp-kpi-grid">
@@ -594,11 +586,106 @@ function renderCanaisView() {
             <div class="tr-legenda">Clique num canal para ver os clientes e os leads. "Sem origem" = negociação sem Fonte preenchida no RD.</div>
         </div>
         <div class="opp-card tr-bloco">
-            <div class="opp-card-head"><span class="dash-section-title">EVOLUÇÃO — CLIENTES POR CANAL (ÚLTIMOS 6 ${tipo === 'mes' ? 'MESES' : 'SEMANAS'})</span></div>
-            <div class="tr-tabela-wrap">${evol}</div>
+            <div class="opp-card-head cn-graf-head"><span class="dash-section-title">EVOLUÇÃO NO ANO — ${ano}</span>
+                <div class="tr-tipos" id="cn-metrica"><button type="button" data-m="clientes" class="${(AppState.canaisMetrica || 'clientes') === 'clientes' ? 'active' : ''}">Clientes</button><button type="button" data-m="leads" class="${AppState.canaisMetrica === 'leads' ? 'active' : ''}">Leads</button></div></div>
+            ${grafico}
         </div>`;
     box.querySelectorAll('[data-cn]').forEach(b => b.onclick = () => {
         const k = b.dataset.cn; abertos.has(k) ? abertos.delete(k) : abertos.add(k); renderCanaisView();
+    });
+    box.querySelectorAll('#cn-metrica button').forEach(b => b.onclick = () => { AppState.canaisMetrica = b.dataset.m; renderCanaisView(); });
+    canaisLigarGrafico(box);
+}
+
+// Cores fixas por canal (Anúncio sempre laranja)
+const CN_CORES = ['#0B2545', '#2563EB', '#00A3E0', '#22C55E', '#8B5CF6', '#14B8A6', '#EAB308'];
+function canaisCor(nome, idx) {
+    if (/anuncio/.test(crmSemAcento(nome))) return '#F36F21';
+    if (nome === 'Sem origem') return '#CBD5E1';
+    if (nome === 'Outros') return '#94A3B8';
+    return CN_CORES[idx % CN_CORES.length];
+}
+
+// Gráfico de barras empilhadas: um mês por barra, cada cor um canal
+function canaisGraficoAno(meses, ano, hojeIso) {
+    const met = AppState.canaisMetrica || 'clientes';
+    const dados = meses.map(p => p.ini <= hojeIso ? canaisDados(p) : 'futuro');
+    const totais = new Map();
+    dados.forEach(x => { if (x && x !== 'futuro') x.lista.forEach(c => totais.set(c.nome, (totais.get(c.nome) || 0) + c[met])); });
+    let nomes = [...totais.entries()].filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).map(([n]) => n);
+    // Até 7 canais com cor própria; o resto vira "Outros"
+    const principais = nomes.slice(0, 7);
+    const temOutros = nomes.length > 7;
+    if (temOutros) principais.push('Outros');
+    const cores = new Map(); let ci = 0;
+    principais.forEach(n => { const c = canaisCor(n, ci); if (c !== '#F36F21' && c !== '#CBD5E1' && c !== '#94A3B8') ci++; cores.set(n, c); });
+    const valor = (x, nome) => {
+        if (!x || x === 'futuro') return 0;
+        if (nome === 'Outros') return x.lista.filter(c => !principais.includes(c.nome)).reduce((s, c) => s + c[met], 0);
+        const c = x.lista.find(y => y.nome === nome); return c ? c[met] : 0;
+    };
+    const somas = dados.map(x => principais.reduce((s, n) => s + valor(x, n), 0));
+    const max = Math.max(1, ...somas);
+    const passo = max <= 5 ? 1 : max <= 10 ? 2 : max <= 25 ? 5 : max <= 50 ? 10 : max <= 100 ? 20 : Math.ceil(max / 5 / 50) * 50;
+    const topo = Math.ceil(max / passo) * passo;
+    const W = 1000, H = 300, pl = 36, pr = 10, pt = 22, pb = 30;
+    const cw = W - pl - pr, ch = H - pt - pb, bw = cw / 12;
+    const y = (v) => pt + ch - (v / topo) * ch;
+    const carregando = dados.some(x => !x);
+    let svg = '';
+    for (let v = 0; v <= topo; v += passo) svg += `<line x1="${pl}" x2="${W - pr}" y1="${y(v)}" y2="${y(v)}" class="cn-g-grade"/><text x="${pl - 6}" y="${y(v) + 4}" class="cn-g-eixo" text-anchor="end">${v}</text>`;
+    meses.forEach((p, i) => {
+        const x0 = pl + i * bw + bw * 0.18, w = bw * 0.64;
+        const d = dados[i];
+        let acc = 0;
+        let barras = '';
+        if (d && d !== 'futuro') principais.forEach(n => {
+            const v = valor(d, n); if (!v) return;
+            const y1 = y(acc + v), y0 = y(acc);
+            barras += `<rect x="${x0}" y="${y1}" width="${w}" height="${Math.max(0, y0 - y1)}" fill="${cores.get(n)}"/>`;
+            acc += v;
+        });
+        const rot = MESES_TR[i].slice(0, 3);
+        svg += `<g class="cn-g-mes ${d === 'futuro' ? 'futuro' : ''}" data-mes="${i}"><rect x="${pl + i * bw}" y="${pt}" width="${bw}" height="${ch}" class="cn-g-alvo"/>${barras}
+            ${d && d !== 'futuro' ? `<text x="${x0 + w / 2}" y="${y(acc) - 6}" class="cn-g-total" text-anchor="middle">${acc}</text>` : !d ? `<text x="${x0 + w / 2}" y="${y(0) - 6}" class="cn-g-eixo" text-anchor="middle">…</text>` : ''}
+            <text x="${x0 + w / 2}" y="${H - 10}" class="cn-g-mes-rot" text-anchor="middle">${rot}</text></g>`;
+    });
+    const legenda = principais.map(n => `<span><i style="background:${cores.get(n)}"></i>${escHtml(n)} <b>${n === 'Outros' ? nomes.slice(7).reduce((s, x) => s + totais.get(x), 0) : totais.get(n)}</b></span>`).join('');
+    // Dados para o balão ao passar o mouse
+    Funis._grafico = { meses, dados, principais, cores, valor, met, ano };
+    return `<div class="cn-graf">
+        <div class="cn-graf-area"><svg viewBox="0 0 ${W} ${H}" class="cn-svg" role="img" aria-label="${met === 'clientes' ? 'Clientes' : 'Leads'} por canal de aquisição em ${ano}">${svg}</svg><div class="cn-graf-tip" id="cn-graf-tip"></div></div>
+        <div class="cn-graf-legenda">${legenda || '<span class="fn-neg-vazio">Sem dados no ano.</span>'}</div>
+        <div class="tr-legenda">${met === 'clientes' ? 'Clientes = vendas pela data da venda.' : 'Leads = negociações criadas no mês.'} Passe o mouse num mês para ver por canal; clique para abrir o mês.${carregando ? ' Carregando os meses…' : ''}</div>
+    </div>`;
+}
+
+function canaisLigarGrafico(box) {
+    const tip = box.querySelector('#cn-graf-tip');
+    const g = Funis._grafico;
+    if (!tip || !g) return;
+    box.querySelectorAll('.cn-g-mes:not(.futuro)').forEach(el => {
+        const i = Number(el.dataset.mes);
+        el.addEventListener('mouseenter', () => {
+            const d = g.dados[i];
+            if (!d || d === 'futuro') return;
+            const linhas = g.principais.map(n => [n, g.valor(d, n)]).filter(([, v]) => v > 0);
+            const total = linhas.reduce((s, [, v]) => s + v, 0);
+            tip.innerHTML = `<b>${MESES_TR[i][0].toUpperCase() + MESES_TR[i].slice(1)} ${g.ano}</b>` +
+                (linhas.length ? linhas.map(([n, v]) => `<div><i style="background:${g.cores.get(n)}"></i>${escHtml(n)}<span>${v}</span></div>`).join('') : '<div>Nenhum</div>') +
+                `<div class="tot">Total<span>${total} ${g.met}</span></div>`;
+            const r = el.getBoundingClientRect(), pr = tip.parentElement.getBoundingClientRect();
+            let left = r.left - pr.left + r.width / 2 - 100;
+            left = Math.max(0, Math.min(left, pr.width - 210));
+            tip.style.left = left + 'px';
+            tip.classList.add('visivel');
+        });
+        el.addEventListener('mouseleave', () => tip.classList.remove('visivel'));
+        el.addEventListener('click', () => {
+            AppState.canaisTipo = 'mes';
+            AppState.canaisRef = g.meses[i].ini;
+            renderCanaisView();
+        });
     });
 }
 
