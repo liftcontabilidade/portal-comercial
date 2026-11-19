@@ -431,6 +431,8 @@ function switchView(viewName) {
         renderContratosView();
     } else if (viewName === 'funis') {
         renderFunisView();
+    } else if (viewName === 'prospeccao') {
+        if (typeof renderProspeccaoView === 'function') renderProspeccaoView();
     } else if (viewName === 'metas') {
         renderMetasView();
     } else if (viewName === 'trafego') {

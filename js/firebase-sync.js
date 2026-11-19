@@ -45,6 +45,7 @@ function iniciar() {
     const docMetaAds = doc(db, 'portalComercial', 'dados', 'config', 'integracaoMeta');
     const docModeloContrato = doc(db, 'portalComercial', 'dados', 'config', 'contratoModelo');
     const docCRM = doc(db, 'portalComercial', 'dados', 'config', 'integracaoCRM');
+    const docProspeccao = doc(db, 'portalComercial', 'dados', 'config', 'prospeccao');
 
     // Último estado recebido/gravado no banco (para gravar só o que mudou)
     const sincronizado = { clientes: new Map(), saidas: new Map(), trafego: new Map(), leads: null, segmentos: null, metas: null };
@@ -186,6 +187,9 @@ function iniciar() {
         cancelar.push(onSnapshot(docCRM, (snap) => {
             window.aplicarConfigCRM && window.aplicarConfigCRM(snap.exists() ? snap.data() : null);
         }, () => {}));
+        cancelar.push(onSnapshot(docProspeccao, (snap) => {
+            window.aplicarProspeccaoDaNuvem && window.aplicarProspeccaoDaNuvem(snap.exists() ? snap.data() : null);
+        }, () => {}));
         cancelar.push(onSnapshot(docModeloContrato, (snap) => {
             window.aplicarModeloContratoDaNuvem && window.aplicarModeloContratoDaNuvem(snap.exists() ? snap.data() : null);
         }, () => {}));
@@ -324,7 +328,14 @@ function iniciar() {
         await b.commit();
     }
 
-    window.LiftCloud = { salvar, ativo: () => ativo, salvarConfigMeta, salvarModeloContrato, salvarConfigCRM };
+    // Checklist da Prospecção Ativa (marcações por semana)
+    async function salvarProspeccao(dados) {
+        const b = writeBatch(db);
+        b.set(docProspeccao, limpo(dados));
+        await b.commit();
+    }
+
+    window.LiftCloud = { salvar, ativo: () => ativo, salvarConfigMeta, salvarModeloContrato, salvarConfigCRM, salvarProspeccao };
 
     /* ---------- Entrou / saiu ---------- */
     onAuthStateChanged(auth, (user) => {

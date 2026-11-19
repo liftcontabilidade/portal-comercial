@@ -2476,3 +2476,53 @@ button.cn-row:hover, button.cn-row.aberto { background: #F8FAFC; }
 .cn-graf-tip div span { margin-left: auto; font-weight: 800; }
 .cn-graf-tip div.tot { border-top: 1px solid rgba(255,255,255,.2); margin-top: 4px; padding-top: 5px; font-weight: 700; }
 .cn-graf-tip div i { box-shadow: 0 0 0 1.5px rgba(255,255,255,.7); }
+
+/* ==========================================================================
+   PROSPECÇÃO ATIVA — cadência semanal
+   ========================================================================== */
+.pa-kpis { display: grid; grid-template-columns: minmax(200px, 260px) 1fr; gap: 16px; margin-bottom: 14px; }
+.pa-grupos-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; justify-content: center; }
+.pa-grupos { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--text-secondary); font-weight: 600; }
+.pa-grupos > span { display: inline-flex; align-items: center; gap: 6px; }
+.pa-g { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 6px; font-size: 11px; font-weight: 800; color: #fff; margin-right: 2px; vertical-align: middle; }
+.pa-g-A { background: #2563EB; } .pa-g-B { background: #7C3AED; } .pa-g-C { background: #0891B2; } .pa-g-D { background: #F36F21; } .pa-g-E { background: #DB2777; }
+.pa-barra-semana { height: 8px; border-radius: 99px; background: var(--border-color); overflow: hidden; margin-bottom: 18px; }
+.pa-barra-semana i { display: block; height: 100%; background: linear-gradient(90deg, var(--lift-orange), var(--success-green)); transition: width .3s; }
+.pa-dias { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; margin-bottom: 20px; }
+.pa-dia { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.pa-dia.hoje { border-color: var(--lift-orange); box-shadow: 0 0 0 3px var(--lift-orange-light); }
+.pa-dia.completo { border-color: var(--success-green); background: var(--success-green-light); }
+.pa-dia-topo { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+.pa-dia-topo b { display: block; font-size: 15px; color: var(--text-primary); }
+.pa-dia-topo div span { font-size: 12px; color: var(--text-secondary); font-weight: 600; }
+.pa-dia-cont { font-size: 12px; font-weight: 800; color: var(--text-secondary); background: var(--bg-main, #F1F5F9); border-radius: 99px; padding: 3px 9px; white-space: nowrap; }
+.pa-dia.completo .pa-dia-cont { color: #fff; background: var(--success-green); }
+.pa-dia-cont.atrasado { color: #B91C1C; background: #FEE2E2; }
+.pa-tarefa { display: flex; gap: 10px; align-items: flex-start; padding: 9px 10px; border-radius: 10px; border: 1px solid var(--border-color); cursor: pointer; background: var(--bg-card); transition: background .15s, border-color .15s; }
+.pa-tarefa:hover { border-color: var(--lift-orange-border); }
+.pa-tarefa input { position: absolute; opacity: 0; pointer-events: none; }
+.pa-check { flex: 0 0 20px; height: 20px; border-radius: 6px; border: 2px solid #CBD5E1; display: inline-flex; align-items: center; justify-content: center; margin-top: 1px; background: #fff; }
+.pa-tarefa.ok .pa-check { background: var(--success-green); border-color: var(--success-green); }
+.pa-tarefa.ok .pa-check::after { content: '✓'; color: #fff; font-size: 13px; font-weight: 900; line-height: 1; }
+.pa-tarefa input:focus-visible + .pa-check { outline: 2px solid var(--lift-orange); outline-offset: 2px; }
+.pa-txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.pa-txt b { font-size: 13px; color: var(--text-primary); }
+.pa-txt > span { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+.pa-txt small { font-size: 11px; }
+.pa-tarefa.ok { background: var(--success-green-light); border-color: #A7F3D0; }
+.pa-tarefa.ok .pa-txt b { text-decoration: line-through; color: var(--text-secondary); }
+.pa-semanas { padding: 18px 20px; }
+.pa-semanas h3 { margin: 0 0 12px; font-size: 15px; }
+.pa-sem-lista { display: flex; flex-direction: column; gap: 4px; max-height: 420px; overflow-y: auto; }
+.pa-sem { display: grid; grid-template-columns: 220px 1fr 56px; gap: 14px; align-items: center; border: 0; background: transparent; font: inherit; font-size: 13px; color: var(--text-primary); padding: 8px 10px; border-radius: 8px; cursor: pointer; text-align: left; }
+.pa-sem:hover { background: var(--lift-orange-light); }
+.pa-sem.ativa { background: var(--lift-orange-light); font-weight: 700; }
+.pa-sem.futura { opacity: .6; }
+.pa-sem em { font-style: normal; font-size: 11px; color: var(--lift-orange); font-weight: 800; margin-left: 6px; }
+.pa-sem b { text-align: right; }
+.pa-sem-barra { height: 6px; border-radius: 99px; background: var(--border-color); overflow: hidden; }
+.pa-sem-barra i { display: block; height: 100%; background: var(--success-green); }
+#pa-hoje { margin-left: 10px; }
+@media (max-width: 1200px) { .pa-dias { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 900px) { .pa-dias { grid-template-columns: repeat(2, minmax(0, 1fr)); } .pa-kpis { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { .pa-dias { grid-template-columns: 1fr; } .pa-sem { grid-template-columns: 1fr 60px 44px; } }
