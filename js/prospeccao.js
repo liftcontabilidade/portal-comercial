@@ -84,13 +84,15 @@ function paInicio(j) {
     }
     return ini ? paSemanaDe(ini) : paSemanaDe(trIso(new Date()));
 }
-// Semanas de prospecção do período: só até a semana atual e a partir do início da prospecção
+// Semanas de prospecção do período. Cada semana pertence ao mês da sua quarta-feira
+// (assim todo mês tem 4 ou 5 semanas). No Ano, conta a partir do início da prospecção.
 function paSemanasLista(j) {
     if (j.tipo === 'semana') return [paSemanaDe(paDiaIso(j.fim, -4))];
-    const atual = paSemanaDe(trIso(new Date())), inicio = paInicio(j), lista = [];
-    let s = paSemanaDe(j.ini);
-    if (s < j.ini) s = paDiaIso(s, 7);
-    for (; s <= j.fim && s <= atual; s = paDiaIso(s, 7)) if (s >= inicio) lista.push(s);
+    const inicio = j.tipo === 'ano' ? paInicio(j) : '', lista = [];
+    for (let s = paSemanaDe(paDiaIso(j.ini, -6)); s <= j.fim; s = paDiaIso(s, 7)) {
+        const quarta = paDiaIso(s, 2);
+        if (quarta >= j.ini && quarta <= j.fim && s >= inicio) lista.push(s);
+    }
     return lista;
 }
 function paSemanasNoPeriodo(j) { return paSemanasLista(j).length; }
