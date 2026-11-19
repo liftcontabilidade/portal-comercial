@@ -315,7 +315,7 @@ function renderFunisView() {
 
 // Lista das negociações de uma etapa: uma embaixo da outra, com a origem ao lado.
 // Laranja = veio de anúncio · Azul = orgânico · Vermelho = perdida
-function crmListaNegocios(negocios) {
+function crmListaNegocios(negocios, semLegenda = false) {
     if (!negocios.length) return '<div class="fn-neg-vazio">Nenhuma negociação nesta etapa.</div>';
     const ordem = { ganha: 0, aberta: 1, pausada: 1, perdida: 2 };
     const lista = negocios.slice().sort((a, b) => (ordem[a.situacao] ?? 1) - (ordem[b.situacao] ?? 1) || String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR'));
@@ -331,7 +331,7 @@ function crmListaNegocios(negocios) {
             <span class="fn-item-origem">${escHtml(origem)}${!perdida ? `<small>${pago ? 'Tráfego Pago' : 'Orgânico'}</small>` : ''}</span>
         </div>`;
     }).join('')}</div>
-    <div class="fn-legenda"><span class="anuncio">Anúncio</span><span class="organico">Orgânico</span><span class="perdida">Perdida</span></div>`;
+    ${semLegenda ? '' : `<div class="fn-legenda"><span class="anuncio">Anúncio</span><span class="organico">Orgânico</span><span class="perdida">Perdida</span></div>`}`;
 }
 
 function crmRenderStatus() {
@@ -563,8 +563,8 @@ function renderCanaisView() {
                 <span class="center">${cv}</span>
                 <span class="center">${d.totalClientes ? formatPct(pct, 0) : '—'}</span>
             </button>
-            ${aberto ? `<div class="cn-detalhe">${c.listaClientes.length ? `<div class="cn-det-tit">Clientes (vendas no período)</div>${crmListaNegocios(c.listaClientes.map(n => ({ ...n, situacao: 'ganha' })))}` : '<div class="fn-neg-vazio">Nenhuma venda deste canal no período.</div>'}
-                ${c.listaLeads.length ? `<div class="cn-det-tit">Leads que entraram no período (${c.listaLeads.length})</div><div class="cn-leads-lista">${c.listaLeads.slice(0, 60).map(n => `<span class="fn-neg ${n.ganha === false ? 'perdida' : n.ganha === true ? 'ganha' : ''}">${escHtml(n.nome || 'Sem nome')}</span>`).join('')}${c.listaLeads.length > 60 ? `<span class="fn-neg-vazio">… e mais ${c.listaLeads.length - 60}</span>` : ''}</div>` : ''}</div>` : ''}`;
+            ${aberto ? `<div class="cn-detalhe">${c.listaClientes.length ? `<div class="cn-det-tit">Clientes (vendas no período)</div>${crmListaNegocios(c.listaClientes.map(n => ({ ...n, situacao: 'ganha' })), true)}` : '<div class="fn-neg-vazio">Nenhuma venda deste canal no período.</div>'}
+                ${c.listaLeads.length ? `<div class="cn-det-tit">Leads que entraram no período (${c.listaLeads.length})</div>${crmListaNegocios(c.listaLeads.map(n => ({ ...n, situacao: n.ganha === true ? 'ganha' : n.ganha === false ? 'perdida' : n.pausada ? 'pausada' : 'aberta' })))}` : ''}</div>` : ''}`;
     }).join('');
 
     // Evolução: clientes por canal nos últimos 6 períodos
