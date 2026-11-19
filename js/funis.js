@@ -176,16 +176,13 @@ async function crmCarregarJanela(j, forcar = false, alvo = null) {
             buscou = true;
             if (AppState.currentView === 'funis') crmRenderStatus();
             try {
-                const [r, g] = await Promise.all([
+                const [r, vendas] = await Promise.all([
                     crmChamar({ acao: 'negociacoes', funil: f.id, inicio: j.ini, fim: j.fim }),
-                    crmChamar({ acao: 'negociacoes', funil: f.id, inicio: j.ini, fim: j.fim, por: 'fechamento' })
+                    crmVendasDoFunil(f, forcar)
                 ]);
-                // Conector antigo ignora "por=fechamento" e devolve as negociações criadas (com abertas no meio)
-                Funis.conectorAntigo = (g.negociacoes || []).some(n => n.ganha !== true);
-                // Ganho: vendida com data de venda dentro do período
-                const naJanela = (n) => { const d = String(n.fechada || '').slice(0, 10); return d >= j.ini && d <= j.fim; };
-                const rotular = (n) => ({ ...n, fonte: trocarRelacionamento(n.fonte), etapaNome: trocarRelacionamento(n.etapaNome), campanha: trocarRelacionamento(n.campanha) });
-                Funis.dados.set(k, { em: Date.now(), lista: (r.negociacoes || []).map(rotular), ganhas: (g.negociacoes || []).filter(n => n.ganha === true && naJanela(n)).map(rotular) });
+                // Ganho: vendas cuja data (do cadastro do portal, quando o cliente existe lá) cai no período
+                const naJanela = (n) => { const d = crmDataVenda(n); return d >= j.ini && d <= j.fim; };
+                Funis.dados.set(k, { em: Date.now(), lista: (r.negociacoes || []).map(crmRotular), ganhas: vendas.filter(naJanela) });
             } finally { Funis.carregando.delete(k); }
         }));
         if (buscou) { Funis.erro = ''; Funis.ultima = new Date(); }
@@ -195,6 +192,51 @@ async function crmCarregarJanela(j, forcar = false, alvo = null) {
     // Só redesenha quando algo foi buscado (evita repetir sem parar enquanto carrega)
     if ((buscou || Funis.erro !== erroAntes) && AppState.currentView === 'funis') renderFunisView();
     if ((buscou || Funis.erro !== erroAntes) && AppState.currentView === 'trafego' && AppState.trafegoAba === 'canais') renderCanaisView();
+}
+
+const crmRotular = (n) => ({ ...n, fonte: trocarRelacionamento(n.fonte), etapaNome: trocarRelacionamento(n.etapaNome), campanha: trocarRelacionamento(n.campanha) });
+
+// Todas as vendas (negociações ganhas) do funil, de qualquer data — usadas para achar o mês certo de cada uma
+async function crmVendasDoFunil(f, forcar = false) {
+    if (!Funis.vendas) Funis.vendas = new Map();
+    const atual = Funis.vendas.get(String(f.id));
+    if (atual && !forcar && Date.now() - atual.em < CRM_INTERVALO) return atual.lista;
+    if (atual && atual.promessa) return atual.promessa;
+    const promessa = crmChamar({ acao: 'negociacoes', funil: f.id, inicio: '2015-01-01', fim: trIso(new Date()), por: 'fechamento' })
+        .then(g => {
+            // Conector antigo ignora "por=fechamento" e devolve as negociações criadas (com abertas no meio)
+            Funis.conectorAntigo = (g.negociacoes || []).some(n => n.ganha !== true);
+            const lista = (g.negociacoes || []).filter(n => n.ganha === true).map(crmRotular);
+            Funis.vendas.set(String(f.id), { em: Date.now(), lista });
+            return lista;
+        })
+        .catch(e => { Funis.vendas.delete(String(f.id)); throw e; });
+    Funis.vendas.set(String(f.id), { ...(atual || {}), em: atual ? atual.em : 0, promessa, lista: atual ? atual.lista : [] });
+    return promessa;
+}
+
+/* Nome comparável (sem acento, sem LTDA/ME/EPP etc.) para achar o cliente do portal */
+function crmNomeComparavel(nome) {
+    return crmSemAcento(nome).replace(/\b(ltda|me|epp|eireli|s ?a|ss|mei|cia)\b\.?/g, ' ').replace(/[^a-z0-9]+/g, ' ').trim();
+}
+function crmMapaClientesPortal() {
+    if (Funis._mapaCli && Date.now() - Funis._mapaCli.em < 1500) return Funis._mapaCli.mapa;
+    const mapa = new Map();
+    (AppState.clientes || []).forEach(c => { const k = crmNomeComparavel(c.nome); if (k) mapa.set(k, c); });
+    Funis._mapaCli = { em: Date.now(), mapa };
+    return mapa;
+}
+const crmDataCliente = (c) => {
+    if (c.dataEntrada && /^\d{4}-\d{2}-\d{2}/.test(c.dataEntrada)) return c.dataEntrada.slice(0, 10);
+    const m = String(c.mesEntrada || '').match(/^(\d{2})\/(\d{4})$/);
+    return m ? `${m[2]}-${m[1]}-01` : '';
+};
+// Data da venda: a data de entrada do cliente no portal (aba Clientes) quando ele está cadastrado lá;
+// senão, a data em que a negociação foi marcada como ganha no RD.
+// (Ex.: clientes antigos importados no RD de uma vez só aparecem todos com a mesma data de venda.)
+function crmDataVenda(n) {
+    const c = crmMapaClientesPortal().get(crmNomeComparavel(n.nome));
+    return (c && crmDataCliente(c)) || String(n.fechada || '').slice(0, 10);
 }
 
 function crmAgendar(atraso = 0) {
@@ -500,13 +542,20 @@ function canaisFunis() {
 function canaisDados(j) {
     const funis = canaisFunis();
     if (!funis.length) return null;
-    const leads = [], clientes = [];
+    const leads = [], vendasRD = [];
     for (const f of funis) {
         const d = Funis.dados.get(crmChaveJanela(f.id, j));
         if (!d) return null;
         leads.push(...d.lista);
-        clientes.push(...(d.ganhas || []));
+        vendasRD.push(...((Funis.vendas && Funis.vendas.get(String(f.id)) || {}).lista || []));
     }
+    // Clientes = cadastrados na aba Clientes do portal com entrada no período.
+    // Canal = Fonte da negociação ganha no RD (achada pelo nome); se não achar, a Origem do cadastro no portal.
+    const fontePorNome = new Map(vendasRD.map(n => [crmNomeComparavel(n.nome), n]));
+    const clientes = (AppState.clientes || []).filter(c => { const d = crmDataCliente(c); return d && d >= j.ini && d <= j.fim; }).map(c => {
+        const rd = fontePorNome.get(crmNomeComparavel(c.nome));
+        return { id: c.id, nome: c.nome, fonte: (rd && rd.fonte) || trocarRelacionamento(c.origemCliente) || '', responsavel: c.vendedor || (rd && rd.responsavel) || '', situacao: 'ganha' };
+    });
     const canais = new Map();
     const pega = (nome) => {
         const k = (nome || '').trim() || 'Sem origem';
@@ -578,7 +627,7 @@ function renderCanaisView() {
     box.innerHTML = (Funis.erro ? `<div class="tri-erro">${escHtml(Funis.erro)}</div>` : '') + `
         <div class="opp-kpi-grid">
             <div class="opp-kpi-card accent-blue"><div><span class="opp-kpi-label">Leads no período</span><span class="opp-kpi-value">${d.totalLeads}</span><span class="opp-kpi-sub">negociações criadas</span></div></div>
-            <div class="opp-kpi-card accent-orange"><div><span class="opp-kpi-label">Clientes (vendas)</span><span class="opp-kpi-value orange">${d.totalClientes}</span><span class="opp-kpi-sub">pela data da venda</span></div></div>
+            <div class="opp-kpi-card accent-orange"><div><span class="opp-kpi-label">Clientes (vendas)</span><span class="opp-kpi-value orange">${d.totalClientes}</span><span class="opp-kpi-sub">pela entrada na aba Clientes</span></div></div>
             <div class="opp-kpi-card accent-blue"><div><span class="opp-kpi-label">Conversão</span><span class="opp-kpi-value">${conv !== null ? formatPct(conv, 1) : '—'}</span><span class="opp-kpi-sub">clientes ÷ leads</span></div></div>
             <div class="opp-kpi-card accent-blue"><div><span class="opp-kpi-label">Canal que mais trouxe clientes</span><span class="opp-kpi-value or-kpi-nome">${top ? escHtml(top.nome) : '—'}</span><span class="opp-kpi-sub">${top ? `${top.clientes} ${top.clientes === 1 ? 'cliente' : 'clientes'}` : 'nenhuma venda no período'}</span></div></div>
         </div>
@@ -661,7 +710,7 @@ function canaisGraficoAno(meses, ano, hojeIso) {
     return `<div class="cn-graf">
         <div class="cn-graf-area"><svg viewBox="0 0 ${W} ${H}" class="cn-svg" role="img" aria-label="${met === 'clientes' ? 'Clientes' : 'Leads'} por canal de aquisição em ${ano}">${svg}</svg><div class="cn-graf-tip" id="cn-graf-tip"></div></div>
         <div class="cn-graf-legenda">${legenda || '<span class="fn-neg-vazio">Sem dados no ano.</span>'}</div>
-        <div class="tr-legenda">${met === 'clientes' ? 'Clientes = vendas pela data da venda.' : 'Leads = negociações criadas no mês.'} Passe o mouse num mês para ver por canal; clique para abrir o mês.${carregando ? ' Carregando os meses…' : ''}</div>
+        <div class="tr-legenda">${met === 'clientes' ? 'Clientes = entrada do cliente na aba Clientes do portal; o canal vem da Fonte no RD.' : 'Leads = negociações criadas no mês.'} Passe o mouse num mês para ver por canal; clique para abrir o mês.${carregando ? ' Carregando os meses…' : ''}</div>
     </div>`;
 }
 
