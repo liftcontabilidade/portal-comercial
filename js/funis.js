@@ -645,7 +645,7 @@ function renderCanaisView() {
         <div class="opp-card tr-bloco">
             <div class="opp-card-head"><span class="dash-section-title">CLIENTES POR CANAL DE AQUISIÇÃO</span></div>
             <div class="opp-table">
-                <div class="opp-row cn-row opp-row-head"><span>Canal (fonte no RD)</span><span>Leads</span><span>Clientes</span><span class="center">Conversão</span><span class="center">% dos clientes</span></div>
+                <div class="opp-row cn-row opp-row-head"><span>Canal (fonte no RD)</span><span>Leads</span><span>Ganho</span><span class="center">Conversão</span><span class="center">% dos clientes</span></div>
                 ${linhas || '<div class="home-empty">Nenhuma negociação no período.</div>'}
             </div>
             <div class="tr-legenda">Clique num canal para ver os clientes e os leads. "Sem origem" = negociação sem Fonte preenchida no RD.</div>
