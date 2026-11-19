@@ -565,8 +565,14 @@ function canaisDados(j) {
     const fontePorNome = new Map(vendasRD.map(n => [crmNomeComparavel(n.nome), n]));
     const clientes = (AppState.clientes || []).filter(c => { const d = crmDataCliente(c); return d && d >= j.ini && d <= j.fim; }).map(c => {
         const rd = crmAcharPorNome(fontePorNome, crmNomeComparavel(c.nome));
-        return { id: c.id, nome: c.nome, fonte: (rd && rd.fonte) || trocarRelacionamento(c.origemCliente) || '', responsavel: c.vendedor || (rd && rd.responsavel) || '', situacao: 'ganha' };
+        return { id: c.id, nome: c.nome, fonte: (rd && rd.fonte) || trocarRelacionamento(c.origemCliente) || '', responsavel: c.vendedor || (rd && rd.responsavel) || '', situacao: 'ganha', ganha: true, fechada: crmDataCliente(c) };
     });
+    // Leads = tudo que chegou no período: negociações criadas no RD + os clientes que fecharam (sem contar duas vezes).
+    // Negociação do RD de um cliente já cadastrado no portal entra no mês de entrada dele (aba Clientes), junto com o Ganho.
+    const mapaPortal = crmMapaClientesPortal();
+    const leadsRD = leads.filter(n => !crmAcharPorNome(mapaPortal, crmNomeComparavel(n.nome)));
+    leads.length = 0;
+    leads.push(...leadsRD, ...clientes);
     const canais = new Map();
     const pega = (nome) => {
         const k = (nome || '').trim() || 'Sem origem';
@@ -637,7 +643,7 @@ function renderCanaisView() {
 
     box.innerHTML = (Funis.erro ? `<div class="tri-erro">${escHtml(Funis.erro)}</div>` : '') + `
         <div class="opp-kpi-grid">
-            <div class="opp-kpi-card accent-blue"><div><span class="opp-kpi-label">Leads no período</span><span class="opp-kpi-value">${d.totalLeads}</span><span class="opp-kpi-sub">negociações criadas</span></div></div>
+            <div class="opp-kpi-card accent-blue"><div><span class="opp-kpi-label">Leads no período</span><span class="opp-kpi-value">${d.totalLeads}</span><span class="opp-kpi-sub">total que chegou (inclui os que fecharam)</span></div></div>
             <div class="opp-kpi-card accent-orange"><div><span class="opp-kpi-label">Clientes (vendas)</span><span class="opp-kpi-value orange">${d.totalClientes}</span><span class="opp-kpi-sub">pela entrada na aba Clientes</span></div></div>
             <div class="opp-kpi-card accent-blue"><div><span class="opp-kpi-label">Conversão</span><span class="opp-kpi-value">${conv !== null ? formatPct(conv, 1) : '—'}</span><span class="opp-kpi-sub">clientes ÷ leads</span></div></div>
             <div class="opp-kpi-card accent-blue"><div><span class="opp-kpi-label">Canal que mais trouxe clientes</span><span class="opp-kpi-value or-kpi-nome">${top ? escHtml(top.nome) : '—'}</span><span class="opp-kpi-sub">${top ? `${top.clientes} ${top.clientes === 1 ? 'cliente' : 'clientes'}` : 'nenhuma venda no período'}</span></div></div>
@@ -721,7 +727,7 @@ function canaisGraficoAno(meses, ano, hojeIso) {
     return `<div class="cn-graf">
         <div class="cn-graf-area"><svg viewBox="0 0 ${W} ${H}" class="cn-svg" role="img" aria-label="${met === 'clientes' ? 'Clientes' : 'Leads'} por canal de aquisição em ${ano}">${svg}</svg><div class="cn-graf-tip" id="cn-graf-tip"></div></div>
         <div class="cn-graf-legenda">${legenda || '<span class="fn-neg-vazio">Sem dados no ano.</span>'}</div>
-        <div class="tr-legenda">${met === 'clientes' ? 'Clientes = entrada do cliente na aba Clientes do portal; o canal vem da Fonte no RD.' : 'Leads = negociações criadas no mês.'} Passe o mouse num mês para ver por canal; clique para abrir o mês.${carregando ? ' Carregando os meses…' : ''}</div>
+        <div class="tr-legenda">${met === 'clientes' ? 'Clientes = entrada do cliente na aba Clientes do portal; o canal vem da Fonte no RD.' : 'Leads = tudo que chegou no mês (negociações criadas no RD + os que fecharam).'} Passe o mouse num mês para ver por canal; clique para abrir o mês.${carregando ? ' Carregando os meses…' : ''}</div>
     </div>`;
 }
 
