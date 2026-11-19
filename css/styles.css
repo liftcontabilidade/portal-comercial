@@ -2526,3 +2526,29 @@ button.cn-row:hover, button.cn-row.aberto { background: #F8FAFC; }
 @media (max-width: 1200px) { .pa-dias { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 900px) { .pa-dias { grid-template-columns: repeat(2, minmax(0, 1fr)); } .pa-kpis { grid-template-columns: 1fr; } }
 @media (max-width: 560px) { .pa-dias { grid-template-columns: 1fr; } .pa-sem { grid-template-columns: 1fr 60px 44px; } }
+.pa-metas { padding: 18px 20px; margin-bottom: 20px; }
+.pa-metas-topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.pa-metas-topo h3 { margin: 0 0 4px; font-size: 15px; }
+.pa-metas-topo span { font-size: 12.5px; color: var(--text-secondary); }
+.pa-metas-acoes { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.pa-metas-aviso { color: var(--text-secondary); font-size: 13px; margin: 6px 0 12px; }
+.pa-funil { display: grid; grid-template-columns: minmax(130px, .7fr) repeat(3, minmax(0, 1fr)); gap: 12px; }
+.pa-etapa { border: 1px solid var(--border-color); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 6px; position: relative; }
+.pa-etapa.bateu { border-color: #A7F3D0; background: var(--success-green-light); }
+.pa-etapa.abaixo { border-color: #FECACA; background: #FEF2F2; }
+.pa-etapa-total { background: var(--bg-main, #F8FAFC); }
+.pa-etapa-nome { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: var(--text-secondary); }
+.pa-etapa-num { font-size: 28px; line-height: 1.1; color: var(--text-primary); }
+.pa-etapa-taxa { font-size: 15px; font-weight: 800; color: var(--text-primary); }
+.pa-etapa-taxa small { font-size: 11.5px; font-weight: 600; color: var(--text-secondary); }
+.pa-etapa-meta { font-size: 12.5px; color: var(--text-secondary); font-weight: 600; }
+.pa-etapa-meta input { width: 56px; padding: 3px 6px; border: 1px solid var(--border-color); border-radius: 6px; font: inherit; }
+.pa-etapa-sub { font-size: 11.5px; color: var(--text-secondary); }
+.pa-txt-ruim { color: #DC2626; }
+.pa-meta-barra { position: relative; height: 8px; border-radius: 99px; background: rgba(148,163,184,.25); overflow: visible; }
+.pa-meta-barra i { display: block; height: 100%; border-radius: 99px; background: #F87171; }
+.pa-etapa.bateu .pa-meta-barra i { background: var(--success-green); }
+.pa-meta-barra em { position: absolute; top: -3px; width: 2px; height: 14px; background: var(--lift-blue); transform: translateX(-1px); }
+.pa-metas-rodape { margin-top: 14px; font-size: 12.5px; color: var(--text-secondary); }
+@media (max-width: 900px) { .pa-funil { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .pa-funil { grid-template-columns: 1fr; } }

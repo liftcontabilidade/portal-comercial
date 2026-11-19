@@ -192,6 +192,7 @@ async function crmCarregarJanela(j, forcar = false, alvo = null) {
     // Só redesenha quando algo foi buscado (evita repetir sem parar enquanto carrega)
     if ((buscou || Funis.erro !== erroAntes) && AppState.currentView === 'funis') renderFunisView();
     if ((buscou || Funis.erro !== erroAntes) && AppState.currentView === 'trafego' && AppState.trafegoAba === 'canais') renderCanaisView();
+    if ((buscou || Funis.erro !== erroAntes) && AppState.currentView === 'prospeccao' && typeof renderProspeccaoView === 'function') renderProspeccaoView();
 }
 
 const crmRotular = (n) => ({ ...n, fonte: trocarRelacionamento(n.fonte), etapaNome: trocarRelacionamento(n.etapaNome), campanha: trocarRelacionamento(n.campanha) });

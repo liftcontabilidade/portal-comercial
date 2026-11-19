@@ -25,10 +25,13 @@ const PA_TAREFAS = [
 ];
 const PA_TOTAL_SEMANA = PA_DIAS.length * PA_TAREFAS.length;
 
-const Prospeccao = { checks: {}, recebida: false };
+// Metas de conversão (cada etapa sobre a anterior)
+const PA_METAS_PADRAO = { atendeu: 10, proposta: 30, fechou: 20 };
+const Prospeccao = { checks: {}, metas: { ...PA_METAS_PADRAO }, recebida: false };
 
 window.aplicarProspeccaoDaNuvem = function (dados) {
     Prospeccao.checks = (dados && dados.checks) || {};
+    Prospeccao.metas = { ...PA_METAS_PADRAO, ...((dados && dados.metas) || {}) };
     Prospeccao.recebida = true;
     if (AppState.currentView === 'prospeccao') renderProspeccaoView();
 };
@@ -45,12 +48,100 @@ async function paMarcar(semana, chave, valor) {
     if (Object.keys(s).length) checks[semana] = s; else delete checks[semana];
     Prospeccao.checks = checks;
     renderProspeccaoView();
+    await paSalvar();
+}
+
+async function paSalvar() {
+    const dados = { checks: Prospeccao.checks, metas: Prospeccao.metas };
     try {
-        if (window.LiftCloud && window.LiftCloud.salvarProspeccao) await window.LiftCloud.salvarProspeccao({ checks });
-        else localStorage.setItem('lift_prospeccao', JSON.stringify({ checks }));
+        if (window.LiftCloud && window.LiftCloud.salvarProspeccao) await window.LiftCloud.salvarProspeccao(dados);
+        else localStorage.setItem('lift_prospeccao', JSON.stringify(dados));
     } catch (e) {
-        if (typeof showToast === 'function') showToast('Não consegui salvar a marcação: ' + e.message, 'error');
+        if (typeof showToast === 'function') showToast('Não consegui salvar: ' + e.message, 'error');
     }
+}
+
+/* ---------- Metas de conversão (dados do funil "Prospecção ativa" no RD) ---------- */
+function paFunis() { return (Funis.funis || []).filter(f => /prospec/i.test(f.nome || '')); }
+
+function paJanelaMetas(semana) {
+    const tipo = AppState.paMetaTipo || 'mes';
+    if (tipo === 'semana') return { ...trJanela('semana', semana), tipo };
+    if (tipo === 'ano') { const a = semana.slice(0, 4); return { ini: `${a}-01-01`, fim: `${a}-12-31`, label: `Ano de ${a}`, tipo }; }
+    return { ...trJanela('mes', paDiaIso(semana, 2)), tipo };
+}
+
+// Quantos leads (criados no período) chegaram a cada etapa
+function paConversao(j) {
+    const funis = paFunis();
+    if (!funis.length) return null;
+    let total = 0, atendeu = 0, proposta = 0, fechou = 0;
+    for (const f of funis) {
+        const d = Funis.dados.get(crmChaveJanela(f.id, j));
+        if (!d) return null;
+        const etapas = [...(f.etapas || [])].sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+        const pos = (re) => { const i = etapas.findIndex(e => re.test(crmSemAcento(e.nome))); return i < 0 ? Infinity : i; };
+        const iAtendeu = pos(/^contatad/), iProposta = pos(/proposta/);
+        d.lista.forEach(n => {
+            total++;
+            const i = n.ganha === true ? Infinity : etapas.findIndex(e => String(e.id) === String(n.etapa));
+            if (n.ganha === true || i >= iAtendeu) atendeu++;
+            if (n.ganha === true || i >= iProposta) proposta++;
+            if (n.ganha === true) fechou++;
+        });
+    }
+    return { total, atendeu, proposta, fechou };
+}
+
+function paHtmlMetas(semana) {
+    const m = Prospeccao.metas;
+    const j = paJanelaMetas(semana);
+    const tipo = j.tipo;
+    const leadsPorCliente = Math.ceil(100 / m.atendeu * 100 / m.proposta * 100 / m.fechou);
+    const editar = AppState.paEditarMetas;
+    const topo = `<div class="pa-metas-topo">
+        <div><h3>Metas de conversão</h3><span>Funil Prospecção ativa (RD) · leads que entraram em: <b>${escHtml(j.label)}</b></span></div>
+        <div class="pa-metas-acoes">
+            <div class="tr-tipos" id="pa-meta-tipos">${[['semana', 'Semana'], ['mes', 'Mês'], ['ano', 'Ano']].map(([k, t]) => `<button type="button" data-t="${k}"${k === tipo ? ' class="active"' : ''}>${t}</button>`).join('')}</div>
+            <button type="button" class="btn-secondary" id="pa-meta-editar">${editar ? 'Salvar metas' : '✎ Editar metas'}</button>
+        </div></div>`;
+    let corpo;
+    if (typeof crmConectado !== 'function' || !crmConectado()) {
+        corpo = `<p class="pa-metas-aviso">Conecte o RD Station CRM na aba <b>Funis</b> para comparar com as metas.</p>`;
+    } else if (Funis.funis && !paFunis().length) {
+        corpo = `<p class="pa-metas-aviso">Não achei no RD um funil com "Prospecção" no nome.</p>`;
+    } else {
+        const c = paConversao(j);
+        if (!c) {
+            crmCarregarJanela(j, false, paFunis);
+            corpo = `<p class="pa-metas-aviso">Carregando dados do RD…</p>`;
+        } else {
+            const pct = (a, b) => b ? a / b * 100 : null;
+            const etapas = [
+                { k: 'atendeu', nome: 'Atenderam', qtd: c.atendeu, base: c.total, baseNome: 'dos leads', sub: 'chegaram a "Contatado" ou além' },
+                { k: 'proposta', nome: 'Receberam proposta', qtd: c.proposta, base: c.atendeu, baseNome: 'de quem atendeu', sub: 'chegaram a "Proposta feita" ou além' },
+                { k: 'fechou', nome: 'Fecharam', qtd: c.fechou, base: c.proposta, baseNome: 'de quem recebeu proposta', sub: 'negociações ganhas' }
+            ];
+            corpo = `<div class="pa-funil">
+                <div class="pa-etapa pa-etapa-total"><span class="pa-etapa-nome">Leads</span><b class="pa-etapa-num">${c.total}</b><span class="pa-etapa-sub">entraram no período</span></div>
+                ${etapas.map(e => {
+                    const p = pct(e.qtd, e.base), meta = m[e.k];
+                    const ok = p !== null && p >= meta;
+                    const larg = p === null ? 0 : Math.min(100, p / (meta * 2) * 100);
+                    return `<div class="pa-etapa ${p === null ? '' : ok ? 'bateu' : 'abaixo'}">
+                        <span class="pa-etapa-nome">${e.nome}</span>
+                        <b class="pa-etapa-num">${e.qtd}</b>
+                        <span class="pa-etapa-taxa">${p === null ? '—' : p.toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%'} <small>${e.baseNome}</small></span>
+                        <span class="pa-meta-barra"><i style="width:${larg}%"></i><em style="left:50%"></em></span>
+                        <span class="pa-etapa-meta">Meta ${editar ? `<input type="number" min="1" max="100" step="1" data-meta="${e.k}" value="${meta}">` : meta}%${p === null ? '' : ok ? ' · <b class="tr-txt-bom">bateu</b>' : ' · <b class="pa-txt-ruim">abaixo</b>'}</span>
+                        <span class="pa-etapa-sub">${e.sub}</span>
+                    </div>`;
+                }).join('')}
+            </div>`;
+        }
+    }
+    return `<div class="opp-card pa-metas">${topo}${corpo}
+        <div class="pa-metas-rodape">Com as metas atuais (${m.atendeu}% → ${m.proposta}% → ${m.fechou}%), são precisos cerca de <b>${leadsPorCliente} leads</b> para fechar 1 cliente.</div></div>`;
 }
 
 const paGrupos = (txt) => txt.split('').map(g => `<span class="pa-g pa-g-${g}">${g}</span>`).join('');
@@ -120,6 +211,7 @@ function renderProspeccaoView() {
             </div>
         </div>
         <div class="pa-barra-semana"><i style="width:${pct}%"></i></div>
+        ${paHtmlMetas(semana)}
         <div class="pa-dias">${dias}</div>
         <div class="opp-card pa-semanas">
             <h3>Todas as semanas de ${ano}</h3>
@@ -127,11 +219,22 @@ function renderProspeccaoView() {
         </div>`;
 
     box.querySelectorAll('input[data-ch]').forEach(inp => inp.addEventListener('change', () => paMarcar(semana, inp.dataset.ch, inp.checked)));
+    box.querySelectorAll('#pa-meta-tipos button').forEach(b => b.addEventListener('click', () => { AppState.paMetaTipo = b.dataset.t; renderProspeccaoView(); }));
+    document.getElementById('pa-meta-editar')?.addEventListener('click', () => {
+        if (AppState.paEditarMetas) {
+            const novas = { ...Prospeccao.metas };
+            box.querySelectorAll('input[data-meta]').forEach(i => { const v = Math.round(Number(i.value)); if (v >= 1 && v <= 100) novas[i.dataset.meta] = v; });
+            Prospeccao.metas = novas;
+            AppState.paEditarMetas = false;
+            paSalvar();
+        } else AppState.paEditarMetas = true;
+        renderProspeccaoView();
+    });
     box.querySelectorAll('.pa-sem').forEach(b => b.addEventListener('click', () => { AppState.paSemana = b.dataset.sem; renderProspeccaoView(); window.scrollTo({ top: 0, behavior: 'smooth' }); }));
 }
 
 function setupProspeccao() {
-    try { if (!Prospeccao.recebida) { const l = JSON.parse(localStorage.getItem('lift_prospeccao') || 'null'); if (l && l.checks) Prospeccao.checks = l.checks; } } catch (e) { /* sem armazenamento */ }
+    try { if (!Prospeccao.recebida) { const l = JSON.parse(localStorage.getItem('lift_prospeccao') || 'null'); if (l && l.checks) Prospeccao.checks = l.checks; if (l && l.metas) Prospeccao.metas = { ...PA_METAS_PADRAO, ...l.metas }; } } catch (e) { /* sem armazenamento */ }
     const mover = (n) => { AppState.paSemana = paDiaIso(paSemanaAtual(), 7 * n); renderProspeccaoView(); };
     document.getElementById('pa-ant')?.addEventListener('click', () => mover(-1));
     document.getElementById('pa-prox')?.addEventListener('click', () => mover(1));
