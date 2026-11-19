@@ -26,7 +26,7 @@ const PA_TAREFAS = [
 const PA_TOTAL_SEMANA = PA_DIAS.length * PA_TAREFAS.length;
 
 // Metas de conversão (cada etapa sobre a anterior)
-const PA_METAS_PADRAO = { atendeu: 10, proposta: 30, fechou: 20 };
+const PA_METAS_PADRAO = { leadsSemana: 500, atendeu: 10, proposta: 30, fechou: 20 };
 const Prospeccao = { checks: {}, metas: { ...PA_METAS_PADRAO }, recebida: false };
 
 window.aplicarProspeccaoDaNuvem = function (dados) {
@@ -66,9 +66,20 @@ function paFunis() { return (Funis.funis || []).filter(f => /prospec/i.test(f.no
 
 function paJanelaMetas(semana) {
     const tipo = AppState.paMetaTipo || 'mes';
-    if (tipo === 'semana') return { ...trJanela('semana', semana), tipo };
+    // Semana: os leads importados no fim de semana anterior entram na semana em que serão contatados (sábado a sexta)
+    if (tipo === 'semana') { const w = trJanela('semana', semana); return { ini: paDiaIso(semana, -2), fim: paDiaIso(semana, 4), label: w.label, tipo }; }
     if (tipo === 'ano') { const a = semana.slice(0, 4); return { ini: `${a}-01-01`, fim: `${a}-12-31`, label: `Ano de ${a}`, tipo }; }
     return { ...trJanela('mes', paDiaIso(semana, 2)), tipo };
+}
+
+// Quantas semanas de prospecção o período tem (só conta até a semana atual)
+function paSemanasNoPeriodo(j) {
+    if (j.tipo === 'semana') return 1;
+    const atual = paSemanaDe(trIso(new Date()));
+    let s = paSemanaDe(j.ini), n = 0;
+    if (s < j.ini) s = paDiaIso(s, 7);
+    for (; s <= j.fim && s <= atual; s = paDiaIso(s, 7)) n++;
+    return n;
 }
 
 // Quantos leads (criados no período) chegaram a cada etapa
@@ -121,13 +132,21 @@ function paHtmlMetas(semana) {
             corpo = `<p class="pa-metas-aviso">Carregando dados do RD…</p>`;
         } else {
             const pct = (a, b) => b ? a / b * 100 : null;
+            const semanas = paSemanasNoPeriodo(j);
+            const base = m.leadsSemana * semanas; // 500 leads por semana a contatar
+            const alvo = { atendeu: base * m.atendeu / 100 };
+            alvo.proposta = alvo.atendeu * m.proposta / 100;
+            alvo.fechou = alvo.proposta * m.fechou / 100;
+            const fmt = (v) => v.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
             const etapas = [
-                { k: 'atendeu', nome: 'Atenderam', qtd: c.atendeu, base: c.total, baseNome: 'dos leads', sub: 'chegaram a "Contatado" ou além' },
+                { k: 'atendeu', nome: 'Atenderam', qtd: c.atendeu, base, baseNome: `dos ${base} leads`, sub: 'chegaram a "Contatado" ou além' },
                 { k: 'proposta', nome: 'Receberam proposta', qtd: c.proposta, base: c.atendeu, baseNome: 'de quem atendeu', sub: 'chegaram a "Proposta feita" ou além' },
                 { k: 'fechou', nome: 'Fecharam', qtd: c.fechou, base: c.proposta, baseNome: 'de quem recebeu proposta', sub: 'negociações ganhas' }
             ];
             corpo = `<div class="pa-funil">
-                <div class="pa-etapa pa-etapa-total"><span class="pa-etapa-nome">Leads</span><b class="pa-etapa-num">${c.total}</b><span class="pa-etapa-sub">entraram no período</span></div>
+                <div class="pa-etapa pa-etapa-total"><span class="pa-etapa-nome">Leads a contatar</span><b class="pa-etapa-num">${base}</b>
+                    <span class="pa-etapa-meta">${editar ? `<input type="number" min="1" step="1" data-meta="leadsSemana" value="${m.leadsSemana}">` : m.leadsSemana} por semana${semanas !== 1 ? ` × ${semanas} semanas` : ''}</span>
+                    <span class="pa-etapa-sub">${c.total} importados no RD no período</span></div>
                 ${etapas.map(e => {
                     const p = pct(e.qtd, e.base), meta = m[e.k];
                     const ok = p !== null && p >= meta;
@@ -137,17 +156,17 @@ function paHtmlMetas(semana) {
                         <b class="pa-etapa-num">${e.qtd}</b>
                         <span class="pa-etapa-taxa">${p === null ? '—' : p.toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%'} <small>${e.baseNome}</small></span>
                         <span class="pa-meta-barra"><i style="width:${larg}%"></i><em style="left:50%"></em></span>
-                        <span class="pa-etapa-meta">Meta ${editar ? `<input type="number" min="1" max="100" step="1" data-meta="${e.k}" value="${meta}">` : meta}%${p === null ? '' : ok ? ' · <b class="tr-txt-bom">bateu</b>' : ' · <b class="pa-txt-ruim">abaixo</b>'}</span>
+                        <span class="pa-etapa-meta">Meta ${editar ? `<input type="number" min="1" max="100" step="1" data-meta="${e.k}" value="${meta}">` : meta}% <small>(${fmt(alvo[e.k])})</small>${p === null ? '' : ok ? ' · <b class="tr-txt-bom">bateu</b>' : ' · <b class="pa-txt-ruim">abaixo</b>'}</span>
                         <span class="pa-etapa-sub">${e.sub}</span>
                     </div>`;
                 }).join('')}
             </div>
-            <div class="pa-onde"><b>Onde estão esses ${c.total} leads no RD agora:</b> ${[...c.porEtapa.entries()].filter(([, q]) => q).map(([n, q]) => `<span>${escHtml(n)} <b>${q}</b></span>`).join('') || '—'}</div>
+            <div class="pa-onde"><b>Onde estão os ${c.total} leads importados no período:</b> ${[...c.porEtapa.entries()].filter(([, q]) => q).map(([n, q]) => `<span>${escHtml(n)} <b>${q}</b></span>`).join('') || '—'}</div>
             ${c.total && !c.atendeu ? `<p class="pa-metas-aviso">Nenhum lead que entrou nesse período saiu de "Tentando contato" ainda. Quando o card for movido para "Contatado" (ou além) no RD, ele passa a contar aqui.</p>` : ''}`;
         }
     }
     return `<div class="opp-card pa-metas">${topo}${corpo}
-        <div class="pa-metas-rodape">Com as metas atuais (${m.atendeu}% → ${m.proposta}% → ${m.fechou}%), são precisos cerca de <b>${leadsPorCliente} leads</b> para fechar 1 cliente.</div></div>`;
+        <div class="pa-metas-rodape">Com ${m.leadsSemana} leads por semana e as metas atuais (${m.atendeu}% → ${m.proposta}% → ${m.fechou}%): <b>${(m.leadsSemana * m.atendeu / 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} atendimentos</b>, <b>${(m.leadsSemana * m.atendeu * m.proposta / 10000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} propostas</b> e <b>${(m.leadsSemana * m.atendeu * m.proposta * m.fechou / 1000000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} clientes</b> por semana (cerca de ${leadsPorCliente} leads para cada cliente).</div></div>`;
 }
 
 const paGrupos = (txt) => txt.split('').map(g => `<span class="pa-g pa-g-${g}">${g}</span>`).join('');
@@ -194,7 +213,7 @@ function renderProspeccaoView() {
         <div class="opp-kpi-row pa-kpis">
             <div class="opp-kpi-card accent-orange"><div><span class="opp-kpi-label">Feito na semana</span><span class="opp-kpi-value orange">${pct}%</span><span class="opp-kpi-sub">${feitas} de ${PA_TOTAL_SEMANA} tarefas</span></div></div>
             <div class="pa-grupos-card">
-                <span class="opp-kpi-label">Grupos de leads</span>
+                <span class="opp-kpi-label">Grupos de leads <small>(os ${Prospeccao.metas.leadsSemana} importados da semana)</small></span>
                 <div class="pa-grupos">${PA_GRUPOS.map(x => `<span>${paGrupos(x.g)} leads ${x.faixa}</span>`).join('')}</div>
             </div>
         </div>
@@ -208,7 +227,7 @@ function renderProspeccaoView() {
     document.getElementById('pa-meta-editar')?.addEventListener('click', () => {
         if (AppState.paEditarMetas) {
             const novas = { ...Prospeccao.metas };
-            box.querySelectorAll('input[data-meta]').forEach(i => { const v = Math.round(Number(i.value)); if (v >= 1 && v <= 100) novas[i.dataset.meta] = v; });
+            box.querySelectorAll('input[data-meta]').forEach(i => { const v = Math.round(Number(i.value)); if (v >= 1 && (v <= 100 || i.dataset.meta === 'leadsSemana')) novas[i.dataset.meta] = v; });
             Prospeccao.metas = novas;
             AppState.paEditarMetas = false;
             paSalvar();
