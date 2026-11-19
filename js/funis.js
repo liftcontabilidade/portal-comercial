@@ -219,6 +219,17 @@ async function crmVendasDoFunil(f, forcar = false) {
 function crmNomeComparavel(nome) {
     return crmSemAcento(nome).replace(/\b(ltda|me|epp|eireli|s ?a|ss|mei|cia)\b\.?/g, ' ').replace(/[^a-z0-9]+/g, ' ').trim();
 }
+// Busca pelo nome: exato; senão, um nome que comece com o outro (ex.: "Fillum Gestão" ↔ "Fillum Gestão CE")
+function crmAcharPorNome(mapa, chave) {
+    if (!chave) return null;
+    if (mapa.has(chave)) return mapa.get(chave);
+    let melhor = null, tam = 0;
+    for (const [k, v] of mapa) {
+        if (k.length < 6) continue;
+        if ((chave.startsWith(k + ' ') || k.startsWith(chave + ' ')) && k.length > tam) { melhor = v; tam = k.length; }
+    }
+    return melhor;
+}
 function crmMapaClientesPortal() {
     if (Funis._mapaCli && Date.now() - Funis._mapaCli.em < 1500) return Funis._mapaCli.mapa;
     const mapa = new Map();
@@ -235,7 +246,7 @@ const crmDataCliente = (c) => {
 // senão, a data em que a negociação foi marcada como ganha no RD.
 // (Ex.: clientes antigos importados no RD de uma vez só aparecem todos com a mesma data de venda.)
 function crmDataVenda(n) {
-    const c = crmMapaClientesPortal().get(crmNomeComparavel(n.nome));
+    const c = crmAcharPorNome(crmMapaClientesPortal(), crmNomeComparavel(n.nome));
     return (c && crmDataCliente(c)) || String(n.fechada || '').slice(0, 10);
 }
 
@@ -553,7 +564,7 @@ function canaisDados(j) {
     // Canal = Fonte da negociação ganha no RD (achada pelo nome); se não achar, a Origem do cadastro no portal.
     const fontePorNome = new Map(vendasRD.map(n => [crmNomeComparavel(n.nome), n]));
     const clientes = (AppState.clientes || []).filter(c => { const d = crmDataCliente(c); return d && d >= j.ini && d <= j.fim; }).map(c => {
-        const rd = fontePorNome.get(crmNomeComparavel(c.nome));
+        const rd = crmAcharPorNome(fontePorNome, crmNomeComparavel(c.nome));
         return { id: c.id, nome: c.nome, fonte: (rd && rd.fonte) || trocarRelacionamento(c.origemCliente) || '', responsavel: c.vendedor || (rd && rd.responsavel) || '', situacao: 'ganha' };
     });
     const canais = new Map();
