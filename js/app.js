@@ -172,6 +172,7 @@ window.aplicarDadosDaNuvem = function ({ clientes, saidas, leads }) {
     } catch (e) { /* ignora */ }
     AppState._assinaturaStorage = lerAssinaturaStorage();
     criarBackupAutomatico(false);
+    if (clientes.some(c => c && /relacionamento/i.test(c.origemCliente || ''))) setTimeout(migrarRelacionamentoParaNetworking, 800);
 
     // Não redesenha enquanto alguém digita num campo (ex.: leads); redesenha ao sair dele
     clearTimeout(_renderNuvemPendente);
@@ -1029,7 +1030,9 @@ function registrarSegmento(texto) {
 }
 
 /* ---------- Origem do cliente (de onde veio) ---------- */
-const ORIGENS_PADRAO = ['Indicação', 'Instagram', 'Google', 'Site', 'WhatsApp', 'Facebook', 'LinkedIn', 'Evento', 'Parceiro', 'Prospecção ativa', 'Tráfego pago', 'Outros'];
+const ORIGENS_PADRAO = ['Indicação', 'Instagram', 'Google', 'Site', 'WhatsApp', 'Facebook', 'LinkedIn', 'Evento', 'Parceiro', 'Networking', 'Prospecção ativa', 'Tráfego pago', 'Outros'];
+// "Relacionamento" passou a se chamar "Networking" no portal
+const trocarRelacionamento = (t) => String(t || '').replace(/relacionamento/gi, 'Networking');
 
 function getListaOrigens() {
     const mapa = new Map();
@@ -1044,7 +1047,7 @@ function getListaOrigens() {
 
 // Reaproveita a grafia de uma origem já existente (ignorando maiúsculas/minúsculas)
 function normalizarOrigem(texto) {
-    const v = (texto || '').trim().replace(/\s+/g, ' ');
+    const v = trocarRelacionamento((texto || '').trim().replace(/\s+/g, ' '));
     if (!v) return '';
     const existente = getListaOrigens().find(x => x.toLocaleLowerCase('pt-BR') === v.toLocaleLowerCase('pt-BR'));
     return existente || v;
@@ -3432,3 +3435,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const b = document.getElementById('meta-sucesso-festa');
     if (b) b.addEventListener('click', soltarConfete);
 });
+
+
+/* Clientes já cadastrados com origem "Relacionamento" passam para "Networking" */
+function migrarRelacionamentoParaNetworking() {
+    let mudou = false;
+    (AppState.clientes || []).forEach(c => {
+        if (c.origemCliente && /relacionamento/i.test(c.origemCliente)) { c.origemCliente = trocarRelacionamento(c.origemCliente); mudou = true; }
+    });
+    try {
+        const segs = JSON.parse(localStorage.getItem('lift_comercial_segmentos') || '[]');
+        if (Array.isArray(segs) && segs.some(x => /relacionamento/i.test(x))) localStorage.setItem('lift_comercial_segmentos', JSON.stringify(segs.map(trocarRelacionamento)));
+    } catch (e) { /* ignora */ }
+    if (mudou) { saveStorage(); if (typeof renderAll === 'function') renderAll(); }
+}

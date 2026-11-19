@@ -161,7 +161,11 @@ async function crmCarregarJanela(j, forcar = false, alvo = null) {
     let buscou = false;
     const erroAntes = Funis.erro;
     try {
-        if (!Funis.funis || forcar) { Funis.funis = (await crmChamar({ acao: 'funis' })).funis || []; buscou = true; }
+        if (!Funis.funis || forcar) {
+            // No portal, "relacionamento" aparece como "Networking"
+            Funis.funis = ((await crmChamar({ acao: 'funis' })).funis || []).map(f => ({ ...f, nome: trocarRelacionamento(f.nome), etapas: (f.etapas || []).map(e => ({ ...e, nome: trocarRelacionamento(e.nome) })) }));
+            buscou = true;
+        }
         const escolhidos = alvo ? alvo() : crmFunisEscolhidos();
         await Promise.all(escolhidos.map(async f => {
             const k = crmChaveJanela(f.id, j);
@@ -180,7 +184,8 @@ async function crmCarregarJanela(j, forcar = false, alvo = null) {
                 Funis.conectorAntigo = (g.negociacoes || []).some(n => n.ganha !== true);
                 // Ganho: vendida com data de venda dentro do período
                 const naJanela = (n) => { const d = String(n.fechada || '').slice(0, 10); return d >= j.ini && d <= j.fim; };
-                Funis.dados.set(k, { em: Date.now(), lista: r.negociacoes || [], ganhas: (g.negociacoes || []).filter(n => n.ganha === true && naJanela(n)) });
+                const rotular = (n) => ({ ...n, fonte: trocarRelacionamento(n.fonte), etapaNome: trocarRelacionamento(n.etapaNome), campanha: trocarRelacionamento(n.campanha) });
+                Funis.dados.set(k, { em: Date.now(), lista: (r.negociacoes || []).map(rotular), ganhas: (g.negociacoes || []).filter(n => n.ganha === true && naJanela(n)).map(rotular) });
             } finally { Funis.carregando.delete(k); }
         }));
         if (buscou) { Funis.erro = ''; Funis.ultima = new Date(); }
