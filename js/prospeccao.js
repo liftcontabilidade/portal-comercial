@@ -184,24 +184,6 @@ function renderProspeccaoView() {
         </div>`;
     }).join('');
 
-    // Todas as semanas do ano (até a próxima), da mais recente para a mais antiga
-    const ano = Number(semana.slice(0, 4));
-    const semanas = [];
-    let s = paSemanaDe(`${ano}-01-01`);
-    const limite = paSemanaDe(paDiaIso(paSemanaDe(hoje), 7));
-    Object.keys(Prospeccao.checks).forEach(k => { if (k.slice(0, 4) === String(ano) && !semanas.includes(k)) semanas.push(k); });
-    while (s <= limite && s.slice(0, 4) <= String(ano)) { if (!semanas.includes(s) && paDiaIso(s, 4).slice(0, 4) === String(ano)) semanas.push(s); s = paDiaIso(s, 7); }
-    if (!semanas.includes(semana)) semanas.push(semana);
-    semanas.sort().reverse();
-    const lista = semanas.map(w => {
-        const f = paFeitas(w), p = Math.round(f / PA_TOTAL_SEMANA * 100);
-        return `<button type="button" class="pa-sem${w === semana ? ' ativa' : ''}${w > hoje ? ' futura' : ''}" data-sem="${w}">
-            <span>${trCurta(w)} a ${trCurta(paDiaIso(w, 4))}${w === paSemanaDe(hoje) ? ' <em>esta semana</em>' : ''}</span>
-            <span class="pa-sem-barra"><i style="width:${p}%"></i></span>
-            <b>${f}/${PA_TOTAL_SEMANA}</b>
-        </button>`;
-    }).join('');
-
     box.innerHTML = `
         <div class="opp-kpi-row pa-kpis">
             <div class="opp-kpi-card accent-orange"><div><span class="opp-kpi-label">Feito na semana</span><span class="opp-kpi-value orange">${pct}%</span><span class="opp-kpi-sub">${feitas} de ${PA_TOTAL_SEMANA} tarefas</span></div></div>
@@ -213,10 +195,7 @@ function renderProspeccaoView() {
         <div class="pa-barra-semana"><i style="width:${pct}%"></i></div>
         ${paHtmlMetas(semana)}
         <div class="pa-dias">${dias}</div>
-        <div class="opp-card pa-semanas">
-            <h3>Todas as semanas de ${ano}</h3>
-            <div class="pa-sem-lista">${lista}</div>
-        </div>`;
+`;
 
     box.querySelectorAll('input[data-ch]').forEach(inp => inp.addEventListener('change', () => paMarcar(semana, inp.dataset.ch, inp.checked)));
     box.querySelectorAll('#pa-meta-tipos button').forEach(b => b.addEventListener('click', () => { AppState.paMetaTipo = b.dataset.t; renderProspeccaoView(); }));
@@ -230,7 +209,6 @@ function renderProspeccaoView() {
         } else AppState.paEditarMetas = true;
         renderProspeccaoView();
     });
-    box.querySelectorAll('.pa-sem').forEach(b => b.addEventListener('click', () => { AppState.paSemana = b.dataset.sem; renderProspeccaoView(); window.scrollTo({ top: 0, behavior: 'smooth' }); }));
 }
 
 function setupProspeccao() {
