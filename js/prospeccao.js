@@ -76,21 +76,25 @@ function paConversao(j) {
     const funis = paFunis();
     if (!funis.length) return null;
     let total = 0, atendeu = 0, proposta = 0, fechou = 0;
+    const porEtapa = new Map();
     for (const f of funis) {
         const d = Funis.dados.get(crmChaveJanela(f.id, j));
         if (!d) return null;
         const etapas = [...(f.etapas || [])].sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
         const pos = (re) => { const i = etapas.findIndex(e => re.test(crmSemAcento(e.nome))); return i < 0 ? Infinity : i; };
         const iAtendeu = pos(/^contatad/), iProposta = pos(/proposta/);
+        etapas.forEach(e => { if (!porEtapa.has(e.nome)) porEtapa.set(e.nome, 0); });
         d.lista.forEach(n => {
             total++;
+            const nomeEt = n.ganha === true ? 'Ganho' : n.ganha === false ? 'Perdidos' : (n.etapaNome || 'Sem etapa');
+            porEtapa.set(nomeEt, (porEtapa.get(nomeEt) || 0) + 1);
             const i = n.ganha === true ? Infinity : etapas.findIndex(e => String(e.id) === String(n.etapa));
             if (n.ganha === true || i >= iAtendeu) atendeu++;
             if (n.ganha === true || i >= iProposta) proposta++;
             if (n.ganha === true) fechou++;
         });
     }
-    return { total, atendeu, proposta, fechou };
+    return { total, atendeu, proposta, fechou, porEtapa };
 }
 
 function paHtmlMetas(semana) {
@@ -137,7 +141,9 @@ function paHtmlMetas(semana) {
                         <span class="pa-etapa-sub">${e.sub}</span>
                     </div>`;
                 }).join('')}
-            </div>`;
+            </div>
+            <div class="pa-onde"><b>Onde estão esses ${c.total} leads no RD agora:</b> ${[...c.porEtapa.entries()].filter(([, q]) => q).map(([n, q]) => `<span>${escHtml(n)} <b>${q}</b></span>`).join('') || '—'}</div>
+            ${c.total && !c.atendeu ? `<p class="pa-metas-aviso">Nenhum lead que entrou nesse período saiu de "Tentando contato" ainda. Quando o card for movido para "Contatado" (ou além) no RD, ele passa a contar aqui.</p>` : ''}`;
         }
     }
     return `<div class="opp-card pa-metas">${topo}${corpo}
