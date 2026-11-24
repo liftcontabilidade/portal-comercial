@@ -1446,6 +1446,9 @@ function baseInicialDoAno(year) {
     return anterior.length ? anterior[anterior.length - 1].totalClientes : fim2025;
 }
 
+// Churn médio de 2026 na planilha: mês (0 = jan) → primeiro mês da média
+const JANELAS_CHURN_MEDIO = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 3, 6: 3, 7: 6, 8: 6, 9: 6 };
+
 function calculateMonthlyDataForYear(year, _semAnoAnterior = false) {
     const meses = [
         '01', '02', '03', '04', '05', '06', 
@@ -1481,40 +1484,39 @@ function calculateMonthlyDataForYear(year, _semAnoAnterior = false) {
         somaEntradas += entradasNoMes;
         somaSaidas += saidasNoMes;
 
-        // Churn (%) = -(Saídas / Base Anterior)
+        // ===== Mesmas fórmulas da aba Dashboard da planilha Comercial =====
+        // Churn (E) = Saídas ÷ Total de clientes do mês anterior  (=C4/D3)
+        // (a planilha começa em 01/2026 com churn 0, pois não tem a linha do mês anterior)
+        const inicioSerie = year === ANO_INICIO_CADASTRO_PORTAL && idx === 0;
         let churnPercent = 0;
-        let churnFormatted = '0,0%';
-        if (saidasNoMes > 0 && previousBase > 0) {
-            churnPercent = -((saidasNoMes / previousBase) * 100);
-            churnFormatted = churnPercent.toFixed(1).replace('.', ',') + '%';
-        }
+        if (!inicioSerie && saidasNoMes > 0 && previousBase > 0) churnPercent = -((saidasNoMes / previousBase) * 100);
+        const churnFormatted = churnPercent.toFixed(1).replace('.', ',') + '%';
 
-        // LTV/meses = 1 / Churn rate (Base anterior ÷ Saídas).
-        // Mês sem saída não tem churn: o LTV não é calculável (não é zero), então
-        // aparece "—" e não puxa a média para baixo.
-        const hojeComp = new Date();
-        const mesFuturo = year > hojeComp.getFullYear() || (year === hojeComp.getFullYear() && idx > hojeComp.getMonth());
-        let ltvRaw = null;
-        if (saidasNoMes > 0 && previousBase > 0) ltvRaw = previousBase / saidasNoMes;
-        const ltvMeses = ltvRaw !== null ? Math.round(ltvRaw) : (mesFuturo ? '' : '—');
-
-        // LTV méd = (LTV/meses do mês anterior + LTV/meses do mês) / 2
-        // (mesma fórmula da planilha: =SOMA(F3:F4)/2), usando só os meses com saída.
-        // Se nenhum dos dois meses teve saída, repete a última média calculada.
-        let ltvAnteriorRaw = null;
-        let ltvMedioAnterior = null;
-        if (idx > 0) {
-            ltvAnteriorRaw = rows[idx - 1].ltvRaw;
-            ltvMedioAnterior = rows[idx - 1].ltvMedioRaw;
-        } else if (!_semAnoAnterior) {
-            const anoAnterior = calculateMonthlyDataForYear(year - 1, true);
-            const ult = anoAnterior.rows[11];
-            ltvAnteriorRaw = ult ? ult.ltvRaw : null;
-            ltvMedioAnterior = ult ? ult.ltvMedioRaw : null;
+        // Churn médio (F): na planilha, cada mês de 2026 faz a média de um intervalo de meses
+        // (ex.: jun = média de abr a jun); a partir de novembro = (churn médio anterior + churn do mês) ÷ 2
+        let churnMedioRaw;
+        const janela = year === ANO_INICIO_CADASTRO_PORTAL ? JANELAS_CHURN_MEDIO[idx] : undefined;
+        let churnMedioAnterior = null, ltvAnteriorRaw = null;
+        if (idx > 0) { churnMedioAnterior = rows[idx - 1].churnMedioRaw; ltvAnteriorRaw = rows[idx - 1].ltvRaw; }
+        else if (!_semAnoAnterior && year > ANO_INICIO_CADASTRO_PORTAL) {
+            const ult = calculateMonthlyDataForYear(year - 1, true).rows[11];
+            if (ult) { churnMedioAnterior = ult.churnMedioRaw; ltvAnteriorRaw = ult.ltvRaw; }
         }
-        const validos = [ltvAnteriorRaw, ltvRaw].filter(v => v !== null);
-        const ltvMedioRaw = validos.length ? validos.reduce((a, b) => a + b, 0) / validos.length : ltvMedioAnterior;
-        const ltvMedio = mesFuturo ? '' : (ltvMedioRaw !== null ? Math.round(ltvMedioRaw) : '—');
+        if (inicioSerie) churnMedioRaw = 0;
+        else if (janela !== undefined) {
+            const valores = rows.slice(janela, idx).map(r => r.churnRaw).concat(churnPercent);
+            churnMedioRaw = valores.reduce((t, v) => t + v, 0) / valores.length;
+        } else churnMedioRaw = churnMedioAnterior === null ? churnPercent : (churnMedioAnterior + churnPercent) / 2;
+        const churnMedio = churnMedioRaw.toFixed(2).replace('.', ',') + '%';
+
+        // LTV/meses (G) = SE(churn médio = 0; LTV do mês anterior; 1 ÷ -churn médio)
+        let ltvRaw;
+        if (inicioSerie) ltvRaw = 0;
+        else if (churnMedioRaw === 0) ltvRaw = ltvAnteriorRaw === null ? 0 : ltvAnteriorRaw;
+        else ltvRaw = 1 / (-churnMedioRaw / 100);
+        const ltvMeses = Math.round(ltvRaw);
+        const ltvMedioRaw = ltvRaw; // compatibilidade
+        const ltvMedio = ltvMeses;
 
         // Se for um mês futuro com zero movimentações, mantém consistente
         const hasData = entradasNoMes > 0 || saidasNoMes > 0 || (idx <= 10 && year === 2026);
@@ -1526,6 +1528,8 @@ function calculateMonthlyDataForYear(year, _semAnoAnterior = false) {
             totalClientes: currentBase,
             churn: churnFormatted,
             churnRaw: churnPercent,
+            churnMedio: churnMedio,
+            churnMedioRaw: churnMedioRaw,
             ltvMeses: ltvMeses,
             ltvMedio: ltvMedio,
             ltvRaw: ltvRaw,
@@ -1548,12 +1552,6 @@ function renderDadosView() {
     // Atualiza o botão/lista de anos na tela de Dados
     renderYearDropdown('dados');
 
-    // Planilha conectada: mostra exatamente os números da aba Dashboard dela
-    if (typeof dpRenderBarra === 'function') dpRenderBarra();
-    if (typeof dpRenderTabela === 'function' && dpRenderTabela(ano)) return;
-    const thead = document.querySelector('#panel-dados .table-dados-planilha thead');
-    if (thead) thead.innerHTML = `<tr><th>Competência (Jan a Dez)</th><th>Entradas</th><th>Saídas</th><th>Total de Clientes</th><th>Churn</th><th># LTV/meses</th><th># LTV méd</th></tr>`;
-
     const dataReport = calculateMonthlyDataForYear(ano);
     const tbody = document.getElementById('tabela-dados-tbody');
     const tfoot = document.getElementById('tabela-dados-tfoot');
@@ -1566,8 +1564,8 @@ function renderDadosView() {
             <td style="font-weight: 600; color: ${r.saidas < 0 ? '#DC2626' : 'inherit'};">${r.saidas}</td>
             <td style="font-weight: 700; color: var(--lift-blue);">${r.totalClientes}</td>
             <td class="${r.churnRaw < 0 ? 'churn-negative' : 'churn-neutral'}">${r.churn}</td>
-            <td>${r.ltvMeses}</td>
-            <td style="font-weight: 600;">${r.ltvMedio}</td>
+            <td class="${r.churnMedioRaw < 0 ? 'churn-negative' : 'churn-neutral'}">${r.churnMedio}</td>
+            <td style="font-weight: 600;">${r.ltvMeses}</td>
         </tr>
     `).join('');
 
@@ -3138,9 +3136,9 @@ function exportDadosToCSV() {
     const ano = AppState.selectedYearDados;
     const report = calculateMonthlyDataForYear(ano);
 
-    let csv = `Competência;Entradas;Saídas;Total clientes;Churn;LTV/meses;LTV méd\r\n`;
+    let csv = `Competência;Entradas;Saídas;Total clientes;Churn;Churn médio;LTV/meses\r\n`;
     report.rows.forEach(r => {
-        csv += `${r.competencia};${r.entradas};${r.saidas};${r.totalClientes};${r.churn};${r.ltvMeses};${r.ltvMedio}\r\n`;
+        csv += `${r.competencia};${r.entradas};${r.saidas};${r.totalClientes};${r.churn};${r.churnMedio};${r.ltvMeses}\r\n`;
     });
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -3259,9 +3257,9 @@ function copyTableDataToClipboard(tipo) {
         showToast('Saídas copiadas! Basta colar na sua planilha.');
     } else if (tipo === 'dados') {
         const report = calculateMonthlyDataForYear(ano);
-        tsv = "Competência\tEntradas\tSaídas\tTotal de Clientes\tChurn\tLTV/meses\tLTV méd\r\n";
+        tsv = "Competência\tEntradas\tSaídas\tTotal de Clientes\tChurn\tChurn médio\tLTV/meses\r\n";
         report.rows.forEach(r => {
-            tsv += `${r.competencia}\t${r.entradas}\t${r.saidas}\t${r.totalClientes}\t${r.churn}\t${r.ltvMeses}\t${r.ltvMedio}\r\n`;
+            tsv += `${r.competencia}\t${r.entradas}\t${r.saidas}\t${r.totalClientes}\t${r.churn}\t${r.churnMedio}\t${r.ltvMeses}\r\n`;
         });
         showToast('Dados mensais copiados! Basta colar na sua planilha.');
     } else if (tipo === 'oportunidades') {
