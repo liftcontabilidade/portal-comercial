@@ -1653,7 +1653,7 @@ html, body {
 .opp-table { padding: 0 10px 10px; }
 .opp-row {
     display: grid;
-    grid-template-columns: 1.3fr 1fr 1fr 1fr;
+    grid-template-columns: 1.2fr repeat(6, minmax(0, 1fr));
     align-items: center; gap: 12px;
     padding: 4px 14px; min-height: 36px;
     border-radius: 8px;
@@ -1669,7 +1669,7 @@ html, body {
     margin-top: 4px; background: var(--lift-blue); color: #FFFFFF;
     font-weight: 800; font-size: 13.5px; min-height: 40px;
 }
-.opp-row-total span:last-child { color: var(--lift-orange-border); text-align: center; }
+.opp-row-total span:last-child, .opp-row-total .opp-total-conv { color: var(--lift-orange-border); text-align: center; }
 .opp-row-head span:last-child, .opp-conv-cell { text-align: center; }
 .opp-mes { font-weight: 600; color: var(--lift-blue); font-size: 13px; }
 .opp-input {
@@ -2564,3 +2564,6 @@ button.cn-row:hover, button.cn-row.aberto { background: #F8FAFC; }
 .pa-res-linha b { text-align: right; }
 .pa-res-pct { text-align: right; color: var(--text-secondary); font-weight: 700; font-size: 12px; }
 @media (max-width: 900px) { .pa-resumo-grid { grid-template-columns: 1fr; } .pa-res-linha { grid-template-columns: 100px 1fr 56px 40px; } }
+
+.opp-rd .opp-fech { font-size: 14px; }
+@media (max-width: 900px) { .opp-table { overflow-x: auto; } .opp-row { min-width: 720px; } }

@@ -193,6 +193,7 @@ async function crmCarregarJanela(j, forcar = false, alvo = null) {
     if ((buscou || Funis.erro !== erroAntes) && AppState.currentView === 'funis') renderFunisView();
     if ((buscou || Funis.erro !== erroAntes) && AppState.currentView === 'trafego' && AppState.trafegoAba === 'canais') renderCanaisView();
     if ((buscou || Funis.erro !== erroAntes) && AppState.currentView === 'prospeccao' && typeof renderProspeccaoView === 'function') renderProspeccaoView();
+    if ((buscou || Funis.erro !== erroAntes) && AppState.currentView === 'oportunidades' && typeof renderOportunidadesView === 'function') renderOportunidadesView();
 }
 
 const crmRotular = (n) => ({ ...n, fonte: trocarRelacionamento(n.fonte), etapaNome: trocarRelacionamento(n.etapaNome), campanha: trocarRelacionamento(n.campanha) });
@@ -792,3 +793,50 @@ function setupCanais() {
     trocarAbaTrafego(AppState.trafegoAba);
 }
 document.addEventListener('DOMContentLoaded', setupCanais);
+
+
+/* ==========================================================================
+   OPORTUNIDADES — Oportunidades e Propostas por mês, do Funil Comercial do RD
+   Oportunidade = chegou à etapa "Qualificação" (ou além); Proposta = chegou à
+   etapa "Proposta enviada" (ou além, inclusive vendida). Mês = data de entrada
+   do cliente na aba Clientes (quando ele está cadastrado), senão a data de criação no RD.
+   ========================================================================== */
+function oppFunisComerciais() { return (Funis.funis || []).filter(f => /comercial/i.test(f.nome || '')); }
+
+// Devolve { porMes: {'01': {oport, prop}}, inicio: 'AAAA-MM' } ou null enquanto carrega / sem RD
+function oppDadosRD(ano) {
+    if (typeof crmConectado !== 'function' || !crmConectado()) return null;
+    const j = { ini: `${ano}-01-01`, fim: `${ano}-12-31`, label: String(ano) };
+    if (!Funis.funis) { crmCarregarJanela(j, false, oppFunisComerciais); return { carregando: true }; }
+    const funis = oppFunisComerciais();
+    if (!funis.length) return null;
+    const porMes = {};
+    let inicio = '';
+    for (const f of funis) {
+        const d = Funis.dados.get(crmChaveJanela(f.id, j));
+        if (!d) { crmCarregarJanela(j, false, oppFunisComerciais); return { carregando: true }; }
+        const etapas = [...(f.etapas || [])].sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+        const pos = (re) => etapas.findIndex(e => re.test(crmSemAcento(e.nome)));
+        const iQualif = pos(/qualifica/);
+        let iProp = pos(/proposta enviada/);
+        if (iProp < 0) iProp = pos(/^proposta/);
+        const iPerca = pos(/^(perca|perda|perdid)/);
+        d.lista.forEach(n => {
+            const criada = String(n.criada || '').slice(0, 10);
+            if (criada && (!inicio || criada < inicio)) inicio = criada;
+            const i = etapas.findIndex(e => String(e.id) === String(n.etapa));
+            const ganha = n.ganha === true;
+            const naPerca = i >= 0 && i === iPerca;
+            const oport = ganha || (!naPerca && iQualif >= 0 && i >= iQualif);
+            const prop = ganha || (!naPerca && iProp >= 0 && i >= iProp);
+            if (!oport && !prop) return;
+            const data = (typeof crmDataVenda === 'function' ? crmDataVenda(n) : '') || criada;
+            if (data.slice(0, 4) !== String(ano)) return;
+            const m = data.slice(5, 7);
+            porMes[m] = porMes[m] || { oport: 0, prop: 0 };
+            if (oport) porMes[m].oport++;
+            if (prop) porMes[m].prop++;
+        });
+    }
+    return { porMes, inicio: inicio.slice(0, 7) };
+}

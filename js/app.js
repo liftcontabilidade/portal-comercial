@@ -1788,13 +1788,33 @@ function calcularOportunidades(ano) {
         return { ...m, leads, fechamentos, conv };
     });
     const convGeral = totalLeads > 0 ? (totalFech / totalLeads) * 100 : null;
-    return { linhas, totalLeads, totalFech, convGeral, melhor };
+    // Oportunidades e Propostas vêm do Funil Comercial do RD (só a partir do mês em que o RD começou)
+    const rd = typeof oppDadosRD === 'function' ? oppDadosRD(ano) : null;
+    let totalOport = null, totalProp = null, totalFechRD = 0;
+    if (rd && rd.porMes) {
+        totalOport = 0; totalProp = 0;
+        linhas.forEach(l => {
+            if (!rd.inicio || `${ano}-${l.key}` < rd.inicio) { l.oport = null; l.prop = null; l.convProp = null; return; }
+            const v = rd.porMes[l.key] || { oport: 0, prop: 0 };
+            l.oport = v.oport; l.prop = v.prop;
+            l.convProp = v.prop > 0 ? (l.fechamentos / v.prop) * 100 : null;
+            totalOport += v.oport; totalProp += v.prop; totalFechRD += l.fechamentos;
+        });
+    }
+    const convProp = totalProp ? (totalFechRD / totalProp) * 100 : null;
+    return { linhas, totalLeads, totalFech, convGeral, melhor, totalOport, totalProp, convProp, rdCarregando: !!(rd && rd.carregando), rdAtivo: !!rd };
 }
 
-function htmlConversao(conv, fechamentos) {
+function oppCelulaRD(v, r) {
+    if (r.rdCarregando) return '<span class="opp-conv-empty">…</span>';
+    if (v === undefined || v === null) return '<span class="opp-conv-empty" title="Sem dados do RD nesse mês">—</span>';
+    return `<b class="opp-fech ${v ? '' : 'zero'}">${v}</b>`;
+}
+
+function htmlConversao(conv, fechamentos, vazio = 'sem leads') {
     if (conv === null) {
         return fechamentos > 0
-            ? '<span class="opp-conv-empty" title="Informe os leads do mês para calcular">sem leads</span>'
+            ? `<span class="opp-conv-empty" title="Sem base para calcular">${vazio}</span>`
             : '<span class="opp-conv-empty">—</span>';
     }
     const nivel = conv >= 15 ? 'high' : 'low';
@@ -1814,12 +1834,15 @@ function renderOportunidadesView() {
         rows.innerHTML = r.linhas.map(l => `
             <div class="opp-row" data-mes="${l.key}">
                 <span class="opp-mes">${l.nome}</span>
+                <span class="center opp-rd">${oppCelulaRD(l.oport, r)}</span>
+                <span class="center opp-rd">${oppCelulaRD(l.prop, r)}</span>
                 <span class="center">
                     <input type="text" inputmode="numeric" class="opp-input" value="${l.leads}"
                            data-mes="${l.key}" aria-label="Leads de ${l.nome}">
                 </span>
                 <span class="center opp-fech ${l.fechamentos ? '' : 'zero'}">${l.fechamentos}</span>
                 <span class="opp-conv-cell">${htmlConversao(l.conv, l.fechamentos)}</span>
+                <span class="opp-conv-cell opp-conv-prop">${l.prop === undefined || l.prop === null ? '<span class="opp-conv-empty">—</span>' : htmlConversao(l.convProp, l.fechamentos, 'sem proposta')}</span>
             </div>`).join('');
     }
     atualizarResumoOportunidades(r);
@@ -1833,6 +1856,9 @@ function atualizarResumoOportunidades(r) {
     set('kpi-total-leads', r.totalLeads);
     set('kpi-total-fechamentos', r.totalFech);
     set('kpi-conversao-geral', r.convGeral === null ? '—' : formatPct(r.convGeral, 2));
+    set('total-oport-sum', r.totalOport === null || r.totalOport === undefined ? '—' : r.totalOport);
+    set('total-prop-sum', r.totalProp === null || r.totalProp === undefined ? '—' : r.totalProp);
+    set('total-conv-prop-sum', r.convProp === null || r.convProp === undefined ? '—' : formatPct(r.convProp, 2));
     set('kpi-melhor-mes', r.melhor ? `${r.melhor.nome} (${formatPct(r.melhor.conv)})` : '—');
 }
 

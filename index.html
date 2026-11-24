@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <!-- Estilos do Portal -->
-    <link rel="stylesheet" href="css/styles.css?v=20261119m">
+    <link rel="stylesheet" href="css/styles.css?v=20261124a">
 </head>
 <body>
     <div class="app-container">
@@ -648,7 +648,7 @@
                                 <div class="year-dropdown-menu" id="oportunidades-year-menu" role="listbox"></div>
                             </div>
                         </div>
-                        <span class="opp-hint">Digite a quantidade de leads de cada mês. Os fechamentos vêm automaticamente da aba Clientes.</span>
+                        <span class="opp-hint">Digite a quantidade de leads de cada mês. Os fechamentos vêm automaticamente da aba Clientes; Oportunidades e Proposta feita vêm do Funil Comercial do RD.</span>
                     </div>
 
                     <!-- Cards de resumo -->
@@ -699,16 +699,22 @@
                         <div class="opp-table">
                             <div class="opp-row opp-row-head">
                                 <span>Mês</span>
+                                <span class="center" title="Chegaram à etapa Qualificação no Funil Comercial (RD)">Oportunidades</span>
+                                <span class="center" title="Chegaram à etapa Proposta enviada no Funil Comercial (RD)">Proposta feita</span>
                                 <span class="center">Leads</span>
                                 <span class="center">Clientes Alcançados</span>
-                                <span>Conversão</span>
+                                <span class="center">Conversão geral</span>
+                                <span class="center" title="Clientes alcançados ÷ propostas feitas">Conversão proposta</span>
                             </div>
                             <div id="opp-rows"></div>
                             <div class="opp-row opp-row-total">
                                 <span>Total</span>
+                                <span class="center" id="total-oport-sum">—</span>
+                                <span class="center" id="total-prop-sum">—</span>
                                 <span class="center" id="total-leads-sum">0</span>
                                 <span class="center" id="total-fechamentos-sum">0</span>
-                                <span id="total-conversao-sum">0,0%</span>
+                                <span class="center opp-total-conv" id="total-conversao-sum">0,0%</span>
+                                <span class="center opp-total-conv" id="total-conv-prop-sum">—</span>
                             </div>
                         </div>
                     </div>
@@ -1866,12 +1872,12 @@
     <script src="js/data.js?v=20261112g"></script>
     <script src="js/charts.js?v=20261117e"></script>
     <script src="js/firebase-config.js?v=20261112g"></script>
-    <script src="js/app.js?v=20261119j"></script>
+    <script src="js/app.js?v=20261124a"></script>
     <script src="js/contrato-modelo.js?v=20261112g"></script>
     <script src="js/contratos.js?v=20261112v"></script>
     <script src="js/contrato-editor.js?v=20261112v"></script>
     <script src="js/vendedores.js?v=20261112g"></script>
-    <script src="js/funis.js?v=20261119j"></script>
+    <script src="js/funis.js?v=20261124a"></script>
     <script src="js/prospeccao.js?v=20261119i"></script>
     <script src="js/trafego.js?v=20261112l"></script>
     <script src="js/meta-ads.js?v=20261112j"></script>
