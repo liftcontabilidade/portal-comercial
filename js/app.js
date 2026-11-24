@@ -1548,6 +1548,12 @@ function renderDadosView() {
     // Atualiza o botão/lista de anos na tela de Dados
     renderYearDropdown('dados');
 
+    // Planilha conectada: mostra exatamente os números da aba Dashboard dela
+    if (typeof dpRenderBarra === 'function') dpRenderBarra();
+    if (typeof dpRenderTabela === 'function' && dpRenderTabela(ano)) return;
+    const thead = document.querySelector('#panel-dados .table-dados-planilha thead');
+    if (thead) thead.innerHTML = `<tr><th>Competência (Jan a Dez)</th><th>Entradas</th><th>Saídas</th><th>Total de Clientes</th><th>Churn</th><th># LTV/meses</th><th># LTV méd</th></tr>`;
+
     const dataReport = calculateMonthlyDataForYear(ano);
     const tbody = document.getElementById('tabela-dados-tbody');
     const tfoot = document.getElementById('tabela-dados-tfoot');

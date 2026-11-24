@@ -45,6 +45,7 @@ function iniciar() {
     const docMetaAds = doc(db, 'portalComercial', 'dados', 'config', 'integracaoMeta');
     const docModeloContrato = doc(db, 'portalComercial', 'dados', 'config', 'contratoModelo');
     const docCRM = doc(db, 'portalComercial', 'dados', 'config', 'integracaoCRM');
+    const docPlanilha = doc(db, 'portalComercial', 'dados', 'config', 'dadosPlanilha');
     const docProspeccao = doc(db, 'portalComercial', 'dados', 'config', 'prospeccao');
 
     // Último estado recebido/gravado no banco (para gravar só o que mudou)
@@ -183,6 +184,9 @@ function iniciar() {
             sincronizado.trafego = new Map(snap.docs.map(d => [d.id, assinatura(d.data())]));
             trafegoRecebido = true;
             window.aplicarTrafegoDaNuvem && window.aplicarTrafegoDaNuvem([...sincronizado.trafego.values()].map(v => JSON.parse(v)));
+        }, () => {}));
+        cancelar.push(onSnapshot(docPlanilha, (snap) => {
+            window.aplicarConfigPlanilha && window.aplicarConfigPlanilha(snap.exists() ? snap.data() : null);
         }, () => {}));
         cancelar.push(onSnapshot(docCRM, (snap) => {
             window.aplicarConfigCRM && window.aplicarConfigCRM(snap.exists() ? snap.data() : null);
@@ -328,6 +332,13 @@ function iniciar() {
         await b.commit();
     }
 
+    // Planilha que alimenta a aba Dados (link fica só no banco)
+    async function salvarConfigPlanilha(cfg) {
+        const b = writeBatch(db);
+        if (cfg) b.set(docPlanilha, limpo(cfg)); else b.delete(docPlanilha);
+        await b.commit();
+    }
+
     // Checklist da Prospecção Ativa (marcações por semana)
     async function salvarProspeccao(dados) {
         const b = writeBatch(db);
@@ -335,7 +346,7 @@ function iniciar() {
         await b.commit();
     }
 
-    window.LiftCloud = { salvar, ativo: () => ativo, salvarConfigMeta, salvarModeloContrato, salvarConfigCRM, salvarProspeccao };
+    window.LiftCloud = { salvar, ativo: () => ativo, salvarConfigMeta, salvarModeloContrato, salvarConfigCRM, salvarProspeccao, salvarConfigPlanilha };
 
     /* ---------- Entrou / saiu ---------- */
     onAuthStateChanged(auth, (user) => {
