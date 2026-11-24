@@ -830,12 +830,15 @@ function oppDadosRD(ano) {
             const oport = ganha || (!naPerca && iQualif >= 0 && i >= iQualif);
             const prop = ganha || (!naPerca && iProp >= 0 && i >= iProp);
             if (!oport && !prop) return;
-            const data = (typeof crmDataVenda === 'function' ? crmDataVenda(n) : '') || criada;
+            // Mês: entrada na aba Clientes (se for cliente cadastrado) senão a data de criação no RD
+            const cli = ganha ? crmAcharPorNome(crmMapaClientesPortal(), crmNomeComparavel(n.nome)) : null;
+            const data = (cli && crmDataCliente(cli)) || criada;
             if (data.slice(0, 4) !== String(ano)) return;
             const m = data.slice(5, 7);
-            porMes[m] = porMes[m] || { oport: 0, prop: 0 };
-            if (oport) porMes[m].oport++;
-            if (prop) porMes[m].prop++;
+            porMes[m] = porMes[m] || { oport: 0, prop: 0, negOport: [], negProp: [] };
+            const item = { ...n, situacao: ganha ? 'ganha' : n.ganha === false ? 'perdida' : n.pausada ? 'pausada' : 'aberta', motivoPerda: n.ganha === false ? `perdida em ${n.etapaNome}${n.motivoPerda ? ' · ' + n.motivoPerda : ''}` : '' };
+            if (oport) { porMes[m].oport++; porMes[m].negOport.push(item); }
+            if (prop) { porMes[m].prop++; porMes[m].negProp.push(item); }
         });
     }
     return { porMes, inicio: inicio.slice(0, 7) };

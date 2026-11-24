@@ -1796,7 +1796,7 @@ function calcularOportunidades(ano) {
         linhas.forEach(l => {
             if (!rd.inicio || `${ano}-${l.key}` < rd.inicio) { l.oport = null; l.prop = null; l.convProp = null; return; }
             const v = rd.porMes[l.key] || { oport: 0, prop: 0 };
-            l.oport = v.oport; l.prop = v.prop;
+            l.oport = v.oport; l.prop = v.prop; l.negOport = v.negOport || []; l.negProp = v.negProp || [];
             l.convProp = v.prop > 0 ? (l.fechamentos / v.prop) * 100 : null;
             totalOport += v.oport; totalProp += v.prop; totalFechRD += l.fechamentos;
         });
@@ -1805,10 +1805,12 @@ function calcularOportunidades(ano) {
     return { linhas, totalLeads, totalFech, convGeral, melhor, totalOport, totalProp, convProp, rdCarregando: !!(rd && rd.carregando), rdAtivo: !!rd };
 }
 
-function oppCelulaRD(v, r) {
+function oppCelulaRD(v, r, mes, tipo) {
     if (r.rdCarregando) return '<span class="opp-conv-empty">…</span>';
     if (v === undefined || v === null) return '<span class="opp-conv-empty" title="Sem dados do RD nesse mês">—</span>';
-    return `<b class="opp-fech ${v ? '' : 'zero'}">${v}</b>`;
+    if (!v) return '<b class="opp-fech zero">0</b>';
+    const aberto = AppState.oppAberto && AppState.oppAberto.mes === mes && AppState.oppAberto.tipo === tipo;
+    return `<button type="button" class="opp-rd-btn${aberto ? ' aberto' : ''}" data-opp-abrir="${mes}|${tipo}" title="Ver as negociações">${v}</button>`;
 }
 
 function htmlConversao(conv, fechamentos, vazio = 'sem leads') {
@@ -1838,12 +1840,22 @@ function renderOportunidadesView() {
                     <input type="text" inputmode="numeric" class="opp-input" value="${l.leads}"
                            data-mes="${l.key}" aria-label="Leads de ${l.nome}">
                 </span>
-                <span class="center opp-rd">${oppCelulaRD(l.oport, r)}</span>
-                <span class="center opp-rd">${oppCelulaRD(l.prop, r)}</span>
+                <span class="center opp-rd">${oppCelulaRD(l.oport, r, l.key, 'oport')}</span>
+                <span class="center opp-rd">${oppCelulaRD(l.prop, r, l.key, 'prop')}</span>
                 <span class="center opp-fech ${l.fechamentos ? '' : 'zero'}">${l.fechamentos}</span>
                 <span class="opp-conv-cell">${htmlConversao(l.conv, l.fechamentos)}</span>
                 <span class="opp-conv-cell opp-conv-prop">${l.prop === undefined || l.prop === null ? '<span class="opp-conv-empty">—</span>' : htmlConversao(l.convProp, l.fechamentos, 'sem proposta')}</span>
-            </div>`).join('');
+            </div>${AppState.oppAberto && AppState.oppAberto.mes === l.key && l[AppState.oppAberto.tipo === 'oport' ? 'negOport' : 'negProp'] ? `
+            <div class="opp-detalhe">
+                <div class="cn-det-tit">${AppState.oppAberto.tipo === 'oport' ? 'Oportunidades' : 'Propostas feitas'} de ${l.nome} — ${l[AppState.oppAberto.tipo === 'oport' ? 'oport' : 'prop']} no Funil Comercial do RD</div>
+                ${crmListaNegocios(l[AppState.oppAberto.tipo === 'oport' ? 'negOport' : 'negProp'].map(n => ({ ...n, fonte: n.etapaNome && n.situacao !== 'ganha' ? `${n.fonte || 'Sem origem'} · ${n.etapaNome}` : n.fonte })))}
+            </div>` : ''}`).join('');
+        rows.querySelectorAll('[data-opp-abrir]').forEach(b => b.addEventListener('click', () => {
+            const [mes, tipo] = b.dataset.oppAbrir.split('|');
+            const a = AppState.oppAberto;
+            AppState.oppAberto = a && a.mes === mes && a.tipo === tipo ? null : { mes, tipo };
+            renderOportunidadesView();
+        }));
     }
     atualizarResumoOportunidades(r);
 }

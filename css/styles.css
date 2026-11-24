@@ -2567,3 +2567,7 @@ button.cn-row:hover, button.cn-row.aberto { background: #F8FAFC; }
 
 .opp-rd .opp-fech { font-size: 14px; }
 @media (max-width: 900px) { .opp-table { overflow-x: auto; } .opp-row { min-width: 720px; } }
+
+.opp-rd-btn { font: inherit; font-size: 14px; font-weight: 800; color: var(--lift-blue); background: #E8EEF6; border: 1px solid transparent; border-radius: 999px; padding: 2px 12px; cursor: pointer; }
+.opp-rd-btn:hover, .opp-rd-btn.aberto { border-color: var(--lift-blue); background: #fff; }
+.opp-detalhe { padding: 8px 14px 14px; background: #F8FAFC; border-top: 1px solid var(--border-subtle); }
