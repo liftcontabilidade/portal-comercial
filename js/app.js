@@ -1834,12 +1834,12 @@ function renderOportunidadesView() {
         rows.innerHTML = r.linhas.map(l => `
             <div class="opp-row" data-mes="${l.key}">
                 <span class="opp-mes">${l.nome}</span>
-                <span class="center opp-rd">${oppCelulaRD(l.oport, r)}</span>
-                <span class="center opp-rd">${oppCelulaRD(l.prop, r)}</span>
                 <span class="center">
                     <input type="text" inputmode="numeric" class="opp-input" value="${l.leads}"
                            data-mes="${l.key}" aria-label="Leads de ${l.nome}">
                 </span>
+                <span class="center opp-rd">${oppCelulaRD(l.oport, r)}</span>
+                <span class="center opp-rd">${oppCelulaRD(l.prop, r)}</span>
                 <span class="center opp-fech ${l.fechamentos ? '' : 'zero'}">${l.fechamentos}</span>
                 <span class="opp-conv-cell">${htmlConversao(l.conv, l.fechamentos)}</span>
                 <span class="opp-conv-cell opp-conv-prop">${l.prop === undefined || l.prop === null ? '<span class="opp-conv-empty">—</span>' : htmlConversao(l.convProp, l.fechamentos, 'sem proposta')}</span>
