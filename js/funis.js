@@ -798,8 +798,7 @@ document.addEventListener('DOMContentLoaded', setupCanais);
 /* ==========================================================================
    OPORTUNIDADES — Oportunidades e Propostas por mês, do Funil Comercial do RD
    Oportunidade = chegou à etapa "Qualificação" (ou além); Proposta = chegou à
-   etapa "Proposta enviada" (ou além, inclusive vendida). Mês = data de entrada
-   do cliente na aba Clientes (quando ele está cadastrado), senão a data de criação no RD.
+   etapa "Proposta enviada" (ou além, inclusive vendida). Mês = data de criação no RD.
    ========================================================================== */
 function oppFunisComerciais() { return (Funis.funis || []).filter(f => /comercial/i.test(f.nome || '')); }
 
@@ -830,9 +829,8 @@ function oppDadosRD(ano) {
             const oport = ganha || (!naPerca && iQualif >= 0 && i >= iQualif);
             const prop = ganha || (!naPerca && iProp >= 0 && i >= iProp);
             if (!oport && !prop) return;
-            // Mês: entrada na aba Clientes (se for cliente cadastrado) senão a data de criação no RD
-            const cli = ganha ? crmAcharPorNome(crmMapaClientesPortal(), crmNomeComparavel(n.nome)) : null;
-            const data = (cli && crmDataCliente(cli)) || criada;
+            // Mês: sempre o da data de criação da negociação no RD
+            const data = criada;
             if (data.slice(0, 4) !== String(ano)) return;
             const m = data.slice(5, 7);
             porMes[m] = porMes[m] || { oport: 0, prop: 0, negOport: [], negProp: [] };
